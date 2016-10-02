@@ -1,7 +1,8 @@
 #![deny(warnings)]
 extern crate hyper;
+
 extern crate hyper_rustls;
-extern crate webpki_roots;
+
 extern crate env_logger;
 
 use std::env;
@@ -77,10 +78,10 @@ fn main() {
 
     let (tx, rx) = mpsc::channel();
     let connector = hyper::client::HttpsConnector::new(hyper_rustls::TlsClient::new());
-    let config = Config::default()
-      .connector(connector);
-    let client = config.build()
-      .expect("Failed to create a Client");
+    let client = Config::default()
+        .connector(connector)
+        .build()
+        .expect("Failed to create a Client");
     client.request(url.parse().unwrap(), Dump(tx)).unwrap();
 
     // wait till done

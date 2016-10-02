@@ -29,7 +29,7 @@ enum Route {
     Echo(Body),
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 enum Body {
     Len(u64),
     Chunked
@@ -79,13 +79,10 @@ impl Handler<HttpStream> for Echo {
         }
     }
     fn on_request_readable(&mut self, transport: &mut Decoder<HttpStream>) -> Next {
-        debug!("on_request_readable");
         match self.route {
             Route::Echo(ref body) => {
                 if self.read_pos < self.buf.len() {
-                    let rc = transport.try_read(&mut self.buf[self.read_pos..]);
-                    debug!("try_read {:?}", rc);
-                    match rc {
+                    match transport.try_read(&mut self.buf[self.read_pos..]) {
                         Ok(Some(0)) => {
                             debug!("Read 0, eof");
                             self.eof = true;
@@ -93,11 +90,8 @@ impl Handler<HttpStream> for Echo {
                         },
                         Ok(Some(n)) => {
                             self.read_pos += n;
-                            debug!("read_pos now {:?}", self.read_pos);
-                            debug!("body {:?}", *body);
                             match *body {
                                 Body::Len(max) if max <= self.read_pos as u64 => {
-                                    debug!("now eof");
                                     self.eof = true;
                                     Next::write()
                                 },
@@ -119,7 +113,6 @@ impl Handler<HttpStream> for Echo {
     }
 
     fn on_response(&mut self, res: &mut Response) -> Next {
-        debug!("on_response");
         match self.route {
             Route::NotFound => {
                 res.set_status(StatusCode::NotFound);
@@ -139,14 +132,12 @@ impl Handler<HttpStream> for Echo {
     }
 
     fn on_response_writable(&mut self, transport: &mut Encoder<HttpStream>) -> Next {
-        debug!("on_response_writable");
         match self.route {
             Route::Index => {
                 transport.write(INDEX).unwrap();
                 Next::end()
             }
             Route::Echo(..) => {
-                println!("echo write {} < {}", self.write_pos, self.read_pos);
                 if self.write_pos < self.read_pos {
                     match transport.try_write(&self.buf[self.write_pos..self.read_pos]) {
                         Ok(Some(0)) => panic!("write ZERO"),
