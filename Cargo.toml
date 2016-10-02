@@ -1,0 +1,24 @@
+[package]
+name = "hyper-rustls"
+version = "0.1.0"
+authors = ["Joseph Birr-Pixton <jpixton@gmail.com>"]
+license = "Apache-2.0/ISC/MIT"
+readme = "README.md"
+description = "Rustls+hyper integration for pure rust HTTPS"
+homepage = "https://github.com/ctz/hyper-rustls"
+repository = "https://github.com/ctz/hyper-rustls"
+
+[dependencies]
+webpki-roots = "0.4.0"
+rotor = "0.6"
+vecio = "0.1"
+rustls = "0.5.1"
+
+[dependencies.hyper]
+version = "0.10.0-a.0"
+git = "https://github.com/hyperium/hyper"
+default-features = false
+
+[dev-dependencies]
+log = "0.3"
+env_logger = "0.3"
