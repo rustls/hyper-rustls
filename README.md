@@ -20,7 +20,7 @@ distributed under hyper's license.
 
 ## Client
 
-```
+```diff
 @@ -1,6 +1,8 @@
  #![deny(warnings)]
  extern crate hyper;
@@ -64,7 +64,7 @@ distributed under hyper's license.
 
 ## Server
 
-```
+```diff
 @@ -1,13 +1,20 @@
  #![deny(warnings)]
  extern crate hyper;
