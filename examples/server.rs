@@ -187,6 +187,6 @@ fn main() {
     let tls = hyper_rustls::TlsServer::new(certs, key);
     let server = Server::https(&"127.0.0.1:1337".parse().unwrap(), tls).unwrap();
     let (listening, server) = server.handle(|_| Echo::new()).unwrap();
-    println!("Listening on http://{}", listening);
+    println!("Listening on https://{}", listening);
     server.run();
 }
