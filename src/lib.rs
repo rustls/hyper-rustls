@@ -1,14 +1,15 @@
 extern crate webpki_roots;
 extern crate rustls;
 extern crate hyper;
-extern crate rotor;
 extern crate vecio;
 
-use hyper::net::{HttpStream, Blocked, Transport};
-use rotor::mio;
+use hyper::net::{HttpStream, NetworkStream};
 
 use std::io;
 use std::sync::Arc;
+use std::sync::{Mutex, MutexGuard};
+use std::net::{SocketAddr, Shutdown};
+use std::time::Duration;
 
 pub struct TlsStream {
   sess: Box<rustls::Session>,
@@ -23,6 +24,14 @@ impl TlsStream {
       return;
     }
 
+    while self.io_error.is_none() && self.sess.wants_write() {
+      if let Err(err) = self.sess.write_tls(&mut self.underlying) {
+        if err.kind() != io::ErrorKind::WouldBlock {
+          self.io_error = Some(err);
+        }
+      }
+    }
+    
     if self.io_error.is_none() && self.sess.wants_read() {
       if let Err(err) = self.sess.read_tls(&mut self.underlying) {
         if err.kind() != io::ErrorKind::WouldBlock {
@@ -34,14 +43,6 @@ impl TlsStream {
     if let Err(err) = self.sess.process_new_packets() {
       self.tls_error = Some(err);
     }
-    
-    if self.io_error.is_none() && self.sess.wants_write() {
-      if let Err(err) = self.sess.write_tls(&mut self.underlying) {
-        if err.kind() != io::ErrorKind::WouldBlock {
-          self.io_error = Some(err);
-        }
-      }
-    }
   }
     
   fn promote_tls_error(&mut self) -> io::Result<()> {
@@ -52,33 +53,34 @@ impl TlsStream {
       None => return Ok(())
     };
   }
-}
 
-impl Transport for TlsStream {
-  fn take_socket_error(&mut self) -> io::Result<()> {
-    match self.io_error.take() {
-      Some(err) => Err(err),
-      None => Ok(())
-    }
+  fn close(&mut self, how: Shutdown) -> io::Result<()> {
+    self.underlying.close(how)
   }
 
-  fn blocked(&self) -> Option<Blocked> {
-    if self.sess.wants_write() {
-      return Some(Blocked::Write);
-    }
+  fn peer_addr(&mut self) -> io::Result<SocketAddr> {
+    self.underlying.peer_addr()
+  }
 
-    None
+  fn set_read_timeout(&self, dur: Option<Duration>) -> io::Result<()> {
+    self.underlying.set_read_timeout(dur)
+  }
+
+  fn set_write_timeout(&self, dur: Option<Duration>) -> io::Result<()> {
+    self.underlying.set_write_timeout(dur)
   }
 }
 
 impl io::Read for TlsStream {
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-    self.underlying_io();
-    try!(self.promote_tls_error());
-    match self.sess.read(buf) {
-      Err(err) => Err(err),
-      Ok(0) => Err(io::Error::new(io::ErrorKind::WouldBlock, "would block")),
-      Ok(n) => Ok(n)
+    loop {
+      self.underlying_io();
+      try!(self.promote_tls_error());
+      match self.sess.read(buf) {
+        Ok(0) => continue,
+        Ok(n) => return Ok(n),
+        Err(e) => return Err(e)
+      }
     }
   }
 }
@@ -99,27 +101,46 @@ impl io::Write for TlsStream {
   }
 }
 
-impl mio::Evented for TlsStream {
-  fn register(&self, selector: &mut mio::Selector, token: mio::Token,
-              interest: mio::EventSet, opts: mio::PollOpt) -> io::Result<()> {
-    self.underlying.register(selector, token, interest, opts)
-  }
+#[derive(Clone)]
+pub struct WrappedStream(Arc<Mutex<TlsStream>>);
 
-  fn reregister(&self, selector: &mut mio::Selector, token: mio::Token,
-                interest: mio::EventSet, opts: mio::PollOpt) -> io::Result<()> {
-    self.underlying.reregister(selector, token, interest, opts)
-  }
-
-  fn deregister(&self, selector: &mut mio::Selector) -> io::Result<()> {
-    self.underlying.deregister(selector)
+impl WrappedStream {
+  fn lock(&self) -> MutexGuard<TlsStream> {
+    self.0.lock().unwrap_or_else(|e| e.into_inner())
   }
 }
 
-impl vecio::Writev for TlsStream {
-  fn writev(&mut self, bufs: &[&[u8]]) -> io::Result<usize> {
-    use std::io::Write;
-    let vec = bufs.concat();
-    self.write(&vec)
+impl io::Read for WrappedStream {
+  fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    self.lock().read(buf)
+  }
+}
+
+impl io::Write for WrappedStream {
+  fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+    self.lock().write(buf)
+  }
+
+  fn flush(&mut self) -> io::Result<()> {
+    self.lock().flush()
+  }
+}
+
+impl hyper::net::NetworkStream for WrappedStream {
+  fn peer_addr(&mut self) -> io::Result<SocketAddr> {
+    self.lock().peer_addr()
+  }
+
+  fn set_read_timeout(&self, dur: Option<Duration>) -> io::Result<()> {
+    self.lock().set_read_timeout(dur)
+  }
+
+  fn set_write_timeout(&self, dur: Option<Duration>) -> io::Result<()> {
+    self.lock().set_write_timeout(dur)
+  }
+
+  fn close(&mut self, how: Shutdown) -> io::Result<()> {
+    self.lock().close(how)
   }
 }
 
@@ -141,9 +162,9 @@ impl TlsClient {
 }
 
 impl hyper::net::SslClient for TlsClient {
-  type Stream = TlsStream;
+  type Stream = WrappedStream;
 
-  fn wrap_client(&self, stream: HttpStream, host: &str) -> hyper::Result<TlsStream> {
+  fn wrap_client(&self, stream: HttpStream, host: &str) -> hyper::Result<WrappedStream> {
     let tls = TlsStream {
       sess: Box::new(rustls::ClientSession::new(&self.cfg, host)),
       underlying: stream,
@@ -151,10 +172,11 @@ impl hyper::net::SslClient for TlsClient {
       tls_error: None
     };
 
-    Ok(tls)
+    Ok(WrappedStream(Arc::new(Mutex::new(tls))))
   }
 }
 
+#[derive(Clone)]
 pub struct TlsServer {
   pub cfg: Arc<rustls::ServerConfig>
 }
@@ -174,9 +196,9 @@ impl TlsServer {
 }
 
 impl hyper::net::SslServer for TlsServer {
-  type Stream = TlsStream;
+  type Stream = WrappedStream;
 
-  fn wrap_server(&self, stream: HttpStream) -> hyper::Result<TlsStream> {
+  fn wrap_server(&self, stream: HttpStream) -> hyper::Result<WrappedStream> {
     let tls = TlsStream {
       sess: Box::new(rustls::ServerSession::new(&self.cfg)),
       underlying: stream,
@@ -184,6 +206,6 @@ impl hyper::net::SslServer for TlsServer {
       tls_error: None
     };
 
-    Ok(tls)
+    Ok(WrappedStream(Arc::new(Mutex::new(tls))))
   }
 }
