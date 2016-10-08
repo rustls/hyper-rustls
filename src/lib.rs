@@ -1,7 +1,6 @@
 extern crate webpki_roots;
 extern crate rustls;
 extern crate hyper;
-extern crate vecio;
 
 use hyper::net::{HttpStream, SslClient, SslServer, NetworkStream};
 
