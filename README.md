@@ -3,6 +3,7 @@ This is an integration between the [rustls TLS stack](https://github.com/ctz/rus
 and the [hyper HTTP library](https://github.com/hyperium/hyper).
 
 [![Build Status](https://travis-ci.org/ctz/hyper-rustls.svg?branch=master)](https://travis-ci.org/ctz/hyper-rustls)
+[![Crate](https://img.shields.io/crates/v/hyper-rustls.svg)](https://crates.io/crates/hyper-rustls)
 
 Implementations are provided of
 [`hyper::net::SslClient`](http://hyper.rs/hyper/v0.9.10/hyper/net/trait.SslClient.html),
