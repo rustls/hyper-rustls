@@ -3,10 +3,9 @@ This is an integration between the [rustls TLS stack](https://github.com/ctz/rus
 and the [hyper HTTP library](https://github.com/hyperium/hyper).
 
 Implementations are provided of
-[`hyper::net::SslClient`](http://hyper.rs/hyper/master/hyper/net/trait.SslClient.html),
-[`hyper::net::SslServer`](http://hyper.rs/hyper/master/hyper/net/trait.SslServer.html)
-and [`hyper::net::Transport`](http://hyper.rs/hyper/master/hyper/net/trait.Transport.html).
-Note that these only exist on hyper master at the moment, so this isn't on crates.io.
+[`hyper::net::SslClient`](http://hyper.rs/hyper/v0.9.10/hyper/net/trait.SslClient.html),
+[`hyper::net::SslServer`](http://hyper.rs/hyper/v0.9.10/hyper/net/trait.SslServer.html)
+and [`hyper::net::NetworkStream`](http://hyper.rs/hyper/v0.9.10/hyper/net/trait.NetworkStream.html).
 
 By default clients verify certificates using the `webpki-roots` crate, which includes
 the Mozilla root CAs.
@@ -21,6 +20,8 @@ distributed under hyper's license.
 ## Client
 
 ```diff
+--- ../hyper/examples/client.rs	2016-10-03 23:29:00.850098245 +0100
++++ examples/client.rs	2016-10-08 07:36:05.076449122 +0100
 @@ -1,6 +1,8 @@
  #![deny(warnings)]
  extern crate hyper;
@@ -30,95 +31,56 @@ distributed under hyper's license.
  extern crate env_logger;
  
  use std::env;
-@@ -8,13 +10,15 @@
- use std::sync::mpsc;
- use std::time::Duration;
+@@ -8,6 +10,7 @@
  
--use hyper::client::{Client, Request, Response, DefaultTransport as HttpStream};
-+use hyper::client::{Config, Request, Response};
+ use hyper::Client;
  use hyper::header::Connection;
- use hyper::{Decoder, Encoder, Next};
++use hyper::net::HttpsConnector;
  
- #[derive(Debug)]
- struct Dump(mpsc::Sender<()>);
- 
-+type HttpStream = hyper::net::HttpsStream<hyper_rustls::TlsStream>;
-+
- impl Drop for Dump {
-     fn drop(&mut self) {
-         let _ = self.0.send(());
-@@ -73,7 +77,11 @@
+ fn main() {
+     env_logger::init().unwrap();
+@@ -32,7 +35,7 @@
+             }
+             Client::with_http_proxy(proxy, port)
+         },
+-        _ => Client::new()
++        _ => Client::with_connector(HttpsConnector::new(hyper_rustls::TlsClient::new()))
      };
  
-     let (tx, rx) = mpsc::channel();
--    let client = Client::new().expect("Failed to create a Client");
-+    let connector = hyper::client::HttpsConnector::new(hyper_rustls::TlsClient::new());
-+    let client = Config::default()
-+        .connector(connector)
-+        .build()
-+        .expect("Failed to create a Client");
-     client.request(url.parse().unwrap(), Dump(tx)).unwrap();
- 
-     // wait till done
+     let mut res = client.get(&*url)
 ```
 
 ## Server
 
 ```diff
-@@ -1,13 +1,20 @@
+--- ../hyper/examples/client.rs	2016-10-03 23:29:00.850098245 +0100
++++ examples/client.rs	2016-10-08 07:36:05.076449122 +0100
+@@ -1,6 +1,8 @@
  #![deny(warnings)]
  extern crate hyper;
+ 
 +extern crate hyper_rustls;
++
  extern crate env_logger;
- #[macro_use]
- extern crate log;
-+extern crate rustls;
  
--use hyper::{Get, Post, StatusCode, RequestUri, Decoder, Encoder, HttpStream, Next};
-+use hyper::{Get, Post, StatusCode, RequestUri, Decoder, Encoder, Next};
- use hyper::header::ContentLength;
- use hyper::server::{Server, Handler, Request, Response};
+ use std::env;
+@@ -8,6 +10,7 @@
  
-+use std::fs;
-+use std::io::BufReader;
-+
-+type HttpStream = hyper_rustls::TlsStream;
-+
- struct Echo {
-     buf: Vec<u8>,
-     read_pos: usize,
-@@ -155,9 +162,30 @@
-     }
- }
+ use hyper::Client;
+ use hyper::header::Connection;
++use hyper::net::HttpsConnector;
  
-+fn load_certs(filename: &str) -> Vec<Vec<u8>> {
-+    let certfile = fs::File::open(filename)
-+        .expect("cannot open certificate file");
-+    let mut reader = BufReader::new(certfile);
-+    rustls::internal::pemfile::certs(&mut reader)
-+      .unwrap()
-+}
-+
-+fn load_private_key(filename: &str) -> Vec<u8> {
-+    let keyfile = fs::File::open(filename)
-+        .expect("cannot open private key file");
-+    let mut reader = BufReader::new(keyfile);
-+    let keys = rustls::internal::pemfile::rsa_private_keys(&mut reader)
-+        .unwrap();
-+    assert!(keys.len() == 1);
-+    keys[0].clone()
-+}
-+
  fn main() {
      env_logger::init().unwrap();
--    let server = Server::http(&"127.0.0.1:1337".parse().unwrap()).unwrap();
-+    let certs = load_certs("examples/sample.pem");
-+    let key = load_private_key("examples/sample.rsa");
-+    let tls = hyper_rustls::TlsServer::new(certs, key);
-+    let server = Server::https(&"127.0.0.1:1337".parse().unwrap(), tls).unwrap();
-     let (listening, server) = server.handle(|_| Echo::new()).unwrap();
-     println!("Listening on http://{}", listening);
-     server.run();
+@@ -32,7 +35,7 @@
+             }
+             Client::with_http_proxy(proxy, port)
+         },
+-        _ => Client::new()
++        _ => Client::with_connector(HttpsConnector::new(hyper_rustls::TlsClient::new()))
+     };
+ 
+     let mut res = client.get(&*url)
 ```
 
 # License

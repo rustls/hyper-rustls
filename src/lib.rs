@@ -3,7 +3,7 @@ extern crate rustls;
 extern crate hyper;
 extern crate vecio;
 
-use hyper::net::{HttpStream, NetworkStream};
+use hyper::net::{HttpStream, SslClient, SslServer, NetworkStream};
 
 use std::io;
 use std::sync::Arc;
@@ -14,12 +14,37 @@ use std::time::Duration;
 pub struct TlsStream {
   sess: Box<rustls::Session>,
   underlying: HttpStream,
+  eof: bool,
   tls_error: Option<rustls::TLSError>,
   io_error: Option<io::Error>
 }
 
 impl TlsStream {
-  fn underlying_io(&mut self) {
+  fn underlying_read(&mut self) {
+    if self.io_error.is_some() || self.tls_error.is_some() {
+      return;
+    }
+
+    if self.sess.wants_read() {
+      match self.sess.read_tls(&mut self.underlying) {
+        Err(err) => {
+          if err.kind() != io::ErrorKind::WouldBlock {
+            self.io_error = Some(err);
+          }
+        },
+        Ok(0) => {
+          self.eof = true;
+        },
+        Ok(_) => ()
+      }
+    }
+
+    if let Err(err) = self.sess.process_new_packets() {
+      self.tls_error = Some(err);
+    }
+  }
+
+  fn underlying_write(&mut self) {
     if self.io_error.is_some() || self.tls_error.is_some() {
       return;
     }
@@ -31,20 +56,13 @@ impl TlsStream {
         }
       }
     }
-    
-    if self.io_error.is_none() && self.sess.wants_read() {
-      if let Err(err) = self.sess.read_tls(&mut self.underlying) {
-        if err.kind() != io::ErrorKind::WouldBlock {
-          self.io_error = Some(err);
-        }
-      }
-    }
-
-    if let Err(err) = self.sess.process_new_packets() {
-      self.tls_error = Some(err);
-    }
   }
-    
+
+  fn underlying_io(&mut self) {
+    self.underlying_write();
+    self.underlying_read();
+  }
+
   fn promote_tls_error(&mut self) -> io::Result<()> {
     match self.tls_error.take() {
       Some(err) => {
@@ -73,11 +91,17 @@ impl TlsStream {
 
 impl io::Read for TlsStream {
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    // This wants to block if we don't have any data ready.
+    // underlying_read does this.
     loop {
-      self.underlying_io();
       try!(self.promote_tls_error());
+
+      if self.eof {
+        return Ok(0);
+      }
+
       match self.sess.read(buf) {
-        Ok(0) => continue,
+        Ok(0) => self.underlying_io(),
         Ok(n) => return Ok(n),
         Err(e) => return Err(e)
       }
@@ -89,14 +113,14 @@ impl io::Write for TlsStream {
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
     let len = try!(self.sess.write(buf));
     try!(self.promote_tls_error());
-    self.underlying_io();
+    self.underlying_write();
     Ok(len)
   }
 
   fn flush(&mut self) -> io::Result<()> {
     let rc = self.sess.flush();
     try!(self.promote_tls_error());
-    self.underlying_io();
+    self.underlying_write();
     rc
   }
 }
@@ -126,7 +150,7 @@ impl io::Write for WrappedStream {
   }
 }
 
-impl hyper::net::NetworkStream for WrappedStream {
+impl NetworkStream for WrappedStream {
   fn peer_addr(&mut self) -> io::Result<SocketAddr> {
     self.lock().peer_addr()
   }
@@ -161,13 +185,14 @@ impl TlsClient {
   }
 }
 
-impl hyper::net::SslClient for TlsClient {
+impl SslClient for TlsClient {
   type Stream = WrappedStream;
 
   fn wrap_client(&self, stream: HttpStream, host: &str) -> hyper::Result<WrappedStream> {
     let tls = TlsStream {
       sess: Box::new(rustls::ClientSession::new(&self.cfg, host)),
       underlying: stream,
+      eof: false,
       io_error: None,
       tls_error: None
     };
@@ -195,17 +220,42 @@ impl TlsServer {
   }
 }
 
-impl hyper::net::SslServer for TlsServer {
+impl SslServer for TlsServer {
   type Stream = WrappedStream;
 
   fn wrap_server(&self, stream: HttpStream) -> hyper::Result<WrappedStream> {
     let tls = TlsStream {
       sess: Box::new(rustls::ServerSession::new(&self.cfg)),
       underlying: stream,
+      eof: false,
       io_error: None,
       tls_error: None
     };
 
     Ok(WrappedStream(Arc::new(Mutex::new(tls))))
+  }
+}
+
+pub mod util {
+  use std::fs;
+  use std::io::BufReader;
+  use rustls;
+
+  pub fn load_certs(filename: &str) -> Vec<Vec<u8>> {
+    let certfile = fs::File::open(filename)
+      .expect("cannot open certificate file");
+    let mut reader = BufReader::new(certfile);
+    rustls::internal::pemfile::certs(&mut reader)
+      .unwrap()
+  }
+
+  pub fn load_private_key(filename: &str) -> Vec<u8> {
+    let keyfile = fs::File::open(filename)
+      .expect("cannot open private key file");
+    let mut reader = BufReader::new(keyfile);
+    let mut keys = rustls::internal::pemfile::rsa_private_keys(&mut reader)
+      .unwrap();
+    assert!(keys.len() == 1);
+    keys.remove(0)
   }
 }
