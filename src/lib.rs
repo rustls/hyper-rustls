@@ -206,7 +206,7 @@ pub struct TlsServer {
 }
 
 impl TlsServer {
-  pub fn new(certs: Vec<Vec<u8>>, key: Vec<u8>) -> TlsServer {
+  pub fn new(certs: Vec<rustls::Certificate>, key: rustls::PrivateKey) -> TlsServer {
     let mut tls_config = rustls::ServerConfig::new();
     let cache = rustls::ServerSessionMemoryCache::new(1024);
     tls_config.set_persistence(cache);
@@ -240,7 +240,7 @@ pub mod util {
   use std::io::BufReader;
   use rustls;
 
-  pub fn load_certs(filename: &str) -> Vec<Vec<u8>> {
+  pub fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
     let certfile = fs::File::open(filename)
       .expect("cannot open certificate file");
     let mut reader = BufReader::new(certfile);
@@ -248,7 +248,7 @@ pub mod util {
       .unwrap()
   }
 
-  pub fn load_private_key(filename: &str) -> Vec<u8> {
+  pub fn load_private_key(filename: &str) -> rustls::PrivateKey {
     let keyfile = fs::File::open(filename)
       .expect("cannot open private key file");
     let mut reader = BufReader::new(keyfile);
