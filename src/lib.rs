@@ -71,6 +71,10 @@ impl TlsStream {
     };
   }
 
+  fn check_io_error(&mut self) -> io::Result<()> {
+    self.io_error.take().map(Err).unwrap_or(Ok(()))
+  }
+
   fn close(&mut self, how: Shutdown) -> io::Result<()> {
     self.underlying.close(how)
   }
@@ -94,6 +98,7 @@ impl io::Read for TlsStream {
     // underlying_read does this.
     loop {
       try!(self.promote_tls_error());
+      try!(self.check_io_error());
 
       if self.eof {
         return Ok(0);
