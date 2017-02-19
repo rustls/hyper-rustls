@@ -1,6 +1,6 @@
 [package]
 name = "hyper-rustls"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Joseph Birr-Pixton <jpixton@gmail.com>"]
 license = "Apache-2.0/ISC/MIT"
 readme = "README.md"
@@ -9,8 +9,8 @@ homepage = "https://github.com/ctz/hyper-rustls"
 repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
-webpki-roots = "0.6.0"
-rustls = "0.5.3"
+webpki-roots = "0.7.0"
+rustls = "0.5.6"
 
 [dependencies.hyper]
 version = "0.10"
