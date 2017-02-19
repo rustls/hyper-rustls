@@ -10,7 +10,9 @@ use std::io;
 
 use hyper::Client;
 use hyper::header::Connection;
+use hyper::net::HttpConnector;
 use hyper::net::HttpsConnector;
+use hyper::client::ProxyConfig;
 
 fn main() {
     env_logger::init().unwrap();
@@ -23,6 +25,8 @@ fn main() {
         }
     };
 
+    let tls = hyper_rustls::TlsClient::new();
+
     let client = match env::var("HTTP_PROXY") {
         Ok(mut proxy) => {
             // parse the proxy, message if it doesn't make sense
@@ -33,9 +37,17 @@ fn main() {
                 });
                 proxy.truncate(colon);
             }
-            Client::with_http_proxy(proxy, port)
-        },
-        _ => Client::with_connector(HttpsConnector::new(hyper_rustls::TlsClient::new()))
+
+            // connector here gets us to the proxy. tls then is used for https
+            // connections via the proxy (tunnelled through the CONNECT method)
+            let connector = HttpConnector::default();
+            let proxy_config = ProxyConfig::new("http", proxy, port, connector, tls);
+            Client::with_proxy_config(proxy_config)
+        }
+        _ => {
+            let connector = HttpsConnector::new(tls);
+            Client::with_connector(connector)
+        }
     };
 
     let mut res = client.get(&*url)
