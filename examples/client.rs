@@ -1,8 +1,8 @@
 #![deny(warnings)]
 extern crate hyper;
 
+extern crate url;
 extern crate hyper_rustls;
-
 extern crate env_logger;
 
 use std::env;
@@ -13,6 +13,7 @@ use hyper::header::Connection;
 use hyper::net::HttpConnector;
 use hyper::net::HttpsConnector;
 use hyper::client::ProxyConfig;
+use url::Url;
 
 fn main() {
     env_logger::init().unwrap();
@@ -28,20 +29,23 @@ fn main() {
     let tls = hyper_rustls::TlsClient::new();
 
     let client = match env::var("HTTP_PROXY") {
-        Ok(mut proxy) => {
+        Ok(proxy) => {
             // parse the proxy, message if it doesn't make sense
-            let mut port = 80;
-            if let Some(colon) = proxy.rfind(':') {
-                port = proxy[colon + 1..].parse().unwrap_or_else(|e| {
-                    panic!("HTTP_PROXY is malformed: {:?}, port parse error: {}", proxy, e);
-                });
-                proxy.truncate(colon);
-            }
+            let proxy = match Url::parse(&proxy) {
+                Ok(proxy) => proxy,
+                Err(why) => panic!("HTTP_PROXY is malformed: {}: {}", proxy, why),
+            };
 
             // connector here gets us to the proxy. tls then is used for https
             // connections via the proxy (tunnelled through the CONNECT method)
             let connector = HttpConnector::default();
-            let proxy_config = ProxyConfig::new("http", proxy, port, connector, tls);
+            let proxy_config = ProxyConfig::new(
+                proxy.scheme(),
+                proxy.host_str().unwrap().to_owned(),
+                proxy.port().unwrap(),
+                connector,
+                tls,
+            );
             Client::with_proxy_config(proxy_config)
         }
         _ => {
