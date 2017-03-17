@@ -5,6 +5,7 @@ extern crate hyper;
 use hyper::net::{HttpStream, SslClient, SslServer, NetworkStream};
 
 use std::io;
+use std::fs::File;
 use std::sync::Arc;
 use std::sync::{Mutex, MutexGuard};
 use std::net::{SocketAddr, Shutdown};
@@ -177,15 +178,27 @@ pub struct TlsClient {
 }
 
 impl TlsClient {
-  pub fn new() -> TlsClient {
+  fn new_opt_ca(opt_ca_file_path: Option<&str>) -> TlsClient {
     let mut tls_config = rustls::ClientConfig::new();
     let cache = rustls::ClientSessionMemoryCache::new(64);
     tls_config.set_persistence(cache);
     tls_config.root_store.add_trust_anchors(&webpki_roots::ROOTS);
+    if let Some(ca_file_path) = opt_ca_file_path {
+      let cafile = File::open(&ca_file_path).expect("Cannot open CA file");
+      let mut ca_reader = io::BufReader::new(cafile);
+      tls_config.root_store.add_pem_file(&mut ca_reader).unwrap();
+    }
 
     TlsClient {
       cfg: Arc::new(tls_config)
     }
+  }
+
+  pub fn new() -> TlsClient {
+    TlsClient::new_opt_ca(None)
+  }
+  pub fn new_with_ca(ca_file_path: &str) -> TlsClient {
+    TlsClient::new_opt_ca(Some(ca_file_path))
   }
 }
 
