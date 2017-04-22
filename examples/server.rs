@@ -42,8 +42,10 @@ fn echo(mut req: Request, mut res: Response) {
 
 fn main() {
     env_logger::init().unwrap();
-    let certs = hyper_rustls::util::load_certs("examples/sample.pem");
-    let key = hyper_rustls::util::load_private_key("examples/sample.rsa");
+    let certs = hyper_rustls::util::load_certs("examples/sample.pem")
+        .expect("cannot load certificate");
+    let key = hyper_rustls::util::load_private_key("examples/sample.rsa")
+        .expect("cannot load key");
     let tls = hyper_rustls::TlsServer::new(certs, key);
     let server = Server::https("127.0.0.1:1337", tls).unwrap();
     let _guard = server.handle(echo);

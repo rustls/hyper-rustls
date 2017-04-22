@@ -243,23 +243,32 @@ impl SslServer for TlsServer {
 pub mod util {
   use std::fs;
   use std::io::BufReader;
+  use std::io;
   use rustls;
 
-  pub fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
-    let certfile = fs::File::open(filename)
-      .expect("cannot open certificate file");
+  pub fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
+    let certfile = try!(fs::File::open(filename));
+
     let mut reader = BufReader::new(certfile);
     rustls::internal::pemfile::certs(&mut reader)
-      .unwrap()
+      .map_err(|_| io::Error::new(io::ErrorKind::Other,
+                                  "no valid certificates found in file"))
   }
 
-  pub fn load_private_key(filename: &str) -> rustls::PrivateKey {
-    let keyfile = fs::File::open(filename)
-      .expect("cannot open private key file");
+  pub fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
+    let keyfile = try!(fs::File::open(filename));
+
     let mut reader = BufReader::new(keyfile);
-    let mut keys = rustls::internal::pemfile::rsa_private_keys(&mut reader)
-      .unwrap();
-    assert!(keys.len() == 1);
-    keys.remove(0)
+    let mut keys = try! {
+        rustls::internal::pemfile::rsa_private_keys(&mut reader)
+        .map_err(|_| io::Error::new(io::ErrorKind::Other,
+                                    "no valid keys found in file"))
+    };
+
+    match keys.len() {
+        1 => Ok(keys.remove(0)),
+        0 => Err(io::Error::new(io::ErrorKind::Other, "no keys found in file")),
+        _ => Err(io::Error::new(io::ErrorKind::Other, "more than one key in file"))
+    }
   }
 }
