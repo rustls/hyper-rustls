@@ -10,7 +10,7 @@ repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
 webpki-roots = "0.7.0"
-rustls = "0.5.6"
+rustls = "0.5.8"
 
 [dependencies.hyper]
 version = "0.10"
