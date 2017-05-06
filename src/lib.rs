@@ -19,6 +19,14 @@ pub struct TlsStream {
 }
 
 impl TlsStream {
+  pub fn get_session(&self) -> &rustls::Session {
+      self.sess.as_ref()
+  }
+
+  pub fn get_mut_session(&mut self) -> &mut rustls::Session {
+      self.sess.as_mut()
+  }
+
   fn underlying_read(&mut self) {
     if self.io_error.is_some() || self.tls_error.is_some() {
       return;
@@ -135,6 +143,13 @@ pub struct WrappedStream(Arc<Mutex<TlsStream>>);
 impl WrappedStream {
   fn lock(&self) -> MutexGuard<TlsStream> {
     self.0.lock().unwrap_or_else(|e| e.into_inner())
+  }
+
+  /// Lock and return the underlying TlsStream.  This
+  /// allows access to the underlying TLS session, for
+  /// debugging and custom configuration.
+  pub fn to_tls_stream(&self) -> MutexGuard<TlsStream> {
+      self.lock()
   }
 }
 
