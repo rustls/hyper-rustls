@@ -148,7 +148,7 @@ impl WrappedStream {
   /// Lock and return the underlying TlsStream.  This
   /// allows access to the underlying TLS session, for
   /// debugging and custom configuration.
-  pub fn to_tls_stream(&mut self) -> MutexGuard<TlsStream> {
+  pub fn to_tls_stream(&self) -> MutexGuard<TlsStream> {
       self.lock()
   }
 }
