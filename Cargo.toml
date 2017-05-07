@@ -9,8 +9,8 @@ homepage = "https://github.com/ctz/hyper-rustls"
 repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
-webpki-roots = "0.7.0"
-rustls = "0.5.8"
+webpki-roots = "0.9.0"
+rustls = "0.6"
 
 [dependencies.hyper]
 version = "0.10"
