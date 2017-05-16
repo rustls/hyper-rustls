@@ -14,7 +14,7 @@ use std::str::FromStr;
 
 fn main() {
     let url = match env::args().nth(1) {
-        Some(url) => Uri::from_str(&*url).expect("well-formed URI"),
+        Some(ref url) => Uri::from_str(url).expect("well-formed URI"),
         None => {
             println!("Usage: client <url>");
             return;
