@@ -9,13 +9,15 @@ homepage = "https://github.com/ctz/hyper-rustls"
 repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
-webpki-roots = "0.4.0"
-rotor = "0.6"
-vecio = "0.1"
-rustls = "0.5.1"
+futures = "0.1.13"
+rustls = "0.7"
+tokio-core = "0.1.7"
+tokio-io = "0.1.1"
+tokio-rustls = "0.2.0"
+tokio-service = "0.1.0"
+webpki-roots = "0.10.0"
 
 [dependencies.hyper]
-version = "0.10.0-a.0"
 git = "https://github.com/hyperium/hyper"
 default-features = false
 
