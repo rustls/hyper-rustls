@@ -10,6 +10,7 @@ use tokio_rustls::ClientConfigExt;
 use tokio_service::Service;
 use webpki_roots;
 
+#[derive(Clone)]
 pub struct HttpsConnector {
     http: HttpConnector,
 }
