@@ -1,53 +1,71 @@
 #![deny(warnings)]
+
+extern crate futures;
 extern crate hyper;
-extern crate hyper_rustls;
-extern crate env_logger;
+extern crate rustls;
+extern crate tokio_core;
+extern crate tokio_proto;
+extern crate tokio_rustls;
 
-use std::io::copy;
+use futures::future::FutureResult;
+use hyper::header::ContentLength;
+use hyper::server::{Http, Service, Request, Response};
+use hyper::{Get, Post, StatusCode};
+use tokio_rustls::proto;
+use rustls::internal::pemfile;
 
-use hyper::{Get, Post};
-use hyper::server::{Server, Request, Response};
-use hyper::uri::RequestUri::AbsolutePath;
+static INDEX: &'static [u8] = b"Try POST /echo\n";
 
-macro_rules! try_return(
-    ($e:expr) => {{
-        match $e {
-            Ok(v) => v,
-            Err(e) => { println!("Error: {}", e); return; }
-        }
-    }}
-);
+#[derive(Clone, Copy)]
+struct Echo;
 
-fn echo(mut req: Request, mut res: Response) {
-    match req.uri {
-        AbsolutePath(ref path) => match (&req.method, &path[..]) {
-            (&Get, "/") | (&Get, "/echo") => {
-                try_return!(res.send(b"Try POST /echo"));
-                return;
-            },
-            (&Post, "/echo") => (), // fall through, fighting mutable borrows
-            _ => {
-                *res.status_mut() = hyper::NotFound;
-                return;
-            }
-        },
-        _ => {
-            return;
-        }
-    };
+impl Service for Echo {
+    type Request = Request;
+    type Response = Response;
+    type Error = hyper::Error;
+    type Future = FutureResult<Response, hyper::Error>;
 
-    let mut res = try_return!(res.start());
-    try_return!(copy(&mut req, &mut res));
+    fn call(&self, req: Request) -> Self::Future {
+        futures::future::ok(match (req.method(), req.path()) {
+                                (&Get, "/") | (&Get, "/echo") => {
+                                    Response::new()
+                                        .with_header(ContentLength(INDEX.len() as u64))
+                                        .with_body(INDEX)
+                                }
+                                (&Post, "/echo") => {
+                                    let mut res = Response::new();
+                                    if let Some(len) = req.headers().get::<ContentLength>() {
+                                        res.headers_mut().set(len.clone());
+                                    }
+                                    res.with_body(req.body())
+                                }
+                                _ => Response::new().with_status(StatusCode::NotFound),
+                            })
+    }
+}
+
+fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
+    let certfile = std::fs::File::open(filename).expect("cannot open certificate file");
+    let mut reader = std::io::BufReader::new(certfile);
+    pemfile::certs(&mut reader).unwrap()
+}
+
+fn load_private_key(filename: &str) -> rustls::PrivateKey {
+    let keyfile = std::fs::File::open(filename).expect("cannot open private key file");
+    let mut reader = std::io::BufReader::new(keyfile);
+    let keys = pemfile::rsa_private_keys(&mut reader).unwrap();
+    assert!(keys.len() == 1);
+    keys[0].clone()
 }
 
 fn main() {
-    env_logger::init().unwrap();
-    let certs = hyper_rustls::util::load_certs("examples/sample.pem")
-        .expect("cannot load certificate");
-    let key = hyper_rustls::util::load_private_key("examples/sample.rsa")
-        .expect("cannot load key");
-    let tls = hyper_rustls::TlsServer::new(certs, key);
-    let server = Server::https("127.0.0.1:1337", tls).unwrap();
-    let _guard = server.handle(echo);
-    println!("Listening on https://127.0.0.1:1337");
+    let addr = "127.0.0.1:1337".parse().unwrap();
+    let certs = load_certs("examples/sample.pem");
+    let key = load_private_key("examples/sample.rsa");
+    let mut cfg = rustls::ServerConfig::new();
+    cfg.set_single_cert(certs, key);
+    let tls = proto::Server::new(Http::new(), std::sync::Arc::new(cfg));
+    let tcp = tokio_proto::TcpServer::new(tls, addr);
+    println!("Starting to serve on https://{}.", addr);
+    tcp.serve(|| Ok(Echo {}));
 }
