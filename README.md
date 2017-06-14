@@ -7,11 +7,6 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 
 [API Documentation](https://docs.rs/hyper-rustls/)
 
-Implementations are provided of
-[`hyper::net::SslClient`](http://hyper.rs/hyper/v0.9.10/hyper/net/trait.SslClient.html),
-[`hyper::net::SslServer`](http://hyper.rs/hyper/v0.9.10/hyper/net/trait.SslServer.html)
-and [`hyper::net::NetworkStream`](http://hyper.rs/hyper/v0.9.10/hyper/net/trait.NetworkStream.html).
-
 By default clients verify certificates using the `webpki-roots` crate, which includes
 the Mozilla root CAs.
 
