@@ -1,2 +1,10 @@
 language: rust
-sudo: required
+rust:
+  - stable
+  - beta
+  - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
+script:
+  - cargo test
