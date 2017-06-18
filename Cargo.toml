@@ -11,10 +11,10 @@ repository = "https://github.com/ctz/hyper-rustls"
 [dependencies]
 futures = "0.1.13"
 hyper = "0.11"
-rustls = "0.8"
+rustls = "0.9.0"
 tokio-core = "0.1.7"
 tokio-io = "0.1.1"
 tokio-proto = "0.1"
-tokio-rustls = { version = "0.2", features = [ "tokio-proto" ] }
+tokio-rustls = { version = "0.2.3", features = [ "tokio-proto" ] }
 tokio-service = "0.1.0"
-webpki-roots = "0.10.0"
+webpki-roots = "0.11.0"
