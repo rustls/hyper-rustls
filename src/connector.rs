@@ -13,6 +13,7 @@ use webpki_roots;
 #[derive(Clone)]
 pub struct HttpsConnector {
     http: HttpConnector,
+    tls_config: Arc<ClientConfig>,
 }
 
 impl HttpsConnector {
@@ -22,13 +23,24 @@ impl HttpsConnector {
     pub fn new(threads: usize, handle: &Handle) -> HttpsConnector {
         let mut http = HttpConnector::new(threads, handle);
         http.enforce_http(false);
-        HttpsConnector { http: http }
+        let mut config = ClientConfig::new();
+        config.root_store.add_trust_anchors(&webpki_roots::ROOTS);
+        HttpsConnector { http: http, tls_config: Arc::new(config) }
     }
 }
 
 impl fmt::Debug for HttpsConnector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("HttpsConnector").finish()
+    }
+}
+
+impl From<(HttpConnector, ClientConfig)> for HttpsConnector {
+    fn from(args: (HttpConnector, ClientConfig)) -> HttpsConnector {
+        HttpsConnector {
+            http: args.0,
+            tls_config: Arc::new(args.1),
+        }
     }
 }
 
@@ -56,10 +68,9 @@ impl Service for HttpsConnector {
         let connecting = self.http.call(uri);
 
         HttpsConnecting(if is_https {
+            let tls = self.tls_config.clone();
             Box::new(connecting.and_then(move |tcp| {
-                let mut config = ClientConfig::new();
-                config.root_store.add_trust_anchors(&webpki_roots::ROOTS);
-                Arc::new(config)
+                    tls
                     .connect_async(&host, tcp)
                     .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
             }).map(|tls| MaybeHttpsStream::Https(tls))
