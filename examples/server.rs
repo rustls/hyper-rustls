@@ -59,7 +59,11 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 }
 
 fn main() {
-    let addr = "127.0.0.1:1337".parse().unwrap();
+    let port = match std::env::args().nth(1) {
+        Some(ref p) => p.to_owned(),
+        None => "1337".to_owned(),
+    };
+    let addr = format!("127.0.0.1:{}", port).parse().unwrap();
     let certs = load_certs("examples/sample.pem");
     let key = load_private_key("examples/sample.rsa");
     let mut cfg = rustls::ServerConfig::new();
