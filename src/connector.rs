@@ -10,6 +10,7 @@ use tokio_rustls::ClientConfigExt;
 use tokio_service::Service;
 use webpki_roots;
 
+/// A Connector for the `https` scheme.
 #[derive(Clone)]
 pub struct HttpsConnector {
     http: HttpConnector,
@@ -17,7 +18,7 @@ pub struct HttpsConnector {
 }
 
 impl HttpsConnector {
-    /// Construct a new HttpsConnector.
+    /// Construct a new `HttpsConnector`.
     ///
     /// Takes number of DNS worker threads.
     pub fn new(threads: usize, handle: &Handle) -> HttpsConnector {
