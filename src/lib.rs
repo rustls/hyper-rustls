@@ -187,6 +187,7 @@ impl NetworkStream for WrappedStream {
   }
 }
 
+#[derive(Clone)]
 pub struct TlsClient {
   pub cfg: Arc<rustls::ClientConfig>
 }
