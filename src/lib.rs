@@ -33,6 +33,7 @@ extern crate tokio_io;
 extern crate tokio_rustls;
 extern crate tokio_service;
 extern crate webpki_roots;
+extern crate ct_logs;
 
 mod connector;
 mod stream;

@@ -9,6 +9,7 @@ use tokio_core::reactor::Handle;
 use tokio_rustls::ClientConfigExt;
 use tokio_service::Service;
 use webpki_roots;
+use ct_logs;
 
 /// A Connector for the `https` scheme.
 #[derive(Clone)]
@@ -26,6 +27,7 @@ impl HttpsConnector {
         http.enforce_http(false);
         let mut config = ClientConfig::new();
         config.root_store.add_trust_anchors(&webpki_roots::ROOTS);
+        config.ct_logs = Some(&ct_logs::LOGS);
         HttpsConnector { http: http, tls_config: Arc::new(config) }
     }
 }
