@@ -26,7 +26,7 @@ impl HttpsConnector {
         let mut http = HttpConnector::new(threads, handle);
         http.enforce_http(false);
         let mut config = ClientConfig::new();
-        config.root_store.add_trust_anchors(&webpki_roots::ROOTS);
+        config.root_store.add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
         config.ct_logs = Some(&ct_logs::LOGS);
         HttpsConnector { http: http, tls_config: Arc::new(config) }
     }
