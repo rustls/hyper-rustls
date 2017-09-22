@@ -3,7 +3,6 @@
 extern crate futures;
 extern crate hyper;
 extern crate rustls;
-extern crate tokio_core;
 extern crate tokio_proto;
 extern crate tokio_rustls;
 
