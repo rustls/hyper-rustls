@@ -25,6 +25,7 @@
 //! }
 //! ```
 
+extern crate ct_logs;
 extern crate futures;
 extern crate hyper;
 extern crate rustls;
@@ -34,7 +35,6 @@ extern crate tokio_rustls;
 extern crate tokio_service;
 extern crate webpki;
 extern crate webpki_roots;
-extern crate ct_logs;
 
 mod connector;
 mod stream;
