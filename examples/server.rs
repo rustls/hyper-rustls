@@ -65,7 +65,7 @@ fn main() {
     let addr = format!("127.0.0.1:{}", port).parse().unwrap();
     let certs = load_certs("examples/sample.pem");
     let key = load_private_key("examples/sample.rsa");
-    let mut cfg = rustls::ServerConfig::new();
+    let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
     cfg.set_single_cert(certs, key);
     let tls = proto::Server::new(Http::new(), std::sync::Arc::new(cfg));
     let tcp = tokio_proto::TcpServer::new(tls, addr);
