@@ -1,12 +1,12 @@
 // Copied from hyperium/hyper-tls#62e3376/src/stream.rs
 
 use futures::Poll;
+use rustls::ClientSession;
 use std::fmt;
 use std::io::{self, Read, Write};
-use rustls::ClientSession;
-use tokio_core::net::TcpStream;
 use tokio_io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsStream;
+use tokio_tcp::TcpStream;
 
 /// A stream that might be protected with TLS.
 pub enum MaybeHttpsStream {

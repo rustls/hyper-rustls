@@ -9,30 +9,30 @@
 //! extern crate hyper_rustls;
 //! extern crate tokio_core;
 //!
-//! use hyper::{Client, Uri};
+//! use hyper::{Body, Client, StatusCode, Uri};
 //! use tokio_core::reactor;
 //!
 //! fn main() {
 //!     let mut core = reactor::Core::new().unwrap();
 //!     let url = ("https://hyper.rs").parse().unwrap();
+//!     let https = hyper_rustls::HttpsConnector::new(4);
 //!
-//!     let client = hyper::Client::configure()
-//!         .connector(hyper_rustls::HttpsConnector::new(4, &core.handle()))
-//!         .build(&core.handle());
+//!     let client: Client<_, hyper::Body> = Client::builder().build(https);
 //!
 //!     let res = core.run(client.get(url)).unwrap();
-//!     assert_eq!(res.status(), hyper::Ok);
+//!     assert_eq!(res.status(), StatusCode::OK);
 //! }
 //! ```
 
 extern crate ct_logs;
 extern crate futures;
+extern crate http;
 extern crate hyper;
 extern crate rustls;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_rustls;
-extern crate tokio_service;
+extern crate tokio_tcp;
 extern crate webpki;
 extern crate webpki_roots;
 
