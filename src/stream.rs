@@ -6,17 +6,16 @@ use std::fmt;
 use std::io::{self, Read, Write};
 use tokio_io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsStream;
-use tokio_tcp::TcpStream;
 
 /// A stream that might be protected with TLS.
-pub enum MaybeHttpsStream {
+pub enum MaybeHttpsStream<T> {
     /// A stream over plain text.
-    Http(TcpStream),
+    Http(T),
     /// A stream protected with TLS.
-    Https(TlsStream<TcpStream, ClientSession>),
+    Https(TlsStream<T, ClientSession>),
 }
 
-impl fmt::Debug for MaybeHttpsStream {
+impl<T: fmt::Debug> fmt::Debug for MaybeHttpsStream<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             MaybeHttpsStream::Http(..) => f.pad("Http(..)"),
@@ -25,7 +24,7 @@ impl fmt::Debug for MaybeHttpsStream {
     }
 }
 
-impl Read for MaybeHttpsStream {
+impl<T: Read + Write> Read for MaybeHttpsStream<T> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         match *self {
@@ -35,7 +34,7 @@ impl Read for MaybeHttpsStream {
     }
 }
 
-impl Write for MaybeHttpsStream {
+impl<T: Read + Write> Write for MaybeHttpsStream<T> {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         match *self {
@@ -53,7 +52,7 @@ impl Write for MaybeHttpsStream {
     }
 }
 
-impl AsyncRead for MaybeHttpsStream {
+impl<T: AsyncRead + AsyncWrite> AsyncRead for MaybeHttpsStream<T> {
     unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [u8]) -> bool {
         match *self {
             MaybeHttpsStream::Http(ref s) => s.prepare_uninitialized_buffer(buf),
@@ -62,7 +61,7 @@ impl AsyncRead for MaybeHttpsStream {
     }
 }
 
-impl AsyncWrite for MaybeHttpsStream {
+impl<T: AsyncRead + AsyncWrite> AsyncWrite for MaybeHttpsStream<T> {
     fn shutdown(&mut self) -> Poll<(), io::Error> {
         match *self {
             MaybeHttpsStream::Http(ref mut s) => s.shutdown(),

@@ -43,8 +43,8 @@ impl<T> fmt::Debug for HttpsConnector<T> {
     }
 }
 
-impl From<(HttpConnector, ClientConfig)> for HttpsConnector<HttpConnector> {
-    fn from(args: (HttpConnector, ClientConfig)) -> Self {
+impl<T> From<(T, ClientConfig)> for HttpsConnector<T> {
+    fn from(args: (T, ClientConfig)) -> Self {
         HttpsConnector {
             http: args.0,
             tls_config: Arc::new(args.1),
@@ -52,10 +52,15 @@ impl From<(HttpConnector, ClientConfig)> for HttpsConnector<HttpConnector> {
     }
 }
 
-impl Connect for HttpsConnector<HttpConnector> {
-    type Transport = MaybeHttpsStream;
+impl<T> Connect for HttpsConnector<T>
+where
+    T: Connect<Error=io::Error>,
+    T::Transport: 'static,
+    T::Future: 'static,
+{
+    type Transport = MaybeHttpsStream<T::Transport>;
     type Error = io::Error;
-    type Future = HttpsConnecting;
+    type Future = HttpsConnecting<T::Transport>;
 
     fn connect(&self, dst: connect::Destination) -> Self::Future {
         let is_https = dst.scheme() == "https";
@@ -83,12 +88,12 @@ impl Connect for HttpsConnector<HttpConnector> {
 }
 
 /// A Future representing work to connect to a URL, and a TLS handshake.
-pub struct HttpsConnecting(
-    Box<Future<Item = (MaybeHttpsStream, connect::Connected), Error = io::Error> + Send>,
+pub struct HttpsConnecting<T>(
+    Box<Future<Item = (MaybeHttpsStream<T>, connect::Connected), Error = io::Error> + Send>,
 );
 
-impl Future for HttpsConnecting {
-    type Item = (MaybeHttpsStream, connect::Connected);
+impl<T> Future for HttpsConnecting<T> {
+    type Item = (MaybeHttpsStream<T>, connect::Connected);
     type Error = io::Error;
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
@@ -96,7 +101,7 @@ impl Future for HttpsConnecting {
     }
 }
 
-impl fmt::Debug for HttpsConnecting {
+impl<T> fmt::Debug for HttpsConnecting<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.pad("HttpsConnecting")
     }
