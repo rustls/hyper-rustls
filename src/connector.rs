@@ -6,7 +6,7 @@ use rustls::ClientConfig;
 use std::sync::Arc;
 use std::{fmt, io};
 use tokio_rustls::ClientConfigExt;
-use webpki::DNSNameRef;
+use webpki::{DNSName, DNSNameRef};
 use webpki_roots;
 
 use stream::MaybeHttpsStream;
@@ -54,7 +54,7 @@ impl<T> From<(T, ClientConfig)> for HttpsConnector<T> {
 
 impl<T> Connect for HttpsConnector<T>
 where
-    T: Connect<Error=io::Error>,
+    T: Connect<Error = io::Error>,
     T::Transport: 'static,
     T::Future: 'static,
 {
@@ -64,25 +64,28 @@ where
 
     fn connect(&self, dst: connect::Destination) -> Self::Future {
         let is_https = dst.scheme() == "https";
+        let hostname = dst.host().to_string();
+        let connecting = self.http.connect(dst);
 
         if !is_https {
-            let connecting = self.http.connect(dst);
-            let fut = Box::new(connecting.map(|(tcp, conn)| (MaybeHttpsStream::Http(tcp), conn)));
-            HttpsConnecting(fut)
+            let fut = connecting.map(|(tcp, conn)| (MaybeHttpsStream::Http(tcp), conn));
+            HttpsConnecting(Box::new(fut))
         } else {
-            let connecting = self.http.connect(dst.clone());
             let cfg = self.tls_config.clone();
-            let fut = Box::new(
-                connecting
-                    .and_then(move |(tcp, conn)| {
-                        let dnsname = DNSNameRef::try_from_ascii_str(dst.host()).unwrap();
-                        cfg.connect_async(dnsname, tcp)
-                            .and_then(|tls| Ok((MaybeHttpsStream::Https(tls), conn)))
-                            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-                    })
-                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e)),
-            );
-            HttpsConnecting(fut)
+            let fut = connecting
+                .map(move |(tcp, conn)| (tcp, conn, hostname))
+                .and_then(
+                    |(tcp, conn, hostname)| match DNSNameRef::try_from_ascii_str(&hostname) {
+                        Ok(dnsname) => Ok((tcp, conn, DNSName::from(dnsname))),
+                        Err(_) => Err(io::Error::new(io::ErrorKind::Other, "invalid dnsname")),
+                    },
+                )
+                .and_then(move |(tcp, conn, dnsname)| {
+                    cfg.connect_async(dnsname.as_ref(), tcp)
+                        .and_then(|tls| Ok((MaybeHttpsStream::Https(tls), conn)))
+                        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+                });
+            HttpsConnecting(Box::new(fut))
         }
     }
 }
