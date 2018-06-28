@@ -51,6 +51,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 }
 
 fn main() {
+    // First parameter is port number (optional, defaults to 1337)
     let port = match env::args().nth(1) {
         Some(ref p) => p.to_owned(),
         None => "1337".to_owned(),
@@ -67,7 +68,18 @@ fn main() {
 
     let tcp = tokio_tcp::TcpListener::bind(&addr).unwrap();
     println!("Starting to serve on https://{}.", addr);
-    let tls = tcp.incoming().and_then(|s| tls_cfg.accept_async(s));
+    let tls = tcp.incoming()
+        .and_then(|s| tls_cfg.accept_async(s))
+        .then(|r| match r {
+            Ok(x) => Ok::<_, io::Error>(Some(x)),
+            Err(_e) => {
+                println!("[!] Voluntary server halt due to client-connection error...");
+                // Errors could be handled here, instead of server aborting.
+                // Ok(None)
+                Err(_e)
+            }
+        })
+        .filter_map(|x| x);
     let fut = Server::builder(tls).serve(|| service_fn(echo));
 
     let mut core = tokio_core::reactor::Core::new().unwrap();
