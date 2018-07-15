@@ -31,6 +31,7 @@ extern crate hyper;
 extern crate rustls;
 extern crate tokio_core;
 extern crate tokio_io;
+extern crate tokio_reactor;
 extern crate tokio_rustls;
 extern crate tokio_tcp;
 extern crate webpki;

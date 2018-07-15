@@ -5,6 +5,7 @@ use hyper::client::HttpConnector;
 use rustls::ClientConfig;
 use std::sync::Arc;
 use std::{fmt, io};
+use tokio_reactor::Handle;
 use tokio_rustls::ClientConfigExt;
 use webpki::{DNSName, DNSNameRef};
 use webpki_roots;
@@ -23,7 +24,15 @@ impl HttpsConnector<HttpConnector> {
     ///
     /// Takes number of DNS worker threads.
     pub fn new(threads: usize) -> Self {
-        let mut http = HttpConnector::new(threads);
+        Self::from_http(HttpConnector::new(threads))
+    }
+
+    /// Construct a new `HttpsConnector` with a specific Tokio handle.
+    pub fn new_with_handle(threads: usize, handle: Handle) -> Self {
+        Self::from_http(HttpConnector::new_with_handle(threads, handle))
+    }
+
+    fn from_http(mut http: HttpConnector) -> Self {
         http.enforce_http(false);
         let mut config = ClientConfig::new();
         config
