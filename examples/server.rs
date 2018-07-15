@@ -62,7 +62,8 @@ fn main() {
         let certs = load_certs("examples/sample.pem");
         let key = load_private_key("examples/sample.rsa");
         let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
-        cfg.set_single_cert(certs, key);
+        cfg.set_single_cert(certs, key)
+            .expect("invalid certificate or key");
         sync::Arc::new(cfg)
     };
 
