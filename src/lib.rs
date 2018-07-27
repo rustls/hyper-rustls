@@ -1,6 +1,7 @@
 extern crate webpki_roots;
 extern crate rustls;
 extern crate hyper;
+extern crate webpki;
 
 use hyper::net::{HttpStream, SslClient, SslServer, NetworkStream};
 
@@ -196,7 +197,7 @@ impl TlsClient {
     let mut tls_config = rustls::ClientConfig::new();
     let cache = rustls::ClientSessionMemoryCache::new(64);
     tls_config.set_persistence(cache);
-    tls_config.root_store.add_trust_anchors(&webpki_roots::ROOTS);
+    tls_config.root_store.add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
 
     TlsClient {
       cfg: Arc::new(tls_config)
@@ -208,8 +209,10 @@ impl SslClient for TlsClient {
   type Stream = WrappedStream;
 
   fn wrap_client(&self, stream: HttpStream, host: &str) -> hyper::Result<WrappedStream> {
+    let dns_name = webpki::DNSNameRef::try_from_ascii_str(host)
+        .expect("invalid DNS name");
     let tls = TlsStream {
-      sess: Box::new(rustls::ClientSession::new(&self.cfg, host)),
+      sess: Box::new(rustls::ClientSession::new(&self.cfg, dns_name)),
       underlying: stream,
       eof: false,
       io_error: None,
@@ -227,11 +230,12 @@ pub struct TlsServer {
 
 impl TlsServer {
   pub fn new(certs: Vec<rustls::Certificate>, key: rustls::PrivateKey) -> TlsServer {
-    let mut tls_config = rustls::ServerConfig::new();
+    let mut tls_config = rustls::ServerConfig::new(rustls::NoClientAuth::new());
     let cache = rustls::ServerSessionMemoryCache::new(1024);
     tls_config.set_persistence(cache);
     tls_config.ticketer = rustls::Ticketer::new();
-    tls_config.set_single_cert(certs, key);
+    tls_config.set_single_cert(certs, key)
+        .expect("invalid certificates or key");
 
     TlsServer {
       cfg: Arc::new(tls_config)
