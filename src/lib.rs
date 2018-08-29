@@ -7,19 +7,18 @@
 //! ```no_run
 //! extern crate hyper;
 //! extern crate hyper_rustls;
-//! extern crate tokio_core;
+//! extern crate tokio;
 //!
 //! use hyper::{Body, Client, StatusCode, Uri};
-//! use tokio_core::reactor;
 //!
 //! fn main() {
-//!     let mut core = reactor::Core::new().unwrap();
+//!     let mut rt = tokio::runtime::Runtime::new().unwrap();
 //!     let url = ("https://hyper.rs").parse().unwrap();
 //!     let https = hyper_rustls::HttpsConnector::new(4);
 //!
 //!     let client: Client<_, hyper::Body> = Client::builder().build(https);
 //!
-//!     let res = core.run(client.get(url)).unwrap();
+//!     let res = rt.block_on(client.get(url)).unwrap();
 //!     assert_eq!(res.status(), StatusCode::OK);
 //! }
 //! ```
@@ -29,7 +28,6 @@ extern crate futures;
 extern crate http;
 extern crate hyper;
 extern crate rustls;
-extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_rustls;
 extern crate tokio_tcp;

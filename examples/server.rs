@@ -3,7 +3,7 @@
 extern crate futures;
 extern crate hyper;
 extern crate rustls;
-extern crate tokio_core;
+extern crate tokio;
 extern crate tokio_rustls;
 extern crate tokio_tcp;
 
@@ -70,7 +70,7 @@ fn main() {
     let tcp = tokio_tcp::TcpListener::bind(&addr).unwrap();
     println!("Starting to serve on https://{}.", addr);
     let tls = tcp.incoming()
-        .and_then(|s| tls_cfg.accept_async(s))
+        .and_then(move |s| tls_cfg.accept_async(s))
         .then(|r| match r {
             Ok(x) => Ok::<_, io::Error>(Some(x)),
             Err(_e) => {
@@ -83,8 +83,8 @@ fn main() {
         .filter_map(|x| x);
     let fut = Server::builder(tls).serve(|| service_fn(echo));
 
-    let mut core = tokio_core::reactor::Core::new().unwrap();
-    if let Err(err) = core.run(fut) {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    if let Err(err) = rt.block_on(fut) {
         println!("FAILED: {}", err);
         std::process::exit(1)
     }

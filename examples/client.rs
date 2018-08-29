@@ -4,7 +4,7 @@ extern crate futures;
 extern crate hyper;
 extern crate hyper_rustls;
 extern crate rustls;
-extern crate tokio_core;
+extern crate tokio;
 
 use futures::{Future, Stream};
 use hyper::{client, Uri};
@@ -54,8 +54,8 @@ fn main() {
             println!("Body:\n{}", String::from_utf8_lossy(&body));
         });
 
-    let mut core = tokio_core::reactor::Core::new().unwrap();
-    if let Err(err) = core.run(fut) {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    if let Err(err) = rt.block_on(fut) {
         println!("FAILED: {}", err);
         std::process::exit(1)
     }
