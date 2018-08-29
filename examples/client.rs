@@ -8,7 +8,7 @@ extern crate futures;
 extern crate hyper;
 extern crate hyper_rustls;
 extern crate rustls;
-extern crate tokio_core;
+extern crate tokio;
 
 use futures::{Future, Stream};
 use hyper::{client, Uri};
@@ -86,8 +86,8 @@ fn run_client() -> io::Result<()> {
         });
 
     // Run the future, wait for the result and return to main.
-    let mut core = tokio_core::reactor::Core::new()?;
-    core.run(fut)
+    let mut rt = tokio::runtime::Runtime::new()?;
+    rt.block_on(fut)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
     Ok(())
 }

@@ -7,7 +7,7 @@
 extern crate futures;
 extern crate hyper;
 extern crate rustls;
-extern crate tokio_core;
+extern crate tokio;
 extern crate tokio_rustls;
 extern crate tokio_tcp;
 
@@ -57,7 +57,7 @@ fn run_server() -> io::Result<()> {
 
     // Prepare a long-running future stream to accept and serve cients.
     let tls = tcp.incoming()
-        .and_then(|s| tls_cfg.accept_async(s))
+        .and_then(move |s| tls_cfg.accept_async(s))
         .then(|r| match r {
             Ok(x) => Ok::<_, io::Error>(Some(x)),
             Err(_e) => {
@@ -73,8 +73,8 @@ fn run_server() -> io::Result<()> {
 
     // Run the future, keep going until an error occurs.
     println!("Starting to serve on https://{}.", addr);
-    let mut core = tokio_core::reactor::Core::new()?;
-    core.run(fut)
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(fut)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
     Ok(())
 }
