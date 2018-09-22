@@ -28,6 +28,10 @@ fn main() {
     }
 }
 
+fn error(err: String) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, err)
+}
+
 fn run_server() -> io::Result<()> {
     // First parameter is port number (optional, defaults to 1337)
     let port = match env::args().nth(1) {
@@ -36,7 +40,7 @@ fn run_server() -> io::Result<()> {
     };
     let addr = format!("127.0.0.1:{}", port)
         .parse()
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
+        .map_err(|e| error(format!("{}", e)))?;
 
     // Build TLS configuration.
     let tls_cfg = {
@@ -48,7 +52,7 @@ fn run_server() -> io::Result<()> {
         let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
         // Select a certificate to use.
         cfg.set_single_cert(certs, key)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
+            .map_err(|e| error(format!("{}", e)))?;
         sync::Arc::new(cfg)
     };
 
@@ -75,7 +79,7 @@ fn run_server() -> io::Result<()> {
     println!("Starting to serve on https://{}.", addr);
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(fut)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
+        .map_err(|e| error(format!("{}", e)))?;
     Ok(())
 }
 
@@ -107,37 +111,28 @@ fn echo(req: Request<Body>) -> ResponseFuture {
 fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
     // Open certificate file.
     let certfile = fs::File::open(filename).map_err(|e| {
-        io::Error::new(
-            io::ErrorKind::Other,
-            format!("failed to open {}: {}", filename, e),
-        )
+        error(format!("failed to open {}: {}", filename, e))
     })?;
     let mut reader = io::BufReader::new(certfile);
 
     // Load and return certificate.
     pemfile::certs(&mut reader)
-        .map_err(|_| io::Error::new(io::ErrorKind::Other, "failed to load certificate"))
+        .map_err(|_| error("failed to load certificate".into()))
 }
 
 // Load private key from file.
 fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
     // Open keyfile.
     let keyfile = fs::File::open(filename).map_err(|e| {
-        io::Error::new(
-            io::ErrorKind::Other,
-            format!("failed to open {}: {}", filename, e),
-        )
+        error(format!("failed to open {}: {}", filename, e))
     })?;
     let mut reader = io::BufReader::new(keyfile);
 
     // Load and return a single private key.
     let keys = pemfile::rsa_private_keys(&mut reader)
-        .map_err(|_| io::Error::new(io::ErrorKind::Other, "failed to load private key"))?;
+        .map_err(|_| error("failed to load private key".into()))?;
     if keys.len() != 1 {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "expected a single private key",
-        ));
+        return Err(error("expected a single private key".into()));
     }
     Ok(keys[0].clone())
 }

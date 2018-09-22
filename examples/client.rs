@@ -23,11 +23,15 @@ fn main() {
     }
 }
 
+fn error(err: String) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, err)
+}
+
 fn run_client() -> io::Result<()> {
     // First parameter is target URL (mandatory).
     let url = match env::args().nth(1) {
         Some(ref url) => {
-            Uri::from_str(url).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?
+            Uri::from_str(url).map_err(|e| error(format!("{}", e)))?
         }
         None => {
             println!("Usage: client <url> <ca_store>");
@@ -39,10 +43,7 @@ fn run_client() -> io::Result<()> {
     let mut ca = match env::args().nth(2) {
         Some(ref path) => {
             let f = fs::File::open(path).map_err(|e| {
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("failed to open {}: {}", path, e),
-                )
+                error(format!("failed to open {}: {}", path, e))
             })?;
             let rd = io::BufReader::new(f);
             Some(rd)
@@ -59,7 +60,7 @@ fn run_client() -> io::Result<()> {
             // Build a TLS client, using the custom CA store for lookups.
             let mut tls = rustls::ClientConfig::new();
             tls.root_store.add_pem_file(rd).map_err(|_| {
-                io::Error::new(io::ErrorKind::Other, "failed to load custom CA store")
+                error("failed to load custom CA store".into())
             })?;
             // Join the above part into an HTTPS connector.
             hyper_rustls::HttpsConnector::from((http, tls))
@@ -88,6 +89,6 @@ fn run_client() -> io::Result<()> {
     // Run the future, wait for the result and return to main.
     let mut rt = tokio::runtime::Runtime::new()?;
     rt.block_on(fut)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?;
+        .map_err(|e| error(format!("{}", e)))?;
     Ok(())
 }
