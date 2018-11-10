@@ -18,7 +18,7 @@ use hyper::service::service_fn;
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use rustls::internal::pemfile;
 use std::{env, fs, io, sync};
-use tokio_rustls::ServerConfigExt;
+use tokio_rustls::TlsAcceptor;
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
@@ -58,10 +58,10 @@ fn run_server() -> io::Result<()> {
 
     // Create a TCP listener via tokio.
     let tcp = tokio_tcp::TcpListener::bind(&addr)?;
-
+    let tls_acceptor = TlsAcceptor::from(tls_cfg);
     // Prepare a long-running future stream to accept and serve cients.
     let tls = tcp.incoming()
-        .and_then(move |s| tls_cfg.accept_async(s))
+        .and_then(move |s| tls_acceptor.accept(s))
         .then(|r| match r {
             Ok(x) => Ok::<_, io::Error>(Some(x)),
             Err(_e) => {
