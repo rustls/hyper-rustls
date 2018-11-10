@@ -5,7 +5,7 @@ use hyper::client::HttpConnector;
 use rustls::ClientConfig;
 use std::sync::Arc;
 use std::{fmt, io};
-use tokio_rustls::ClientConfigExt;
+use tokio_rustls::TlsConnector;
 use webpki::{DNSName, DNSNameRef};
 use webpki_roots;
 
@@ -72,6 +72,7 @@ where
             HttpsConnecting(Box::new(fut))
         } else {
             let cfg = self.tls_config.clone();
+            let connector = TlsConnector::from(cfg);
             let fut = connecting
                 .map(move |(tcp, conn)| (tcp, conn, hostname))
                 .and_then(
@@ -81,7 +82,7 @@ where
                     },
                 )
                 .and_then(move |(tcp, conn, dnsname)| {
-                    cfg.connect_async(dnsname.as_ref(), tcp)
+                    connector.connect(dnsname.as_ref(), tcp)
                         .and_then(|tls| Ok((MaybeHttpsStream::Https(tls), conn)))
                         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
                 });
