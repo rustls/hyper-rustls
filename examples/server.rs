@@ -77,8 +77,8 @@ fn run_server() -> io::Result<()> {
 
     // Run the future, keep going until an error occurs.
     println!("Starting to serve on https://{}.", addr);
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(fut)
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on_all(fut)
         .map_err(|e| error(format!("{}", e)))?;
     Ok(())
 }
