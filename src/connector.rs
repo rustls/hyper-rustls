@@ -52,6 +52,15 @@ impl<T> From<(T, ClientConfig)> for HttpsConnector<T> {
     }
 }
 
+impl<T> From<(T, Arc<ClientConfig>)> for HttpsConnector<T> {
+    fn from(args: (T, Arc<ClientConfig>)) -> Self {
+        HttpsConnector {
+            http: args.0,
+            tls_config: args.1,
+        }
+    }
+}
+
 impl<T> Connect for HttpsConnector<T>
 where
     T: Connect<Error = io::Error>,
