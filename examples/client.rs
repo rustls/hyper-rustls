@@ -75,8 +75,8 @@ fn run_client() -> io::Result<()> {
     // Prepare a chain of futures which sends a GET request, inspects
     // the returned headers, collects the whole body and prints it to
     // stdout.
-    let fut = client
-        .get(url)
+    let fut = futures::future::ok(client)
+        .and_then(|client| client.get(url))
         .inspect(|res| {
             println!("Status:\n{}", res.status());
             println!("Headers:\n{:#?}", res.headers());
@@ -87,8 +87,8 @@ fn run_client() -> io::Result<()> {
         });
 
     // Run the future, wait for the result and return to main.
-    let mut rt = tokio::runtime::Runtime::new()?;
-    rt.block_on(fut)
+    let rt = tokio::runtime::Runtime::new()?;
+    rt.block_on_all(fut)
         .map_err(|e| error(format!("{}", e)))?;
     Ok(())
 }
