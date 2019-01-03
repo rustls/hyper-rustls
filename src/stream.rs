@@ -1,5 +1,6 @@
 // Copied from hyperium/hyper-tls#62e3376/src/stream.rs
 
+use bytes::{Buf, BufMut};
 use futures::Poll;
 use rustls::ClientSession;
 use std::fmt;
@@ -59,6 +60,13 @@ impl<T: AsyncRead + AsyncWrite> AsyncRead for MaybeHttpsStream<T> {
             MaybeHttpsStream::Https(ref s) => s.prepare_uninitialized_buffer(buf),
         }
     }
+
+    fn read_buf<B: BufMut>(&mut self, buf: &mut B) -> Poll<usize, io::Error> {
+        match *self {
+            MaybeHttpsStream::Http(ref mut s) => s.read_buf(buf),
+            MaybeHttpsStream::Https(ref mut s) => s.read_buf(buf),
+        }
+    }
 }
 
 impl<T: AsyncRead + AsyncWrite> AsyncWrite for MaybeHttpsStream<T> {
@@ -66,6 +74,13 @@ impl<T: AsyncRead + AsyncWrite> AsyncWrite for MaybeHttpsStream<T> {
         match *self {
             MaybeHttpsStream::Http(ref mut s) => s.shutdown(),
             MaybeHttpsStream::Https(ref mut s) => s.shutdown(),
+        }
+    }
+
+    fn write_buf<B: Buf>(&mut self, buf: &mut B) -> Poll<usize, io::Error> {
+        match *self {
+            MaybeHttpsStream::Http(ref mut s) => s.write_buf(buf),
+            MaybeHttpsStream::Https(ref mut s) => s.write_buf(buf),
         }
     }
 }

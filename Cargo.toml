@@ -9,6 +9,7 @@ homepage = "https://github.com/ctz/hyper-rustls"
 repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
+bytes = "0.4"
 ct-logs = "0.4"
 futures = "0.1.21"
 http = "0.1"
