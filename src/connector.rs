@@ -2,7 +2,7 @@ use ct_logs;
 use futures::{Future, Poll};
 use hyper::client::connect::{self, Connect};
 use hyper::client::HttpConnector;
-use rustls::ClientConfig;
+use rustls::{ClientConfig, Session};
 use std::sync::Arc;
 use std::{fmt, io};
 use tokio_rustls::TlsConnector;
@@ -92,7 +92,14 @@ where
                 )
                 .and_then(move |(tcp, conn, dnsname)| {
                     connector.connect(dnsname.as_ref(), tcp)
-                        .and_then(|tls| Ok((MaybeHttpsStream::Https(tls), conn)))
+                        .and_then(|tls| {
+                            let connected = if tls.get_ref().1.get_alpn_protocol() == Some("h2") {
+                                conn.negotiated_h2()
+                            } else {
+                                conn
+                            };
+                            Ok((MaybeHttpsStream::Https(tls), connected))
+                        })
                         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
                 });
             HttpsConnecting(Box::new(fut))
