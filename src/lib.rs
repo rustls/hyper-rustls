@@ -23,6 +23,7 @@
 //! }
 //! ```
 
+extern crate bytes;
 extern crate ct_logs;
 extern crate futures;
 extern crate http;
