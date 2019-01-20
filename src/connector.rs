@@ -93,7 +93,7 @@ where
                 .and_then(move |(tcp, conn, dnsname)| {
                     connector.connect(dnsname.as_ref(), tcp)
                         .and_then(|tls| {
-                            let connected = if tls.get_ref().1.get_alpn_protocol() == Some("h2") {
+                            let connected = if tls.get_ref().1.get_alpn_protocol() == Some(b"h2") {
                                 conn.negotiated_h2()
                             } else {
                                 conn
