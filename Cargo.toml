@@ -10,7 +10,7 @@ repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
 bytes = "0.4"
-ct-logs = "0.4"
+ct-logs = "0.5"
 futures = "0.1.21"
 http = "0.1"
 hyper = "0.12.14"
