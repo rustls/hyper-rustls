@@ -1,13 +1,12 @@
-use ct_logs;
 use futures::{Future, Poll};
 use hyper::client::connect::{self, Connect};
+#[cfg(feature = "tokio-runtime")]
 use hyper::client::HttpConnector;
 use rustls::{ClientConfig, Session};
 use std::sync::Arc;
 use std::{fmt, io};
 use tokio_rustls::TlsConnector;
 use webpki::{DNSName, DNSNameRef};
-use webpki_roots;
 
 use stream::MaybeHttpsStream;
 
@@ -18,11 +17,15 @@ pub struct HttpsConnector<T> {
     tls_config: Arc<ClientConfig>,
 }
 
+#[cfg(feature = "tokio-runtime")]
 impl HttpsConnector<HttpConnector> {
     /// Construct a new `HttpsConnector`.
     ///
     /// Takes number of DNS worker threads.
     pub fn new(threads: usize) -> Self {
+        use ct_logs;
+        use webpki_roots;
+
         let mut http = HttpConnector::new(threads);
         http.enforce_http(false);
         let mut config = ClientConfig::new();

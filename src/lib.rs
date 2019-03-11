@@ -5,25 +5,28 @@
 //! ## Example
 //!
 //! ```no_run
-//! extern crate hyper;
-//! extern crate hyper_rustls;
-//! extern crate tokio;
-//!
+//! # #[cfg(feature = "tokio-runtime")]
+//! # extern crate hyper;
+//! #
+//! # #[cfg(feature = "tokio-runtime")]
+//! # fn main() {
 //! use hyper::{Body, Client, StatusCode, Uri};
 //!
-//! fn main() {
-//!     let mut rt = tokio::runtime::Runtime::new().unwrap();
-//!     let url = ("https://hyper.rs").parse().unwrap();
-//!     let https = hyper_rustls::HttpsConnector::new(4);
+//! let mut rt = tokio::runtime::Runtime::new().unwrap();
+//! let url = ("https://hyper.rs").parse().unwrap();
+//! let https = hyper_rustls::HttpsConnector::new(4);
 //!
-//!     let client: Client<_, hyper::Body> = Client::builder().build(https);
+//! let client: Client<_, hyper::Body> = Client::builder().build(https);
 //!
-//!     let res = rt.block_on(client.get(url)).unwrap();
-//!     assert_eq!(res.status(), StatusCode::OK);
-//! }
+//! let res = rt.block_on(client.get(url)).unwrap();
+//! assert_eq!(res.status(), StatusCode::OK);
+//! # }
+//! # #[cfg(not(feature = "tokio-runtime"))]
+//! # fn main() {}
 //! ```
 
 extern crate bytes;
+#[cfg(feature = "tokio-runtime")]
 extern crate ct_logs;
 extern crate futures;
 extern crate hyper;
@@ -31,6 +34,7 @@ extern crate rustls;
 extern crate tokio_io;
 extern crate tokio_rustls;
 extern crate webpki;
+#[cfg(feature = "tokio-runtime")]
 extern crate webpki_roots;
 
 mod connector;
