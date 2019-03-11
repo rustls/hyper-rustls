@@ -26,12 +26,10 @@
 extern crate bytes;
 extern crate ct_logs;
 extern crate futures;
-extern crate http;
 extern crate hyper;
 extern crate rustls;
 extern crate tokio_io;
 extern crate tokio_rustls;
-extern crate tokio_tcp;
 extern crate webpki;
 extern crate webpki_roots;
 
