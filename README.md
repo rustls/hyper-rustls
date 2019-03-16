@@ -3,7 +3,7 @@ This is an integration between the [rustls TLS stack](https://github.com/ctz/rus
 and the [hyper HTTP library](https://github.com/hyperium/hyper).
 
 [![Build Status](https://travis-ci.org/ctz/hyper-rustls.svg?branch=master)](https://travis-ci.org/ctz/hyper-rustls)
-[![Build Status](https://dev.azure.com/ctz99/ctz/_apis/build/status/ctz.hyper-rustls?branchName=master)](https://dev.azuze.com/ctz99/ctz/_build/latest?definitionId=4&branchName=master)
+[![Build Status](https://dev.azure.com/ctz99/ctz/_apis/build/status/ctz.hyper-rustls?branchName=master)](https://dev.azure.com/ctz99/ctz/_build/latest?definitionId=4&branchName=master)
 [![Crate](https://img.shields.io/crates/v/hyper-rustls.svg)](https://crates.io/crates/hyper-rustls)
 
 [API Documentation](https://docs.rs/hyper-rustls/)
