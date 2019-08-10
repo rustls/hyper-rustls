@@ -23,9 +23,6 @@ impl HttpsConnector<HttpConnector> {
     ///
     /// Takes number of DNS worker threads.
     pub fn new(threads: usize) -> Self {
-        use ct_logs;
-        use webpki_roots;
-
         let mut http = HttpConnector::new(threads);
         http.enforce_http(false);
         let mut config = ClientConfig::new();
