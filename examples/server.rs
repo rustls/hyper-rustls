@@ -84,7 +84,7 @@ fn run_server() -> io::Result<()> {
 }
 
 // Future result: either a hyper body or an error.
-type ResponseFuture = Box<Future<Item = Response<Body>, Error = hyper::Error> + Send>;
+type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = hyper::Error> + Send>;
 
 // Custom echo service, handling two different routes and a
 // catch-all 404 responder.
