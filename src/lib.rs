@@ -40,5 +40,5 @@ extern crate webpki_roots;
 mod connector;
 mod stream;
 
-pub use connector::HttpsConnector;
-pub use stream::MaybeHttpsStream;
+pub use crate::connector::HttpsConnector;
+pub use crate::stream::MaybeHttpsStream;
