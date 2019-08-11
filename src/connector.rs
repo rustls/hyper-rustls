@@ -8,7 +8,7 @@ use std::{fmt, io};
 use tokio_rustls::TlsConnector;
 use webpki::{DNSName, DNSNameRef};
 
-use stream::MaybeHttpsStream;
+use crate::stream::MaybeHttpsStream;
 
 /// A Connector for the `https` scheme.
 #[derive(Clone)]
