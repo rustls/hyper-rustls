@@ -23,9 +23,6 @@ impl HttpsConnector<HttpConnector> {
     ///
     /// Takes number of DNS worker threads.
     pub fn new(threads: usize) -> Self {
-        use ct_logs;
-        use webpki_roots;
-
         let mut http = HttpConnector::new(threads);
         http.enforce_http(false);
         let mut config = ClientConfig::new();
@@ -94,7 +91,8 @@ where
                     },
                 )
                 .and_then(move |(tcp, conn, dnsname)| {
-                    connector.connect(dnsname.as_ref(), tcp)
+                    connector
+                        .connect(dnsname.as_ref(), tcp)
                         .and_then(|tls| {
                             let connected = if tls.get_ref().1.get_alpn_protocol() == Some(b"h2") {
                                 conn.negotiated_h2()

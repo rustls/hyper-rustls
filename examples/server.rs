@@ -60,7 +60,8 @@ fn run_server() -> io::Result<()> {
     let tcp = tokio_tcp::TcpListener::bind(&addr)?;
     let tls_acceptor = TlsAcceptor::from(tls_cfg);
     // Prepare a long-running future stream to accept and serve cients.
-    let tls = tcp.incoming()
+    let tls = tcp
+        .incoming()
         .and_then(move |s| tls_acceptor.accept(s))
         .then(|r| match r {
             Ok(x) => Ok::<_, io::Error>(Some(x)),
@@ -78,13 +79,12 @@ fn run_server() -> io::Result<()> {
     // Run the future, keep going until an error occurs.
     println!("Starting to serve on https://{}.", addr);
     let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on_all(fut)
-        .map_err(|e| error(format!("{}", e)))?;
+    rt.block_on_all(fut).map_err(|e| error(format!("{}", e)))?;
     Ok(())
 }
 
 // Future result: either a hyper body or an error.
-type ResponseFuture = Box<Future<Item = Response<Body>, Error = hyper::Error> + Send>;
+type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = hyper::Error> + Send>;
 
 // Custom echo service, handling two different routes and a
 // catch-all 404 responder.
@@ -110,22 +110,19 @@ fn echo(req: Request<Body>) -> ResponseFuture {
 // Load public certificate from file.
 fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
     // Open certificate file.
-    let certfile = fs::File::open(filename).map_err(|e| {
-        error(format!("failed to open {}: {}", filename, e))
-    })?;
+    let certfile = fs::File::open(filename)
+        .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(certfile);
 
     // Load and return certificate.
-    pemfile::certs(&mut reader)
-        .map_err(|_| error("failed to load certificate".into()))
+    pemfile::certs(&mut reader).map_err(|_| error("failed to load certificate".into()))
 }
 
 // Load private key from file.
 fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
     // Open keyfile.
-    let keyfile = fs::File::open(filename).map_err(|e| {
-        error(format!("failed to open {}: {}", filename, e))
-    })?;
+    let keyfile = fs::File::open(filename)
+        .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(keyfile);
 
     // Load and return a single private key.
