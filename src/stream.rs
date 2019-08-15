@@ -24,28 +24,22 @@ impl<T: fmt::Debug> fmt::Debug for MaybeHttpsStream<T> {
     }
 }
 
-impl<T: Read + Write> Read for MaybeHttpsStream<T> {
+impl<T: AsyncRead + AsyncWrite> Read for MaybeHttpsStream<T> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         match *self {
             MaybeHttpsStream::Http(ref mut s) => s.read(buf),
-            MaybeHttpsStream::Https(ref mut s) => {
-                let (_, cs) = s.get_mut();
-                cs.read(buf)
-            }
+            MaybeHttpsStream::Https(ref mut s) => s.read(buf)
         }
     }
 }
 
-impl<T: Read + Write> Write for MaybeHttpsStream<T> {
+impl<T: AsyncRead + AsyncWrite> Write for MaybeHttpsStream<T> {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         match *self {
             MaybeHttpsStream::Http(ref mut s) => s.write(buf),
-            MaybeHttpsStream::Https(ref mut s) => {
-                let (_, cs) = s.get_mut();
-                cs.write(buf)
-            }
+            MaybeHttpsStream::Https(ref mut s) => s.write(buf)
         }
     }
 
@@ -53,10 +47,7 @@ impl<T: Read + Write> Write for MaybeHttpsStream<T> {
     fn flush(&mut self) -> io::Result<()> {
         match *self {
             MaybeHttpsStream::Http(ref mut s) => s.flush(),
-            MaybeHttpsStream::Https(ref mut s) => {
-                let (_, cs) = s.get_mut();
-                cs.flush()
-            }
+            MaybeHttpsStream::Https(ref mut s) => s.flush()
         }
     }
 }
