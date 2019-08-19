@@ -6,9 +6,6 @@
 //!
 //! ```no_run
 //! # #[cfg(feature = "tokio-runtime")]
-//! # extern crate hyper;
-//! #
-//! # #[cfg(feature = "tokio-runtime")]
 //! # fn main() {
 //! use hyper::{Body, Client, StatusCode, Uri};
 //!
@@ -24,19 +21,7 @@
 //! # #[cfg(not(feature = "tokio-runtime"))]
 //! # fn main() {}
 //! ```
-
-extern crate bytes;
-#[cfg(feature = "tokio-runtime")]
-extern crate ct_logs;
-extern crate futures;
-extern crate hyper;
-extern crate rustls;
-extern crate tokio_io;
-extern crate tokio_rustls;
-extern crate webpki;
-#[cfg(feature = "tokio-runtime")]
-extern crate webpki_roots;
-
+#![feature(async_await)]
 mod connector;
 mod stream;
 

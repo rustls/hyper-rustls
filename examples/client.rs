@@ -2,16 +2,10 @@
 //!
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
+#![feature(async_await)]
 #![deny(warnings)]
-
-extern crate futures;
-extern crate hyper;
-extern crate hyper_rustls;
-extern crate rustls;
-extern crate tokio;
-
-use futures::{Future, Stream};
-use hyper::{client, Uri};
+use futures::TryStreamExt;
+use hyper::{client, Uri, Body, Chunk};
 use std::str::FromStr;
 use std::{env, fs, io};
 
@@ -27,7 +21,8 @@ fn error(err: String) -> io::Error {
     io::Error::new(io::ErrorKind::Other, err)
 }
 
-fn run_client() -> io::Result<()> {
+#[tokio::main]
+async fn run_client() -> io::Result<()> {
     // First parameter is target URL (mandatory).
     let url = match env::args().nth(1) {
         Some(ref url) => Uri::from_str(url).map_err(|e| error(format!("{}", e)))?,
@@ -72,19 +67,21 @@ fn run_client() -> io::Result<()> {
     // Prepare a chain of futures which sends a GET request, inspects
     // the returned headers, collects the whole body and prints it to
     // stdout.
-    let fut = futures::future::ok(client)
-        .and_then(|client| client.get(url))
-        .inspect(|res| {
-            println!("Status:\n{}", res.status());
-            println!("Headers:\n{:#?}", res.headers());
-        })
-        .and_then(|res| res.into_body().concat2())
-        .inspect(|body| {
-            println!("Body:\n{}", String::from_utf8_lossy(&body));
-        });
+    let fut = async move {
+        let res = client.get(url).await.map_err(|e| {
+            error(format!("Could not get: {:?}", e))
+        })?;
+        println!("Status:\n{}", res.status());
+        println!("Headers:\n{:#?}", res.headers());
 
-    // Run the future, wait for the result and return to main.
-    let rt = tokio::runtime::Runtime::new()?;
-    rt.block_on_all(fut).map_err(|e| error(format!("{}", e)))?;
-    Ok(())
+        let body: Body = res.into_body();
+        let body: Chunk = body.try_concat().await.map_err(|e| {
+            error(format!("Could not get body: {:?}", e))
+        })?;
+        println!("Body:\n{}", String::from_utf8_lossy(&body));
+
+        Ok(())
+    };
+
+    fut.await
 }
