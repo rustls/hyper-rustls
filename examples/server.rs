@@ -2,23 +2,17 @@
 //!
 //! First parameter is the mandatory port to use.
 //! Certificate and private key are hardcoded to sample files.
+#![feature(async_await)]
 #![deny(warnings)]
-
-extern crate futures;
-extern crate hyper;
-extern crate rustls;
-extern crate tokio;
-extern crate tokio_rustls;
-extern crate tokio_tcp;
-
-use futures::future;
-use futures::Stream;
-use hyper::rt::Future;
+use futures::{Stream, StreamExt, TryFutureExt, TryStreamExt};
 use hyper::service::service_fn;
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use rustls::internal::pemfile;
 use std::{env, fs, io, sync};
+use std::pin::Pin;
+use tokio::net::tcp::{TcpListener, TcpStream};
 use tokio_rustls::TlsAcceptor;
+use tokio_rustls::server::TlsStream;
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
@@ -32,7 +26,8 @@ fn error(err: String) -> io::Error {
     io::Error::new(io::ErrorKind::Other, err)
 }
 
-fn run_server() -> io::Result<()> {
+#[tokio::main]
+async fn run_server() -> io::Result<()> {
     // First parameter is port number (optional, defaults to 1337)
     let port = match env::args().nth(1) {
         Some(ref p) => p.to_owned(),
@@ -57,38 +52,38 @@ fn run_server() -> io::Result<()> {
     };
 
     // Create a TCP listener via tokio.
-    let tcp = tokio_tcp::TcpListener::bind(&addr)?;
-    let tls_acceptor = TlsAcceptor::from(tls_cfg);
-    // Prepare a long-running future stream to accept and serve cients.
-    let tls = tcp
-        .incoming()
-        .and_then(move |s| tls_acceptor.accept(s))
-        .then(|r| match r {
-            Ok(x) => Ok::<_, io::Error>(Some(x)),
-            Err(_e) => {
-                println!("[!] Voluntary server halt due to client-connection error...");
-                // Errors could be handled here, instead of server aborting.
-                // Ok(None)
-                Err(_e)
-            }
-        })
-        .filter_map(|x| x);
-    // Build a hyper server, which serves our custom echo service.
-    let fut = Server::builder(tls).serve(|| service_fn(echo));
+    let fut = async move {
+        let tcp = TcpListener::bind(&addr)?;
+        let tls_acceptor = TlsAcceptor::from(tls_cfg);
+        // Prepare a long-running future stream to accept and serve cients.
+        let incoming_tls_stream: Pin<Box<dyn Stream<Item=Result<TlsStream<TcpStream>, io::Error>>>> = tcp.incoming()
+            .map_err(|e| {
+                error(format!("Incoming failed: {:?}", e))
+            })
+            .and_then(move |s| {
+              tls_acceptor.accept(s).map_err(|e| {
+                  println!("[!] Voluntary server halt due to client-connection error...");
+                  // Errors could be handled here, instead of server aborting.
+                  // Ok(None)
+                  error(format!("TLS Error: {:?}", e))
+              })
+            }).boxed();
+        let serve_fn = hyper::service::make_service_fn(|_| async move {
+            Ok::<_, io::Error>(service_fn(echo))
+        });
+        // Build a hyper server, which serves our custom echo service.
+        Ok::<_, io::Error>(Server::builder(incoming_tls_stream).serve(serve_fn))
+    };
 
     // Run the future, keep going until an error occurs.
     println!("Starting to serve on https://{}.", addr);
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on_all(fut).map_err(|e| error(format!("{}", e)))?;
+    fut.await?;
     Ok(())
 }
 
-// Future result: either a hyper body or an error.
-type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = hyper::Error> + Send>;
-
 // Custom echo service, handling two different routes and a
 // catch-all 404 responder.
-fn echo(req: Request<Body>) -> ResponseFuture {
+async fn echo(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     let mut response = Response::new(Body::empty());
     match (req.method(), req.uri().path()) {
         // Help route.
@@ -104,7 +99,7 @@ fn echo(req: Request<Body>) -> ResponseFuture {
             *response.status_mut() = StatusCode::NOT_FOUND;
         }
     };
-    Box::new(future::ok(response))
+    Ok(response)
 }
 
 // Load public certificate from file.
