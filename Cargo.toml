@@ -1,10 +1,6 @@
 [package]
 name = "hyper-rustls"
-<<<<<<< HEAD
-version = "0.17.1"
-=======
 version = "0.18.0-alpha.1"
->>>>>>> Upgrade to std futures and tokio 0.2
 edition = "2018"
 authors = ["Joseph Birr-Pixton <jpixton@gmail.com>"]
 license = "Apache-2.0/ISC/MIT"
