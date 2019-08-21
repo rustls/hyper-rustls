@@ -1,9 +1,10 @@
 // Copied from hyperium/hyper-tls#62e3376/src/stream.rs
 use std::fmt;
-use std::io::{self, Read, Write};
+use std::io;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use tokio_io_new::{AsyncRead, AsyncWrite};
+
+use tokio_io::{AsyncRead, AsyncWrite};
 use tokio_rustls::client::TlsStream;
 
 /// A stream that might be protected with TLS.
@@ -23,77 +24,66 @@ impl<T: fmt::Debug> fmt::Debug for MaybeHttpsStream<T> {
     }
 }
 
-impl<T: AsyncRead + AsyncWrite> Read for MaybeHttpsStream<T> {
-    #[inline]
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        match *self {
-            MaybeHttpsStream::Http(ref mut s) => s.read(buf),
-            MaybeHttpsStream::Https(ref mut s) => s.read(buf)
-        }
+impl<T> From<T> for MaybeHttpsStream<T> {
+    fn from(inner: T) -> Self {
+        MaybeHttpsStream::Http(inner)
     }
 }
 
-impl<T: AsyncRead + AsyncWrite> Write for MaybeHttpsStream<T> {
-    #[inline]
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        match *self {
-            MaybeHttpsStream::Http(ref mut s) => s.write(buf),
-            MaybeHttpsStream::Https(ref mut s) => s.write(buf)
-        }
-    }
-
-    #[inline]
-    fn flush(&mut self) -> io::Result<()> {
-        match *self {
-            MaybeHttpsStream::Http(ref mut s) => s.flush(),
-            MaybeHttpsStream::Https(ref mut s) => s.flush()
-        }
+impl<T> From<TlsStream<T>> for MaybeHttpsStream<T> {
+    fn from(inner: TlsStream<T>) -> Self {
+        MaybeHttpsStream::Https(inner)
     }
 }
 
 impl<T: AsyncRead + AsyncWrite + Unpin> AsyncRead for MaybeHttpsStream<T> {
+    #[inline]
     unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [u8]) -> bool {
-        match *self {
-            MaybeHttpsStream::Http(ref s) => s.prepare_uninitialized_buffer(buf),
-            MaybeHttpsStream::Https(ref s) => s.prepare_uninitialized_buffer(buf),
+        match self {
+            MaybeHttpsStream::Http(s) => s.prepare_uninitialized_buffer(buf),
+            MaybeHttpsStream::Https(s) => s.prepare_uninitialized_buffer(buf),
         }
     }
 
+    #[inline]
     fn poll_read(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
+        self: Pin<&mut Self>,
+        cx: &mut Context,
         buf: &mut [u8],
-    ) -> Poll<io::Result<usize>> {
-        match *self {
-            MaybeHttpsStream::Http(ref mut s) => Pin::new(s).poll_read(cx, buf),
-            MaybeHttpsStream::Https(ref mut s) => Pin::new(s).poll_read(cx, buf),
+    ) -> Poll<Result<usize, io::Error>> {
+        match Pin::get_mut(self) {
+            MaybeHttpsStream::Http(s) => Pin::new(s).poll_read(cx, buf),
+            MaybeHttpsStream::Https(s) => Pin::new(s).poll_read(cx, buf),
         }
     }
 }
 
-impl<T: AsyncRead + AsyncWrite + Unpin> AsyncWrite for MaybeHttpsStream<T> {
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
-        match *self {
-            MaybeHttpsStream::Http(ref mut s) => Pin::new(s).poll_flush(cx),
-            MaybeHttpsStream::Https(ref mut s) => Pin::new(s).poll_flush(cx),
-        }
-    }
-
-    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
-        match *self {
-            MaybeHttpsStream::Http(ref mut s) => Pin::new(s).poll_shutdown(cx),
-            MaybeHttpsStream::Https(ref mut s) => Pin::new(s).poll_shutdown(cx),
-        }
-    }
-
+impl<T: AsyncWrite + AsyncRead + Unpin> AsyncWrite for MaybeHttpsStream<T> {
+    #[inline]
     fn poll_write(
-        mut self: Pin<&mut Self>,
+        self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &[u8],
     ) -> Poll<Result<usize, io::Error>> {
-        match *self {
-            MaybeHttpsStream::Http(ref mut s) => Pin::new(s).poll_write(cx, buf),
-            MaybeHttpsStream::Https(ref mut s) => Pin::new(s).poll_write(cx, buf),
+        match Pin::get_mut(self) {
+            MaybeHttpsStream::Http(s) => Pin::new(s).poll_write(cx, buf),
+            MaybeHttpsStream::Https(s) => Pin::new(s).poll_write(cx, buf),
+        }
+    }
+
+    #[inline]
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
+        match Pin::get_mut(self) {
+            MaybeHttpsStream::Http(s) => Pin::new(s).poll_flush(cx),
+            MaybeHttpsStream::Https(s) => Pin::new(s).poll_flush(cx),
+        }
+    }
+
+    #[inline]
+    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
+        match Pin::get_mut(self) {
+            MaybeHttpsStream::Http(s) => Pin::new(s).poll_shutdown(cx),
+            MaybeHttpsStream::Https(s) => Pin::new(s).poll_shutdown(cx),
         }
     }
 }

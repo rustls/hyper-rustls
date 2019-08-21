@@ -5,14 +5,14 @@
 #![feature(async_await)]
 #![deny(warnings)]
 use futures::{Stream, StreamExt, TryFutureExt, TryStreamExt};
-use hyper::service::service_fn;
+use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use rustls::internal::pemfile;
-use std::{env, fs, io, sync};
 use std::pin::Pin;
+use std::{env, fs, io, sync};
 use tokio::net::tcp::{TcpListener, TcpStream};
-use tokio_rustls::TlsAcceptor;
 use tokio_rustls::server::TlsStream;
+use tokio_rustls::TlsAcceptor;
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
@@ -27,7 +27,7 @@ fn error(err: String) -> io::Error {
 }
 
 #[tokio::main]
-async fn run_server() -> io::Result<()> {
+async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // First parameter is port number (optional, defaults to 1337)
     let port = match env::args().nth(1) {
         Some(ref p) => p.to_owned(),
@@ -52,32 +52,28 @@ async fn run_server() -> io::Result<()> {
     };
 
     // Create a TCP listener via tokio.
-    let fut = async move {
-        let tcp = TcpListener::bind(&addr)?;
-        let tls_acceptor = TlsAcceptor::from(tls_cfg);
-        // Prepare a long-running future stream to accept and serve cients.
-        let incoming_tls_stream: Pin<Box<dyn Stream<Item=Result<TlsStream<TcpStream>, io::Error>>>> = tcp.incoming()
-            .map_err(|e| {
-                error(format!("Incoming failed: {:?}", e))
-            })
+    let tcp = TcpListener::bind(&addr)?;
+    let tls_acceptor = TlsAcceptor::from(tls_cfg);
+    // Prepare a long-running future stream to accept and serve cients.
+    let incoming_tls_stream: Pin<Box<dyn Stream<Item = Result<TlsStream<TcpStream>, io::Error>>>> =
+        tcp.incoming()
+            .map_err(|e| error(format!("Incoming failed: {:?}", e)))
             .and_then(move |s| {
-              tls_acceptor.accept(s).map_err(|e| {
-                  println!("[!] Voluntary server halt due to client-connection error...");
-                  // Errors could be handled here, instead of server aborting.
-                  // Ok(None)
-                  error(format!("TLS Error: {:?}", e))
-              })
-            }).boxed();
-        let serve_fn = hyper::service::make_service_fn(|_| async move {
-            Ok::<_, io::Error>(service_fn(echo))
-        });
-        // Build a hyper server, which serves our custom echo service.
-        Ok::<_, io::Error>(Server::builder(incoming_tls_stream).serve(serve_fn))
-    };
+                tls_acceptor.accept(s).map_err(|e| {
+                    println!("[!] Voluntary server halt due to client-connection error...");
+                    // Errors could be handled here, instead of server aborting.
+                    // Ok(None)
+                    error(format!("TLS Error: {:?}", e))
+                })
+            })
+            .boxed();
+
+    let service = make_service_fn(|_| async { Ok::<_, io::Error>(service_fn(echo)) });
+    let server = Server::builder(incoming_tls_stream).serve(service);
 
     // Run the future, keep going until an error occurs.
     println!("Starting to serve on https://{}.", addr);
-    fut.await?;
+    server.await?;
     Ok(())
 }
 
