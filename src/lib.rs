@@ -11,7 +11,7 @@
 //!
 //! let mut rt = tokio::runtime::Runtime::new().unwrap();
 //! let url = ("https://hyper.rs").parse().unwrap();
-//! let https = hyper_rustls::HttpsConnector::new(4);
+//! let https = hyper_rustls::HttpsConnector::new();
 //!
 //! let client: Client<_, hyper::Body> = Client::builder().build(https);
 //!
