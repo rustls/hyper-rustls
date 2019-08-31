@@ -47,7 +47,7 @@ async fn run_client() -> io::Result<()> {
     let https = match ca {
         Some(ref mut rd) => {
             // Build an HTTP connector which supports HTTPS too.
-            let mut http = client::HttpConnector::new(4);
+            let mut http = client::HttpConnector::new();
             http.enforce_http(false);
             // Build a TLS client, using the custom CA store for lookups.
             let mut tls = rustls::ClientConfig::new();
@@ -58,7 +58,7 @@ async fn run_client() -> io::Result<()> {
             hyper_rustls::HttpsConnector::from((http, tls))
         }
         // Default HTTPS connector.
-        None => hyper_rustls::HttpsConnector::new(4),
+        None => hyper_rustls::HttpsConnector::new(),
     };
 
     // Build the hyper client from the HTTPS connector.
