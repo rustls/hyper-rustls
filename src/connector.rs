@@ -24,8 +24,8 @@ impl HttpsConnector<HttpConnector> {
     /// Construct a new `HttpsConnector`.
     ///
     /// Takes number of DNS worker threads.
-    pub fn new(threads: usize) -> Self {
-        let mut http = HttpConnector::new(threads);
+    pub fn new() -> Self {
+        let mut http = HttpConnector::new();
         http.enforce_http(false);
         let mut config = ClientConfig::new();
         config
