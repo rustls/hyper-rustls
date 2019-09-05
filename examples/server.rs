@@ -3,7 +3,6 @@
 //! First parameter is the mandatory port to use.
 //! Certificate and private key are hardcoded to sample files.
 #![feature(async_await)]
-#![deny(warnings)]
 use futures::{Stream, StreamExt, TryFutureExt, TryStreamExt};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};

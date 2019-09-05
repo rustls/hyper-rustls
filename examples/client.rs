@@ -3,7 +3,6 @@
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
 #![feature(async_await)]
-#![deny(warnings)]
 use futures::TryStreamExt;
 use hyper::{client, Uri, Body, Chunk};
 use std::str::FromStr;
