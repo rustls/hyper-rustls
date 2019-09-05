@@ -32,9 +32,7 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Some(ref p) => p.to_owned(),
         None => "1337".to_owned(),
     };
-    let addr = format!("127.0.0.1:{}", port)
-        .parse()
-        .map_err(|e| error(format!("{}", e)))?;
+    let addr = format!("127.0.0.1:{}", port);
 
     // Build TLS configuration.
     let tls_cfg = {
@@ -51,7 +49,7 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     };
 
     // Create a TCP listener via tokio.
-    let tcp = TcpListener::bind(&addr)?;
+    let tcp = TcpListener::bind(&addr).await?;
     let tls_acceptor = TlsAcceptor::from(tls_cfg);
     // Prepare a long-running future stream to accept and serve cients.
     let incoming_tls_stream: Pin<Box<dyn Stream<Item = Result<TlsStream<TcpStream>, io::Error>>>> =
