@@ -2,8 +2,12 @@
 //!
 //! First parameter is the mandatory port to use.
 //! Certificate and private key are hardcoded to sample files.
-#![feature(async_await)]
-use futures::{Stream, StreamExt, TryFutureExt, TryStreamExt};
+use core::task::{Context, Poll};
+use futures_util::{
+    stream::{Stream, StreamExt},
+    try_future::TryFutureExt,
+    try_stream::TryStreamExt,
+};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use rustls::internal::pemfile;
@@ -66,12 +70,31 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .boxed();
 
     let service = make_service_fn(|_| async { Ok::<_, io::Error>(service_fn(echo)) });
-    let server = Server::builder(incoming_tls_stream).serve(service);
+    let server = Server::builder(HyperAcceptor {
+        acceptor: incoming_tls_stream,
+    })
+    .serve(service);
 
     // Run the future, keep going until an error occurs.
     println!("Starting to serve on https://{}.", addr);
     server.await?;
     Ok(())
+}
+
+struct HyperAcceptor {
+    acceptor: Pin<Box<dyn Stream<Item = Result<TlsStream<TcpStream>, io::Error>>>>,
+}
+
+impl hyper::server::accept::Accept for HyperAcceptor {
+    type Conn = TlsStream<TcpStream>;
+    type Error = io::Error;
+
+    fn poll_accept(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
+        Pin::new(&mut self.acceptor).poll_next(cx)
+    }
 }
 
 // Custom echo service, handling two different routes and a

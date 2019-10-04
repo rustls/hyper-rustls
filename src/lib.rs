@@ -21,7 +21,6 @@
 //! # #[cfg(not(feature = "tokio-runtime"))]
 //! # fn main() {}
 //! ```
-#![feature(async_await)]
 mod connector;
 mod stream;
 
