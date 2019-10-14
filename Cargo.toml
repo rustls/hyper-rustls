@@ -18,7 +18,7 @@ rustls = "0.16"
 tokio-io = "0.1.1"
 tokio-rustls = "^0.10.0"
 webpki = "^0.21.0"
-webpki-roots = { version = "^0.17.0", optional = true }
+webpki-roots = { version = "^0.18.0", optional = true }
 
 [dev-dependencies]
 tokio = "0.1"
