@@ -1,4 +1,4 @@
-use futures::FutureExt;
+use futures_util::FutureExt;
 use hyper::client::connect::{self, Connect};
 #[cfg(feature = "tokio-runtime")]
 use hyper::client::HttpConnector;
@@ -71,7 +71,16 @@ where
 {
     type Transport = MaybeHttpsStream<T::Transport>;
     type Error = io::Error;
-    type Future = Pin<Box<dyn Future<Output = Result<(MaybeHttpsStream<T::Transport>, connect::Connected), io::Error>> + Send>>;
+    type Future = Pin<
+        Box<
+            dyn Future<
+                    Output = Result<
+                        (MaybeHttpsStream<T::Transport>, connect::Connected),
+                        io::Error,
+                    >,
+                > + Send,
+        >,
+    >;
 
     fn connect(&self, dst: connect::Destination) -> Self::Future {
         let is_https = dst.scheme() == "https";
@@ -93,12 +102,12 @@ where
             let f = async move {
                 let (tcp, conn) = connecting_future.await?;
                 let connector = TlsConnector::from(cfg);
-                let dnsname = DNSNameRef::try_from_ascii_str(&hostname).map_err(|_| {
-                    io::Error::new(io::ErrorKind::Other, "invalid dnsname")
-                })?;
-                let tls = connector.connect(dnsname, tcp).await.map_err(|e| {
-                    io::Error::new(io::ErrorKind::Other, e)
-                })?;
+                let dnsname = DNSNameRef::try_from_ascii_str(&hostname)
+                    .map_err(|_| io::Error::new(io::ErrorKind::Other, "invalid dnsname"))?;
+                let tls = connector
+                    .connect(dnsname, tcp)
+                    .await
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
                 let connected = if tls.get_ref().1.get_alpn_protocol() == Some(b"h2") {
                     conn.negotiated_h2()
                 } else {

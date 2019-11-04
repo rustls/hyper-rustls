@@ -2,9 +2,8 @@
 //!
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
-#![feature(async_await)]
-use futures::TryStreamExt;
-use hyper::{client, Uri, Body, Chunk};
+use futures_util::TryStreamExt;
+use hyper::{client, Body, Chunk, Uri};
 use std::str::FromStr;
 use std::{env, fs, io};
 
@@ -67,16 +66,18 @@ async fn run_client() -> io::Result<()> {
     // the returned headers, collects the whole body and prints it to
     // stdout.
     let fut = async move {
-        let res = client.get(url).await.map_err(|e| {
-            error(format!("Could not get: {:?}", e))
-        })?;
+        let res = client
+            .get(url)
+            .await
+            .map_err(|e| error(format!("Could not get: {:?}", e)))?;
         println!("Status:\n{}", res.status());
         println!("Headers:\n{:#?}", res.headers());
 
         let body: Body = res.into_body();
-        let body: Chunk = body.try_concat().await.map_err(|e| {
-            error(format!("Could not get body: {:?}", e))
-        })?;
+        let body: Chunk = body
+            .try_concat()
+            .await
+            .map_err(|e| error(format!("Could not get body: {:?}", e)))?;
         println!("Body:\n{}", String::from_utf8_lossy(&body));
 
         Ok(())
