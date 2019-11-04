@@ -110,7 +110,7 @@ where
 
 /// A Future representing work to connect to a URL, and a TLS handshake.
 pub struct HttpsConnecting<T>(
-    Box<Future<Item = (MaybeHttpsStream<T>, connect::Connected), Error = io::Error> + Send>,
+    Box<dyn Future<Item = (MaybeHttpsStream<T>, connect::Connected), Error = io::Error> + Send>,
 );
 
 impl<T> Future for HttpsConnecting<T> {
