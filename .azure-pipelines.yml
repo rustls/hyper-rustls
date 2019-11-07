@@ -10,20 +10,20 @@ resources:
       endpoint: ctz
 
 jobs:
-- template: az-pipeline/unstable/clippy.yml@templates
+- template: admin/pipelines/clippy.yml
   parameters:
     rustup_toolchain: ${{ variables.clippy_toolchain }}
 - job: Windows
   pool:
     vmImage: vs2017-win2016
   steps:
-    - template: az-pipeline/unstable/rustup.yml@templates
+    - template: admin/pipelines/rustup.yml
     - template: admin/pipelines/cargo-steps.yml
 - job: MacOS
   pool:
     vmImage: macOS-10.13
   steps:
-    - template: az-pipeline/unstable/rustup.yml@templates
+    - template: admin/pipelines/rustup.yml
     - template: admin/pipelines/cargo-steps.yml
 - job: Linux
   pool:
@@ -39,7 +39,7 @@ jobs:
       minimum:
         rustup_toolchain: ${{ variables.minimum_toolchain }}
   steps:
-    - template: az-pipeline/unstable/rustup.yml@templates
+    - template: admin/pipelines/rustup.yml
       parameters:
         rustup_toolchain: $(rustup_toolchain)
     - template: admin/pipelines/cargo-steps.yml
