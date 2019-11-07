@@ -35,7 +35,7 @@ extern crate tokio_io;
 extern crate tokio_rustls;
 extern crate webpki;
 #[cfg(feature = "tokio-runtime")]
-extern crate webpki_roots;
+extern crate rustls_native_certs;
 
 mod connector;
 mod stream;

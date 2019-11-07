@@ -26,9 +26,8 @@ impl HttpsConnector<HttpConnector> {
         let mut http = HttpConnector::new(threads);
         http.enforce_http(false);
         let mut config = ClientConfig::new();
-        config
-            .root_store
-            .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
+        config.root_store = rustls_native_certs::load_native_certs()
+            .expect("cannot access native cert store");
         config.ct_logs = Some(&ct_logs::LOGS);
         HttpsConnector {
             http,
