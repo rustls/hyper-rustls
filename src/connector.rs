@@ -38,6 +38,13 @@ impl HttpsConnector<HttpConnector> {
     }
 }
 
+#[cfg(feature = "tokio-runtime")]
+impl Default for HttpsConnector<HttpConnector> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> fmt::Debug for HttpsConnector<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("HttpsConnector").finish()
@@ -70,6 +77,8 @@ where
 {
     type Transport = MaybeHttpsStream<T::Transport>;
     type Error = io::Error;
+
+    #[allow(clippy::type_complexity)]
     type Future = Pin<
         Box<
             dyn Future<
