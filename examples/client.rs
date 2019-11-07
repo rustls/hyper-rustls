@@ -37,7 +37,7 @@ fn run_client() -> io::Result<()> {
         }
     };
 
-    // Second parameter is custom Root-CA store (optional, defaults to webpki).
+    // Second parameter is custom Root-CA store (optional, defaults to native cert store).
     let mut ca = match env::args().nth(2) {
         Some(ref path) => {
             let f = fs::File::open(path)

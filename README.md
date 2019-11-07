@@ -8,8 +8,8 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 
 [API Documentation](https://docs.rs/hyper-rustls/)
 
-By default clients verify certificates using the `webpki-roots` crate, which includes
-the Mozilla root CAs.
+By default clients verify certificates using the `rustls-native-certs` crate, which uses
+the platform's root CAs.
 
 # License
 hyper-rustls is distributed under the following three licenses:
