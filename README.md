@@ -14,7 +14,7 @@ the platform's root CAs.
 # Release history
 - Next release (0.19.0):
   * First release with async/await support
-  * Alphas are available: https://crates.io/crates/hyper-rustls/0.18.0-alpha.2
+  * Alphas are available: https://crates.io/crates/hyper-rustls/0.19.0-alpha.3
 - 0.18.0 (2019-11-23)
   * Uses [rustls-native-certs](https://crates.io/crates/rustls-native-certs)
     instead of compiled-in root certificates.
