@@ -11,6 +11,18 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 By default clients verify certificates using the `rustls-native-certs` crate, which uses
 the platform's root CAs.
 
+# Release history
+- Next release (0.19.0):
+  * First release with async/await support
+  * Alphas are available: https://crates.io/crates/hyper-rustls/0.18.0-alpha.2
+- 0.18.0 (2019-11-23)
+  * Uses [rustls-native-certs](https://crates.io/crates/rustls-native-certs)
+    instead of compiled-in root certificates.
+- 0.17.1 (2019-08-19)
+  * Fix accidental use of sync read/write.
+- 0.17.0 (2019-08-11)
+  * Update dependencies.
+
 # License
 hyper-rustls is distributed under the following three licenses:
 
