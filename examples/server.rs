@@ -13,6 +13,7 @@ use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use rustls::internal::pemfile;
 use std::pin::Pin;
 use std::{env, fs, io, sync};
+use std::vec::Vec;
 use tokio::net::tcp::{TcpListener, TcpStream};
 use tokio_rustls::server::TlsStream;
 use tokio_rustls::TlsAcceptor;
@@ -49,6 +50,11 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Select a certificate to use.
         cfg.set_single_cert(certs, key)
             .map_err(|e| error(format!("{}", e)))?;
+        // Configure ALPN to accept HTTP/2, HTTP/1.1 in that order.
+        cfg.set_protocols(&[
+            b"h2".to_vec(),
+            b"http/1.1".to_vec(),
+        ]);
         sync::Arc::new(cfg)
     };
 
