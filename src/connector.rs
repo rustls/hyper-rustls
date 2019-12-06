@@ -1,16 +1,20 @@
 use futures_util::FutureExt;
-use hyper::client::connect::{self, Connect};
 #[cfg(feature = "tokio-runtime")]
-use hyper::client::HttpConnector;
-use rustls::{ClientConfig, Session};
+use hyper::client::connect::HttpConnector;
+use hyper::{client::connect::Connection, service::Service, Uri};
+use rustls::ClientConfig;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
+use std::task::{Context, Poll};
 use std::{fmt, io};
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsConnector;
 use webpki::DNSNameRef;
 
 use crate::stream::MaybeHttpsStream;
+
+type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
 /// A Connector for the `https` scheme.
 #[derive(Clone)]
@@ -28,8 +32,8 @@ impl HttpsConnector<HttpConnector> {
         let mut http = HttpConnector::new();
         http.enforce_http(false);
         let mut config = ClientConfig::new();
-        config.root_store = rustls_native_certs::load_native_certs()
-            .expect("cannot access native cert store");
+        config.root_store =
+            rustls_native_certs::load_native_certs().expect("cannot access native cert store");
         config.ct_logs = Some(&ct_logs::LOGS);
         HttpsConnector {
             http,
@@ -69,46 +73,47 @@ impl<T> From<(T, Arc<ClientConfig>)> for HttpsConnector<T> {
     }
 }
 
-impl<T> Connect for HttpsConnector<T>
+impl<T> Service<Uri> for HttpsConnector<T>
 where
-    T: Connect<Error = io::Error>,
-    T::Transport: 'static,
-    T::Future: 'static,
+    T: Service<Uri>,
+    T::Response: Connection + AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    T::Future: Send + 'static,
+    T::Error: Into<BoxError>,
 {
-    type Transport = MaybeHttpsStream<T::Transport>;
-    type Error = io::Error;
+    type Response = MaybeHttpsStream<T::Response>;
+    type Error = BoxError;
 
     #[allow(clippy::type_complexity)]
-    type Future = Pin<
-        Box<
-            dyn Future<
-                    Output = Result<
-                        (MaybeHttpsStream<T::Transport>, connect::Connected),
-                        io::Error,
-                    >,
-                > + Send,
-        >,
-    >;
+    type Future =
+        Pin<Box<dyn Future<Output = Result<MaybeHttpsStream<T::Response>, BoxError>> + Send>>;
 
-    fn connect(&self, dst: connect::Destination) -> Self::Future {
-        let is_https = dst.scheme() == "https";
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        match self.http.poll_ready(cx) {
+            Poll::Ready(Ok(())) => Poll::Ready(Ok(())),
+            Poll::Ready(Err(e)) => Poll::Ready(Err(e.into())),
+            Poll::Pending => Poll::Pending,
+        }
+    }
+
+    fn call(&mut self, dst: Uri) -> Self::Future {
+        let is_https = dst.scheme_str() == Some("https");
 
         if !is_https {
-            let connecting_future = self.http.connect(dst);
+            let connecting_future = self.http.call(dst);
 
             let f = async move {
-                let (tcp, conn) = connecting_future.await?;
+                let tcp = connecting_future.await.map_err(Into::into)?;
 
-                Ok((MaybeHttpsStream::Http(tcp), conn))
+                Ok(MaybeHttpsStream::Http(tcp))
             };
             f.boxed()
         } else {
             let cfg = self.tls_config.clone();
-            let hostname = dst.host().to_string();
-            let connecting_future = self.http.connect(dst);
+            let hostname = dst.host().unwrap_or_default().to_string();
+            let connecting_future = self.http.call(dst);
 
             let f = async move {
-                let (tcp, conn) = connecting_future.await?;
+                let tcp = connecting_future.await.map_err(Into::into)?;
                 let connector = TlsConnector::from(cfg);
                 let dnsname = DNSNameRef::try_from_ascii_str(&hostname)
                     .map_err(|_| io::Error::new(io::ErrorKind::Other, "invalid dnsname"))?;
@@ -116,12 +121,7 @@ where
                     .connect(dnsname, tcp)
                     .await
                     .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-                let connected = if tls.get_ref().1.get_alpn_protocol() == Some(b"h2") {
-                    conn.negotiated_h2()
-                } else {
-                    conn
-                };
-                Ok((MaybeHttpsStream::Https(tls), connected))
+                Ok(MaybeHttpsStream::Https(tls))
             };
             f.boxed()
         }
