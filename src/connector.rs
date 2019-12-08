@@ -28,6 +28,7 @@ impl HttpsConnector<HttpConnector> {
         let mut http = HttpConnector::new();
         http.enforce_http(false);
         let mut config = ClientConfig::new();
+        config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
         config.root_store = rustls_native_certs::load_native_certs()
             .expect("cannot access native cert store");
         config.ct_logs = Some(&ct_logs::LOGS);
