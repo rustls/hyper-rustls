@@ -2,8 +2,7 @@
 //!
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
-use futures_util::TryStreamExt;
-use hyper::{client, Body, Chunk, Uri};
+use hyper::{body::to_bytes, client, Body, Uri};
 use std::str::FromStr;
 use std::{env, fs, io};
 
@@ -74,8 +73,7 @@ async fn run_client() -> io::Result<()> {
         println!("Headers:\n{:#?}", res.headers());
 
         let body: Body = res.into_body();
-        let body: Chunk = body
-            .try_concat()
+        let body = to_bytes(body)
             .await
             .map_err(|e| error(format!("Could not get body: {:?}", e)))?;
         println!("Body:\n{}", String::from_utf8_lossy(&body));

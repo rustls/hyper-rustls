@@ -1,10 +1,14 @@
 // Copied from hyperium/hyper-tls#62e3376/src/stream.rs
 use std::fmt;
 use std::io;
+use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-use tokio_io::{AsyncRead, AsyncWrite};
+use hyper::client::connect::{Connected, Connection};
+
+use rustls::Session;
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::client::TlsStream;
 
 /// A stream that might be protected with TLS.
@@ -13,6 +17,22 @@ pub enum MaybeHttpsStream<T> {
     Http(T),
     /// A stream protected with TLS.
     Https(TlsStream<T>),
+}
+
+impl<T: AsyncRead + AsyncWrite + Connection + Unpin> Connection for MaybeHttpsStream<T> {
+    fn connected(&self) -> Connected {
+        match self {
+            MaybeHttpsStream::Http(s) => s.connected(),
+            MaybeHttpsStream::Https(s) => {
+                let (tcp, tls) = s.get_ref();
+                if tls.get_alpn_protocol() == Some(b"h2") {
+                    tcp.connected().negotiated_h2()
+                } else {
+                    tcp.connected()
+                }
+            }
+        }
+    }
 }
 
 impl<T: fmt::Debug> fmt::Debug for MaybeHttpsStream<T> {
@@ -38,7 +58,7 @@ impl<T> From<TlsStream<T>> for MaybeHttpsStream<T> {
 
 impl<T: AsyncRead + AsyncWrite + Unpin> AsyncRead for MaybeHttpsStream<T> {
     #[inline]
-    unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [u8]) -> bool {
+    unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [MaybeUninit<u8>]) -> bool {
         match self {
             MaybeHttpsStream::Http(s) => s.prepare_uninitialized_buffer(buf),
             MaybeHttpsStream::Https(s) => s.prepare_uninitialized_buffer(buf),
