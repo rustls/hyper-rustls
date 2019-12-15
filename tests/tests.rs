@@ -1,5 +1,4 @@
-use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::thread;
 use std::time;
 
@@ -22,24 +21,16 @@ fn server() {
 
     thread::sleep(time::Duration::from_secs(1));
 
-    let mut cli = Command::new("openssl")
-        .arg("s_client")
-        .arg("-ign_eof")
-        .arg("-connect")
-        .arg("localhost:1337")
-        .stdin(Stdio::piped())
-        .spawn()
-        .expect("cannot run openssl");
+    let output = Command::new("curl")
+        .arg("--insecure")
+        .arg("--http1.0")
+        .arg("--silent")
+        .arg("https://localhost:1337")
+        .output()
+        .expect("cannot run curl");
 
-    cli.stdin
-        .as_mut()
-        .unwrap()
-        .write(b"GET / HTTP/1.0\r\n\r\n")
-        .unwrap();
-
-    let rc = cli.wait().expect("openssl failed");
-
-    assert!(rc.success());
+    println!("client output: {:?}", output.stdout);
+    assert_eq!(output.stdout, b"Try POST /echo\n");
 
     srv.kill().unwrap();
 }
