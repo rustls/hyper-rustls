@@ -12,9 +12,8 @@ By default clients verify certificates using the `rustls-native-certs` crate, wh
 the platform's root CAs.
 
 # Release history
-- Next release (0.19.0):
-  * First release with async/await support
-  * Alphas are available: https://crates.io/crates/hyper-rustls/0.19.0-alpha.3
+- 0.19.0 (2019-12-17):
+  * First release with async/await support.  Many thanks to @CryZe, @alex, @markuskobler and @dbcfd.
 - 0.18.0 (2019-11-23)
   * Uses [rustls-native-certs](https://crates.io/crates/rustls-native-certs)
     instead of compiled-in root certificates.
