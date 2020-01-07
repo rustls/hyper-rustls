@@ -6,7 +6,7 @@
 //! otherwise HTTP/1.1 will be used.
 use core::task::{Context, Poll};
 use futures_util::{
-    future::TryFutureExt,
+    future::{ready, TryFutureExt},
     stream::{Stream, StreamExt, TryStreamExt},
 };
 use hyper::service::{make_service_fn, service_fn};
@@ -65,11 +65,13 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .map_err(|e| error(format!("Incoming failed: {:?}", e)))
         .and_then(move |s| {
             tls_acceptor.accept(s).map_err(|e| {
-                println!("[!] Voluntary server halt due to client-connection error...");
-                // Errors could be handled here, instead of server aborting.
-                // Ok(None)
+                eprintln!("TLS Error: {:?}", e);
                 error(format!("TLS Error: {:?}", e))
             })
+        })
+        .filter(|res| {
+            // Ignore failed accepts
+            ready(res.is_ok())
         })
         .boxed();
 
