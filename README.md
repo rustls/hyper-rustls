@@ -12,6 +12,8 @@ By default clients verify certificates using the `rustls-native-certs` crate, wh
 the platform's root CAs.
 
 # Release history
+- 0.19.1 (2020-01-19):
+  * Remove dependency on hyper's tcp feature.
 - 0.19.0 (2019-12-17):
   * First release with async/await support.  Many thanks to @CryZe, @alex, @markuskobler and @dbcfd.
 - 0.18.0 (2019-11-23)
