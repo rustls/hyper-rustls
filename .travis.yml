@@ -20,7 +20,8 @@ before_script:
 
 script:
   - cargo test
-  - cargo test --all-features
+  - cargo test --no-default-features --features native-tokio
+  - cargo test --no-default-features --features webpki-tokio
   - cargo test --no-default-features
   - bash -c 'if [[ "$TRAVIS_RUST_VERSION" == "$CLIPPY_RUST_VERSION" ]]; then
       cargo clippy -- -D warnings;

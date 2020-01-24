@@ -22,6 +22,15 @@
 //! # fn main() {}
 //! ```
 
+#[cfg(all(
+    feature = "tokio-runtime",
+    any(not(feature = "rustls-native-certs"), feature = "webpki-roots"),
+    any(not(feature = "webpki-roots"), feature = "rustls-native-certs")
+))]
+compile_error!(
+    "Must enable exactly one of rustls-native-certs (default) or webpki-roots with tokio-runtime! (note: use `default-features = false' in a binary crate for one or other)"
+);
+
 mod connector;
 mod stream;
 
