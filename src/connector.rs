@@ -33,8 +33,17 @@ impl HttpsConnector<HttpConnector> {
         http.enforce_http(false);
         let mut config = ClientConfig::new();
         config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
-        config.root_store = rustls_native_certs::load_native_certs()
-            .expect("cannot access native cert store");
+        #[cfg(feature = "rustls-native-certs")] 
+        {
+            config.root_store = rustls_native_certs::load_native_certs()
+                .expect("cannot access native cert store");
+        }
+        #[cfg(feature = "webpki-roots")] 
+        {
+            config
+                .root_store
+                .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
+        }
         config.ct_logs = Some(&ct_logs::LOGS);
         HttpsConnector {
             http,

@@ -5,7 +5,7 @@
 //! ## Example
 //!
 //! ```no_run
-//! # #[cfg(feature = "tokio-runtime")]
+//! # #[cfg(all(any(feature = "rustls-native-certs", feature = "webpki-roots"), feature = "tokio-runtime"))]
 //! # fn main() {
 //! use hyper::{Body, Client, StatusCode, Uri};
 //!
@@ -21,6 +21,15 @@
 //! # #[cfg(not(feature = "tokio-runtime"))]
 //! # fn main() {}
 //! ```
+
+#[cfg(all(
+    feature = "tokio-runtime",
+    any(not(feature = "rustls-native-certs"), feature = "webpki-roots"),
+    any(not(feature = "webpki-roots"), feature = "rustls-native-certs")
+))]
+compile_error!(
+    "Must enable exactly one of rustls-native-certs (default) or webpki-roots with tokio-runtime!"
+);
 
 mod connector;
 mod stream;
