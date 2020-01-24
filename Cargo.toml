@@ -25,8 +25,9 @@ webpki-roots = { version = "0.18", optional = true }
 tokio = { version = "0.2", features = ["io-std", "macros", "dns", "stream"] }
 
 [features]
-default = ["tokio-runtime", "rustls-native-certs"]
+default = ["native-tokio"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
+native-tokio = ["tokio-runtime", "rustls-native-certs"]
 tokio-runtime =  ["hyper/runtime", "ct-logs"]
 
 [[example]]
