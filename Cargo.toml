@@ -26,6 +26,7 @@ tokio = { version = "0.2", features = ["io-std", "macros", "dns", "stream"] }
 
 [features]
 default = ["tokio-runtime", "rustls-native-certs"]
+webpki-tokio = ["tokio-runtime", "webpki-roots"]
 tokio-runtime =  ["hyper/runtime", "ct-logs"]
 
 [[example]]

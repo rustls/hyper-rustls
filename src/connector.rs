@@ -23,7 +23,7 @@ pub struct HttpsConnector<T> {
     tls_config: Arc<ClientConfig>,
 }
 
-#[cfg(feature = "tokio-runtime")]
+#[cfg(all(any(feature = "rustls-native-certs", feature = "webpki-roots"), feature = "tokio-runtime"))]
 impl HttpsConnector<HttpConnector> {
     /// Construct a new `HttpsConnector`.
     ///
@@ -52,7 +52,7 @@ impl HttpsConnector<HttpConnector> {
     }
 }
 
-#[cfg(feature = "tokio-runtime")]
+#[cfg(all(any(feature = "rustls-native-certs", feature = "webpki-roots"), feature = "tokio-runtime"))]
 impl Default for HttpsConnector<HttpConnector> {
     fn default() -> Self {
         Self::new()
