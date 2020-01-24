@@ -53,7 +53,10 @@ impl<T> fmt::Debug for HttpsConnector<T> {
     }
 }
 
-impl<H, C: Into<Arc<ClientConfig>>> From<(H, C)> for HttpsConnector<H> {
+impl<H, C> From<(H, C)> for HttpsConnector<H>
+where
+    C: Into<Arc<ClientConfig>> 
+{
     fn from((http, cfg): (H, C)) -> Self {
         HttpsConnector {
             http,
