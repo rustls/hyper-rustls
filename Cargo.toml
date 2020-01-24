@@ -32,7 +32,9 @@ tokio-runtime =  ["hyper/runtime", "ct-logs"]
 [[example]]
 name = "client"
 path = "examples/client.rs"
+required-features = ["tokio-runtime"]
 
 [[example]]
 name = "server"
 path = "examples/server.rs"
+required-features = ["tokio-runtime"]
