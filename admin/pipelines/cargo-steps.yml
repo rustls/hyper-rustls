@@ -5,8 +5,8 @@ steps:
   - script: cargo test
     displayName: "cargo test (debug; default features)"
     env: { "RUST_BACKTRACE": "1" }
-  - script: cargo test --all-features
-    displayName: "cargo test (debug; all features)"
+  - script: cargo test --no-default-features --features webpki-tokio
+    displayName: "cargo test (debug; webpi-roots feature)"
     env: { "RUST_BACKTRACE": "1" }
   - script: cargo test --no-default-features
     displayName: "cargo build (debug; no default features)"
