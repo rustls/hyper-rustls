@@ -45,10 +45,7 @@ impl HttpsConnector<HttpConnector> {
             }
         };
         config.ct_logs = Some(&ct_logs::LOGS);
-        HttpsConnector {
-            http,
-            tls_config: Arc::new(config),
-        }
+        (http, config).into()
     }
 }
 
@@ -65,20 +62,14 @@ impl<T> fmt::Debug for HttpsConnector<T> {
     }
 }
 
-impl<T> From<(T, ClientConfig)> for HttpsConnector<T> {
-    fn from(args: (T, ClientConfig)) -> Self {
+impl<H, C> From<(H, C)> for HttpsConnector<H>
+where
+    C: Into<Arc<ClientConfig>> 
+{
+    fn from((http, cfg): (H, C)) -> Self {
         HttpsConnector {
-            http: args.0,
-            tls_config: Arc::new(args.1),
-        }
-    }
-}
-
-impl<T> From<(T, Arc<ClientConfig>)> for HttpsConnector<T> {
-    fn from(args: (T, Arc<ClientConfig>)) -> Self {
-        HttpsConnector {
-            http: args.0,
-            tls_config: args.1,
+            http,
+            tls_config: cfg.into(),
         }
     }
 }
