@@ -12,8 +12,9 @@ By default clients verify certificates using the `rustls-native-certs` crate, wh
 the platform's root CAs.
 
 # Release history
-- Next release:
+- 0.20.0 (2020-02-24):
   * Use newer rustls-native-certs which works in presence of invalid certificates.
+  * Update dependencies.
 - 0.19.1 (2020-01-19):
   * Remove dependency on hyper's tcp feature.
 - 0.19.0 (2019-12-17):
