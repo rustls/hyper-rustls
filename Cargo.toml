@@ -15,7 +15,7 @@ log = "0.4.4"
 ct-logs = { version = "^0.6", optional = true }
 futures-util = "0.3.1"
 hyper = { version = "0.13.0", default-features = false }
-rustls = "0.17"
+rustls = { version = "0.17", features = ["dangerous_configuration"] }
 rustls-native-certs = { version = "0.3.0", optional = true }
 tokio = "0.2.4"
 tokio-rustls = "0.13.0"

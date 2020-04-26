@@ -2,7 +2,7 @@ use futures_util::FutureExt;
 #[cfg(feature = "tokio-runtime")]
 use hyper::client::connect::HttpConnector;
 use hyper::{client::connect::Connection, service::Service, Uri};
-use rustls::ClientConfig;
+use rustls::{ ServerCertVerifier, ClientConfig };
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -56,6 +56,38 @@ impl HttpsConnector<HttpConnector> {
         config.ct_logs = Some(&ct_logs::LOGS);
         (http, config).into()
     }
+
+    /// Construct a new `HttpsConnector` with cerificate verifier
+    pub fn new_with_certificate_verifier(verifier: Arc<dyn ServerCertVerifier>) -> Self {
+        let mut http = HttpConnector::new();
+        http.enforce_http(false);
+        let mut config = ClientConfig::new();
+        config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        config.dangerous().set_certificate_verifier(verifier);
+
+        #[cfg(feature = "rustls-native-certs")] 
+        {
+            config.root_store = match rustls_native_certs::load_native_certs() {
+                Ok(store) => store,
+                Err((Some(store), err)) => {
+                    warn!("Could not load all certificates: {:?}", err);
+                    store
+                }
+                Err((None, err)) => {
+                    Err(err).expect("cannot access native cert store")
+                }
+            };
+        }
+        #[cfg(feature = "webpki-roots")] 
+        {
+            config
+                .root_store
+                .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
+        }
+        config.ct_logs = Some(&ct_logs::LOGS);
+        (http, config).into()
+    }
+
 }
 
 #[cfg(all(any(feature = "rustls-native-certs", feature = "webpki-roots"), feature = "tokio-runtime"))]
