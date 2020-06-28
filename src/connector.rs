@@ -34,7 +34,7 @@ impl HttpsConnector<HttpConnector> {
         http.enforce_http(false);
         let mut config = ClientConfig::new();
         config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
-        #[cfg(feature = "rustls-native-certs")] 
+        #[cfg(feature = "rustls-native-certs")]
         {
             config.root_store = match rustls_native_certs::load_native_certs() {
                 Ok(store) => store,
@@ -47,7 +47,7 @@ impl HttpsConnector<HttpConnector> {
                 }
             };
         }
-        #[cfg(feature = "webpki-roots")] 
+        #[cfg(feature = "webpki-roots")]
         {
             config
                 .root_store
@@ -73,7 +73,7 @@ impl<T> fmt::Debug for HttpsConnector<T> {
 
 impl<H, C> From<(H, C)> for HttpsConnector<H>
 where
-    C: Into<Arc<ClientConfig>> 
+    C: Into<Arc<ClientConfig>>
 {
     fn from((http, cfg): (H, C)) -> Self {
         HttpsConnector {
@@ -119,7 +119,13 @@ where
             f.boxed()
         } else {
             let cfg = self.tls_config.clone();
-            let hostname = dst.host().unwrap_or_default().to_string();
+            let hostname = dst.host().unwrap_or_default();
+            let hostname = if hostname.as_bytes()[0] == b'[' {
+                &hostname[1..hostname.len() - 1]
+            } else {
+                hostname
+            };
+            let hostname = hostname.to_string();
             let connecting_future = self.http.call(dst);
 
             let f = async move {
