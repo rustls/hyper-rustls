@@ -12,6 +12,8 @@ By default clients verify certificates using the `rustls-native-certs` crate, wh
 the platform's root CAs.
 
 # Release history
+- 0.21.0 (2020-07-05):
+  * Update dependencies.
 - 0.20.0 (2020-02-24):
   * Use newer rustls-native-certs which works in presence of invalid certificates.
   * Update dependencies.
