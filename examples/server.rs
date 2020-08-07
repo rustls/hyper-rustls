@@ -5,10 +5,7 @@
 //! hyper will automatically use HTTP/2 if a client starts talking HTTP/2,
 //! otherwise HTTP/1.1 will be used.
 use core::task::{Context, Poll};
-use futures_util::{
-    future::TryFutureExt,
-    stream::{Stream, StreamExt, TryStreamExt},
-};
+use futures_util::stream::{Stream, StreamExt};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use rustls::internal::pemfile;
@@ -58,18 +55,28 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     // Create a TCP listener via tokio.
     let mut tcp = TcpListener::bind(&addr).await?;
-    let tls_acceptor = TlsAcceptor::from(tls_cfg);
+    let tls_acceptor = &TlsAcceptor::from(tls_cfg);
     // Prepare a long-running future stream to accept and serve cients.
     let incoming_tls_stream = tcp
         .incoming()
-        .map_err(|e| error(format!("Incoming failed: {:?}", e)))
-        .and_then(move |s| {
-            tls_acceptor.accept(s).map_err(|e| {
-                println!("[!] Voluntary server halt due to client-connection error...");
-                // Errors could be handled here, instead of server aborting.
-                // Ok(None)
-                error(format!("TLS Error: {:?}", e))
-            })
+        .filter_map(move |s| async move {
+            let client = match s {
+                Ok(x) => x,
+                Err(e) => {
+                    println!("Failed to accept a client, should probably back off");
+                    return Some(Err(e));
+                }
+            };
+            match tls_acceptor.accept(client).await {
+                Ok(x) => Some(Ok(x)),
+                Err(e) => {
+                    println!(
+                        "[!] Voluntary server halt due to client-connection error...: {}",
+                        e
+                    );
+                    Some(Err(e)) // Errors can be handled here, make `None` to filter out and prevent server abort
+                }
+            }
         })
         .boxed();
 
