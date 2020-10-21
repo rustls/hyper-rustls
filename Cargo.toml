@@ -10,7 +10,7 @@ homepage = "https://github.com/ctz/hyper-rustls"
 repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
-bytes = "0.5"
+bytes = "0.6"
 log = "0.4.4"
 ct-logs = { version = "^0.7", optional = true }
 futures-util = "0.3.1"
