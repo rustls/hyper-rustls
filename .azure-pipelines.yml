@@ -21,7 +21,7 @@ jobs:
     - template: admin/pipelines/cargo-steps.yml
 - job: MacOS
   pool:
-    vmImage: macOS-10.13
+    vmImage: macOS-10.14
   steps:
     - template: admin/pipelines/rustup.yml
     - template: admin/pipelines/cargo-steps.yml
