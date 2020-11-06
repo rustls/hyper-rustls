@@ -4,10 +4,11 @@
 //! Certificate and private key are hardcoded to sample files.
 //! hyper will automatically use HTTP/2 if a client starts talking HTTP/2,
 //! otherwise HTTP/1.1 will be used.
+use async_stream::stream;
 use core::task::{Context, Poll};
 use futures_util::{
     future::TryFutureExt,
-    stream::{Stream, StreamExt, TryStreamExt},
+    stream::Stream,
 };
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
@@ -57,25 +58,24 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     };
 
     // Create a TCP listener via tokio.
-    let mut tcp = TcpListener::bind(&addr).await?;
+    let tcp = TcpListener::bind(&addr).await?;
     let tls_acceptor = TlsAcceptor::from(tls_cfg);
     // Prepare a long-running future stream to accept and serve clients.
-    let incoming_tls_stream = tcp
-        .incoming()
-        .map_err(|e| error(format!("Incoming failed: {:?}", e)))
-        .and_then(move |s| {
-            tls_acceptor.accept(s).map_err(|e| {
+    let incoming_tls_stream = stream! {
+        loop {
+            let (socket, _) = tcp.accept().await?;
+            let stream = tls_acceptor.accept(socket).map_err(|e| {
                 println!("[!] Voluntary server halt due to client-connection error...");
                 // Errors could be handled here, instead of server aborting.
                 // Ok(None)
                 error(format!("TLS Error: {:?}", e))
-            })
-        })
-        .boxed();
-
+            });
+            yield stream.await;
+        }
+    };
     let service = make_service_fn(|_| async { Ok::<_, io::Error>(service_fn(echo)) });
     let server = Server::builder(HyperAcceptor {
-        acceptor: incoming_tls_stream,
+        acceptor: Box::pin(incoming_tls_stream),
     })
     .serve(service);
 
