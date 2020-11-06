@@ -1,14 +1,13 @@
 // Copied from hyperium/hyper-tls#62e3376/src/stream.rs
 use std::fmt;
 use std::io;
-use std::mem::MaybeUninit;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use hyper::client::connect::{Connected, Connection};
 
 use rustls::Session;
-use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio_rustls::client::TlsStream;
 
 /// A stream that might be protected with TLS.
@@ -58,19 +57,11 @@ impl<T> From<TlsStream<T>> for MaybeHttpsStream<T> {
 
 impl<T: AsyncRead + AsyncWrite + Unpin> AsyncRead for MaybeHttpsStream<T> {
     #[inline]
-    unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [MaybeUninit<u8>]) -> bool {
-        match self {
-            MaybeHttpsStream::Http(s) => s.prepare_uninitialized_buffer(buf),
-            MaybeHttpsStream::Https(s) => s.prepare_uninitialized_buffer(buf),
-        }
-    }
-
-    #[inline]
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context,
-        buf: &mut [u8],
-    ) -> Poll<Result<usize, io::Error>> {
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
             MaybeHttpsStream::Http(s) => Pin::new(s).poll_read(cx, buf),
             MaybeHttpsStream::Https(s) => Pin::new(s).poll_read(cx, buf),
