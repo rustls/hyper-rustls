@@ -54,6 +54,9 @@ impl HttpsConnector<HttpConnector> {
                 .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
         }
         config.ct_logs = Some(&ct_logs::LOGS);
+        if config.root_store.is_empty() {
+            panic!("no CA certificates found");
+        }
         (http, config).into()
     }
 }
