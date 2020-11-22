@@ -59,7 +59,7 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Create a TCP listener via tokio.
     let mut tcp = TcpListener::bind(&addr).await?;
     let tls_acceptor = TlsAcceptor::from(tls_cfg);
-    // Prepare a long-running future stream to accept and serve cients.
+    // Prepare a long-running future stream to accept and serve clients.
     let incoming_tls_stream = tcp
         .incoming()
         .map_err(|e| error(format!("Incoming failed: {:?}", e)))
