@@ -29,7 +29,7 @@ tokio = { version = "0.3", features = ["io-std", "macros", "net", "stream", "rt-
 default = ["native-tokio"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
-tokio-runtime =  ["hyper/runtime", "ct-logs"]
+tokio-runtime =  ["hyper/full", "ct-logs"]
 
 [[example]]
 name = "client"
