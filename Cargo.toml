@@ -10,11 +10,10 @@ homepage = "https://github.com/ctz/hyper-rustls"
 repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
-bytes = "0.6"
 log = "0.4.4"
 ct-logs = { version = "^0.7", optional = true }
 futures-util = "0.3.1"
-hyper = { version = "0.13.0", default-features = false }
+hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false }
 rustls = "0.18"
 rustls-native-certs = { version = "0.4.0", optional = true }
 tokio = "0.3.4"
@@ -23,13 +22,14 @@ webpki = "0.21.0"
 webpki-roots = { version = "0.20", optional = true }
 
 [dev-dependencies]
-tokio = { version = "0.3", features = ["io-std", "macros", "dns", "stream"] }
+async-stream = "0.3.0"
+tokio = { version = "0.3", features = ["io-std", "macros", "net", "stream", "rt-multi-thread"] }
 
 [features]
 default = ["native-tokio"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
-tokio-runtime =  ["hyper/runtime", "ct-logs"]
+tokio-runtime =  ["hyper/full", "ct-logs"]
 
 [[example]]
 name = "client"

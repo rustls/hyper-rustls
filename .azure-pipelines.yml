@@ -1,6 +1,6 @@
 variables:
-  clippy_toolchain: 1.39.0
-  minimum_toolchain: 1.39.0
+  clippy_toolchain: 1.45.2
+  minimum_toolchain: 1.45.2
 
 resources:
   repositories:
@@ -21,7 +21,7 @@ jobs:
     - template: admin/pipelines/cargo-steps.yml
 - job: MacOS
   pool:
-    vmImage: macOS-10.13
+    vmImage: macOS-10.14
   steps:
     - template: admin/pipelines/rustup.yml
     - template: admin/pipelines/cargo-steps.yml
