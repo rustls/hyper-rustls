@@ -32,6 +32,12 @@ impl HttpsConnector<HttpConnector> {
     pub fn new() -> Self {
         let mut http = HttpConnector::new();
         http.enforce_http(false);
+        (http, Self::default_client_config()).into()
+    }
+
+    /// Constructs default `ClientConfig` which later can be used for
+    /// construction of `HttpsConnector` with custom `HttpConnector`.
+    pub fn default_client_config() -> ClientConfig {
         let mut config = ClientConfig::new();
         config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
         #[cfg(feature = "rustls-native-certs")] 
@@ -54,7 +60,7 @@ impl HttpsConnector<HttpConnector> {
                 .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
         }
         config.ct_logs = Some(&ct_logs::LOGS);
-        (http, config).into()
+        config
     }
 }
 
