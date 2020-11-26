@@ -11,15 +11,15 @@ repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
 log = "0.4.4"
-ct-logs = { version = "^0.7", optional = true }
+ct-logs = { version = "^0.8", optional = true }
 futures-util = "0.3.1"
 hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false }
-rustls = "0.18"
-rustls-native-certs = { version = "0.4.0", optional = true }
+rustls = "0.19"
+rustls-native-certs = { version = "0.5.0", optional = true }
 tokio = "0.3.4"
-tokio-rustls = "0.20.0"
+tokio-rustls = "0.21.0"
 webpki = "0.21.0"
-webpki-roots = { version = "0.20", optional = true }
+webpki-roots = { version = "0.21", optional = true }
 
 [dev-dependencies]
 async-stream = "0.3.0"
