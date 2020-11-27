@@ -13,7 +13,7 @@ repository = "https://github.com/ctz/hyper-rustls"
 log = "0.4.4"
 ct-logs = { version = "^0.8", optional = true }
 futures-util = "0.3.1"
-hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false }
+hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false, features = ["client"] }
 rustls = "0.19"
 rustls-native-certs = { version = "0.5.0", optional = true }
 tokio = "0.3.4"
