@@ -34,9 +34,13 @@ tokio-runtime =  ["hyper/full", "ct-logs"]
 [[example]]
 name = "client"
 path = "examples/client.rs"
-required-features = ["tokio-runtime"]
+required-features = ["native-tokio", "tokio-runtime"]
 
 [[example]]
 name = "server"
 path = "examples/server.rs"
 required-features = ["tokio-runtime"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
