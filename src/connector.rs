@@ -2,6 +2,7 @@ use futures_util::FutureExt;
 #[cfg(feature = "tokio-runtime")]
 use hyper::client::connect::HttpConnector;
 use hyper::{client::connect::Connection, service::Service, Uri};
+use log::warn;
 use rustls::ClientConfig;
 use std::future::Future;
 use std::pin::Pin;
@@ -11,7 +12,6 @@ use std::{fmt, io};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsConnector;
 use webpki::DNSNameRef;
-use log::warn;
 
 use crate::stream::MaybeHttpsStream;
 
@@ -24,7 +24,10 @@ pub struct HttpsConnector<T> {
     tls_config: Arc<ClientConfig>,
 }
 
-#[cfg(all(any(feature = "rustls-native-certs", feature = "webpki-roots"), feature = "tokio-runtime"))]
+#[cfg(all(
+    any(feature = "rustls-native-certs", feature = "webpki-roots"),
+    feature = "tokio-runtime"
+))]
 impl HttpsConnector<HttpConnector> {
     /// Construct a new `HttpsConnector`.
     ///
@@ -42,9 +45,7 @@ impl HttpsConnector<HttpConnector> {
                     warn!("Could not load all certificates: {:?}", err);
                     store
                 }
-                Err((None, err)) => {
-                    Err(err).expect("cannot access native cert store")
-                }
+                Err((None, err)) => Err(err).expect("cannot access native cert store"),
             };
         }
         #[cfg(feature = "webpki-roots")]
@@ -61,7 +62,10 @@ impl HttpsConnector<HttpConnector> {
     }
 }
 
-#[cfg(all(any(feature = "rustls-native-certs", feature = "webpki-roots"), feature = "tokio-runtime"))]
+#[cfg(all(
+    any(feature = "rustls-native-certs", feature = "webpki-roots"),
+    feature = "tokio-runtime"
+))]
 impl Default for HttpsConnector<HttpConnector> {
     fn default() -> Self {
         Self::new()
@@ -76,7 +80,7 @@ impl<T> fmt::Debug for HttpsConnector<T> {
 
 impl<H, C> From<(H, C)> for HttpsConnector<H>
 where
-    C: Into<Arc<ClientConfig>>
+    C: Into<Arc<ClientConfig>>,
 {
     fn from((http, cfg): (H, C)) -> Self {
         HttpsConnector {
