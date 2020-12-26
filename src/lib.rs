@@ -18,7 +18,7 @@
 //! let res = rt.block_on(client.get(url)).unwrap();
 //! assert_eq!(res.status(), StatusCode::OK);
 //! # }
-//! # #[cfg(not(feature = "tokio-runtime"))]
+//! # #[cfg(not(all(feature = "rustls-native-certs", feature = "tokio-runtime")))]
 //! # fn main() {}
 //! ```
 

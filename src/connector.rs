@@ -2,7 +2,6 @@ use futures_util::FutureExt;
 #[cfg(feature = "tokio-runtime")]
 use hyper::client::connect::HttpConnector;
 use hyper::{client::connect::Connection, service::Service, Uri};
-use log::warn;
 use rustls::ClientConfig;
 use std::future::Future;
 use std::pin::Pin;
@@ -37,7 +36,7 @@ impl HttpsConnector<HttpConnector> {
         config.root_store = match rustls_native_certs::load_native_certs() {
             Ok(store) => store,
             Err((Some(store), err)) => {
-                warn!("Could not load all certificates: {:?}", err);
+                log::warn!("Could not load all certificates: {:?}", err);
                 store
             }
             Err((None, err)) => Err(err).expect("cannot access native cert store"),
