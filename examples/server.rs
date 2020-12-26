@@ -6,10 +6,7 @@
 //! otherwise HTTP/1.1 will be used.
 use async_stream::stream;
 use core::task::{Context, Poll};
-use futures_util::{
-    future::TryFutureExt,
-    stream::Stream,
-};
+use futures_util::{future::TryFutureExt, stream::Stream};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use rustls::internal::pemfile;
