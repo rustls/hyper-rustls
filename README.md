@@ -8,10 +8,11 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 
 [API Documentation](https://docs.rs/hyper-rustls/)
 
-By default clients verify certificates using the `rustls-native-certs` crate, which uses
-the platform's root CAs.
-
 # Release history
+- 0.22.0 (2020-12-26):
+  * Use tokio 1.0, hyper 0.14, and rustls 0.19. Thanks to @paolobarbolini and @messense.
+  * Rework how the certificate store is chosen: now by an explicit API rather than
+    implicitly by crate features. Thanks to @djc.
 - 0.21.0 (2020-07-05):
   * Update dependencies.
 - 0.20.0 (2020-02-24):
