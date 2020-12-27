@@ -22,6 +22,8 @@
 //! # fn main() {}
 //! ```
 
+#![feature(doc_cfg)]
+
 mod connector;
 mod stream;
 
