@@ -5,7 +5,7 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 [![Build Status](https://github.com/ctz/hyper-rustls/workflows/hyper-rustls/badge.svg)](https://github.com/ctz/hyper-rustls/actions)
 [![Build Status](https://dev.azure.com/ctz99/ctz/_apis/build/status/ctz.hyper-rustls?branchName=master)](https://dev.azure.com/ctz99/ctz/_build/latest?definitionId=4&branchName=master)
 [![Crate](https://img.shields.io/crates/v/hyper-rustls.svg)](https://crates.io/crates/hyper-rustls)
-[![Documentation](https://docs.rs/rustls/badge.svg)](https://docs.rs/rustls/)
+[![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 
 # Release history
 - 0.22.0 (2020-12-26):
