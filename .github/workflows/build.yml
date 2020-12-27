@@ -1,0 +1,50 @@
+on: [push, pull_request]
+name: hyper-rustls
+
+jobs:
+  build:
+    name: "Build and test"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # test a bunch of toolchains on ubuntu
+        rust:
+          - stable
+          - beta
+          - nightly
+        os: [ubuntu-18.04]
+        # but only stable on macos/windows (slower platforms)
+        include:
+          - os: macos-latest
+            rust: stable
+          - os: windows-latest
+            rust: stable
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install ${{ matrix.rust }} toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+
+      - name: cargo test (debug; default features)
+        run: cargo test
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: cargo test (debug; native-tokio only)
+        run: cargo test --no-default-features --features native-tokio
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: cargo test (debug; webpki-tokio only)
+        run: cargo test --no-default-features --features webpki-tokio
+
+      - name: cargo test (debug; no default features)
+        run: cargo test --no-default-features
+
+      - name: cargo test (release)
+        run: cargo test --release
+
