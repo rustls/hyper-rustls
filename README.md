@@ -8,6 +8,8 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 [![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 
 # Release history
+- 0.22.1 (2020-12-27):
+  * Fixing docs.rs build; no other changes.
 - 0.22.0 (2020-12-26):
   * Use tokio 1.0, hyper 0.14, and rustls 0.19. Thanks to @paolobarbolini and @messense.
   * Rework how the certificate store is chosen: now by an explicit API rather than

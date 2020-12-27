@@ -22,7 +22,7 @@
 //! # fn main() {}
 //! ```
 
-#![feature(doc_cfg)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod connector;
 mod stream;
