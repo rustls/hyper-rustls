@@ -1,4 +1,3 @@
-use futures_util::FutureExt;
 #[cfg(feature = "tokio-runtime")]
 use hyper::client::connect::HttpConnector;
 use hyper::{client::connect::Connection, service::Service, Uri};
@@ -119,7 +118,7 @@ where
 
                 Ok(MaybeHttpsStream::Http(tcp))
             };
-            f.boxed()
+            Box::pin(f)
         } else {
             let cfg = self.tls_config.clone();
             let hostname = dst.host().unwrap_or_default().to_string();
@@ -136,7 +135,7 @@ where
                     .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
                 Ok(MaybeHttpsStream::Https(tls))
             };
-            f.boxed()
+            Box::pin(f)
         }
     }
 }
