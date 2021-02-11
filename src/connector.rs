@@ -65,10 +65,6 @@ impl HttpsConnector<HttpConnector> {
         {
             config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
         }
-        #[cfg(not(feature = "http2"))]
-        {
-            config.alpn_protocols = vec![b"http/1.1".to_vec()];
-        }
 
         config.ct_logs = Some(&ct_logs::LOGS);
         (http, config).into()
