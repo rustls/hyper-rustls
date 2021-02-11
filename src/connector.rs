@@ -22,6 +22,30 @@ pub struct HttpsConnector<T> {
     tls_config: Arc<ClientConfig>,
 }
 
+#[cfg(all(
+    any(feature = "rustls-native-certs", feature = "webpki-roots"),
+    feature = "tokio-runtime"
+))]
+impl HttpsConnector<HttpConnector> {
+    /// Construct a new `HttpsConnector` using the OS root store
+    #[cfg(feature = "rustls-native-certs")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
+    pub fn with_native_roots() -> Self {
+        HttpsConnectorBuilder::with_native_roots()
+            .enable_cert_transparency()
+            .build()
+    }
+
+    /// Construct a new `HttpsConnector` using the `webpki_roots`
+    #[cfg(feature = "webpki-roots")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
+    pub fn with_webpki_roots() -> Self {
+        HttpsConnectorBuilder::with_webpki_roots()
+            .enable_cert_transparency()
+            .build()
+    }
+}
+
 /// A builder that will configure an `HttpsConnector`
 ///
 /// This builder ensures configuration is consistent.
