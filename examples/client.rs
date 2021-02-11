@@ -55,7 +55,7 @@ async fn run_client() -> io::Result<()> {
             hyper_rustls::HttpsConnector::from((http, tls))
         }
         // Default HTTPS connector.
-        None => hyper_rustls::HttpsConnector::with_native_roots(),
+        None => hyper_rustls::HttpsConnectorBuilder::with_native_roots().build(),
     };
 
     // Build the hyper client from the HTTPS connector.

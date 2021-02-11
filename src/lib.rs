@@ -11,7 +11,7 @@
 //!
 //! let mut rt = tokio::runtime::Runtime::new().unwrap();
 //! let url = ("https://hyper.rs").parse().unwrap();
-//! let https = hyper_rustls::HttpsConnector::with_native_roots();
+//! let https = hyper_rustls::HttpsConnectorBuilder::with_native_roots().build();
 //!
 //! let client: Client<_, hyper::Body> = Client::builder().build(https);
 //!
@@ -27,5 +27,5 @@
 mod connector;
 mod stream;
 
-pub use crate::connector::HttpsConnector;
+pub use crate::connector::{HttpsConnector, HttpsConnectorBuilder};
 pub use crate::stream::MaybeHttpsStream;

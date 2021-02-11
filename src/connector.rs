@@ -22,12 +22,18 @@ pub struct HttpsConnector<T> {
     tls_config: Arc<ClientConfig>,
 }
 
-#[cfg(all(
-    any(feature = "rustls-native-certs", feature = "webpki-roots"),
-    feature = "tokio-runtime"
-))]
-impl HttpsConnector<HttpConnector> {
-    /// Construct a new `HttpsConnector` using the OS root store
+/// A builder that will configure an `HttpsConnector`
+///
+/// This builder ensures configuration is consistent.
+///
+/// An alternative way of building an `HttpsConnector`
+/// is to use From/Into.
+pub struct HttpsConnectorBuilder {
+    tls_config: ClientConfig,
+}
+
+impl HttpsConnectorBuilder {
+    /// Configure using the OS root store for certificate trust
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     pub fn with_native_roots() -> Self {
@@ -43,10 +49,17 @@ impl HttpsConnector<HttpConnector> {
         if config.root_store.is_empty() {
             panic!("no CA certificates found");
         }
-        Self::build(config)
+        Self { tls_config: config }
     }
 
-    /// Construct a new `HttpsConnector` using the `webpki_roots`
+    /// Configure using a custom `rustls::RootCertStore` for certificate trust
+    pub fn with_custom_roots(roots: rustls::RootCertStore) -> Self {
+        let mut config = ClientConfig::new();
+        config.root_store = roots;
+        Self { tls_config: config }
+    }
+
+    /// Configure using `webpki_roots` for certificate trust
     #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     pub fn with_webpki_roots() -> Self {
@@ -54,16 +67,36 @@ impl HttpsConnector<HttpConnector> {
         config
             .root_store
             .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
-        Self::build(config)
+        Self { tls_config: config }
     }
 
-    fn build(mut config: ClientConfig) -> Self {
+    /// Enable HTTP2
+    /// This advertises http2 support in ALPN
+    #[cfg(feature = "http2")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "http2")))]
+    pub fn enable_http2(mut self) -> Self {
+        self.tls_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        self
+    }
+
+    /// Enable certificate transparency
+    #[cfg(feature = "ct-logs")]
+    pub fn enable_cert_transparency(mut self) -> Self {
+        self.tls_config.ct_logs = Some(&ct_logs::LOGS);
+        self
+    }
+
+    /// Built an HttpsConnector<HttpConnector>
+    #[cfg(feature = "tokio-runtime")]
+    pub fn build(self) -> HttpsConnector<HttpConnector> {
         let mut http = HttpConnector::new();
         http.enforce_http(false);
+        self.wrap_connector(http)
+    }
 
-        config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
-        config.ct_logs = Some(&ct_logs::LOGS);
-        (http, config).into()
+    /// Built an HttpsConnector with a custom lower-level connector
+    pub fn wrap_connector<H>(self, conn: H) -> HttpsConnector<H> {
+        (conn, self.tls_config).into()
     }
 }
 

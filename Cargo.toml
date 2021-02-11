@@ -28,9 +28,10 @@ futures-util = { version = "0.3.1", default-features = false }
 
 [features]
 default = ["native-tokio"]
+http2 = ["hyper/http2"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
-tokio-runtime =  ["hyper/runtime", "ct-logs"]
+tokio-runtime =  ["hyper/tcp", "ct-logs"]
 
 [[example]]
 name = "client"
