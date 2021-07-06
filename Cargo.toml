@@ -11,14 +11,15 @@ repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
 log = "0.4.4"
-ct-logs = { version = "^0.8", optional = true }
+ct-logs = { version = "^0.9", optional = true }
 hyper = { version = "0.14", default-features = false, features = ["client", "http1"] }
-rustls = "0.19"
-rustls-native-certs = { version = "0.5.0", optional = true }
+rustls = { git = "https://github.com/ctz/rustls" }
+rustls-native-certs = { git = "https://github.com/djc/rustls-native-certs", rev = "6116ef59f5825b0ec74a38807635a70433d68c27", optional = true }
+rustls-pemfile = { version = "0.2.1" }
 tokio = "1.0"
-tokio-rustls = "0.22"
-webpki = "0.21.0"
-webpki-roots = { version = "0.21", optional = true }
+tokio-rustls = { version = "0.23", git = "https://github.com/tokio-rs/tls", rev = "b433932bf1025960e5b99f353cf8eee4ce2f08f3" }
+webpki = "0.22.0"
+webpki-roots = { version = "0.22", optional = true }
 
 [dev-dependencies]
 async-stream = "0.3.0"
@@ -47,3 +48,6 @@ required-features = ["tokio-runtime"]
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[patch."crates-io"]
+rustls = { git = "https://github.com/ctz/rustls" }

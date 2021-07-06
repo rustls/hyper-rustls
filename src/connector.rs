@@ -1,15 +1,16 @@
-#[cfg(feature = "tokio-runtime")]
-use hyper::client::connect::HttpConnector;
-use hyper::{client::connect::Connection, service::Service, Uri};
-use rustls::ClientConfig;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::{fmt, io};
+use std::convert::TryFrom;
+
+#[cfg(feature = "tokio-runtime")]
+use hyper::client::connect::HttpConnector;
+use hyper::{client::connect::Connection, service::Service, Uri};
+use rustls::{ClientConfig, RootCertStore};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsConnector;
-use webpki::DNSNameRef;
 
 use crate::stream::MaybeHttpsStream;
 
@@ -32,30 +33,30 @@ impl HttpsConnector<HttpConnector> {
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     pub fn with_native_roots() -> Self {
-        let mut config = ClientConfig::new();
-        config.root_store = match rustls_native_certs::load_native_certs() {
-            Ok(store) => store,
-            Err((Some(store), err)) => {
-                log::warn!("Could not load all certificates: {:?}", err);
-                store
-            }
-            Err((None, err)) => Err(err).expect("cannot access native cert store"),
+        let certs = match rustls_native_certs::load_native_certs() {
+            Ok(certs) => certs,
+            Err(err) => Err(err).expect("cannot access native cert store"),
         };
-        if config.root_store.is_empty() {
+
+        if certs.is_empty() {
             panic!("no CA certificates found");
         }
-        Self::build(config)
+
+        let mut roots = RootCertStore::empty();
+        for cert in certs {
+            roots.add_parsable_certificates(&[cert.0]);
+        }
+
+        Self::build(roots)
     }
 
     /// Construct a new `HttpsConnector` using the `webpki_roots`
     #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     pub fn with_webpki_roots() -> Self {
-        let mut config = ClientConfig::new();
-        config
-            .root_store
-            .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
-        Self::build(config)
+        let mut roots = rustls::RootCertStore::empty();
+        roots.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0);
+        Self::build(roots)
     }
 
     /// Force the use of HTTPS when connecting.
@@ -80,7 +81,6 @@ impl HttpsConnector<HttpConnector> {
             config.alpn_protocols.push(b"http/1.1".to_vec());
         }
 
-        config.ct_logs = Some(&ct_logs::LOGS);
         (http, config).into()
     }
 }
@@ -152,7 +152,7 @@ where
             let f = async move {
                 let tcp = connecting_future.await.map_err(Into::into)?;
                 let connector = TlsConnector::from(cfg);
-                let dnsname = DNSNameRef::try_from_ascii_str(&hostname)
+                let dnsname = rustls::ServerName::try_from(hostname.as_str())
                     .map_err(|_| io::Error::new(io::ErrorKind::Other, "invalid dnsname"))?;
                 let tls = connector
                     .connect(dnsname, tcp)
