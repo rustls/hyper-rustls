@@ -6,9 +6,9 @@ use std::task::{Context, Poll};
 
 use hyper::client::connect::{Connected, Connection};
 
-use rustls::Session;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio_rustls::client::TlsStream;
+use tokio_rustls::rustls::{Connection as _};
 
 /// A stream that might be protected with TLS.
 pub enum MaybeHttpsStream<T> {
@@ -24,7 +24,7 @@ impl<T: AsyncRead + AsyncWrite + Connection + Unpin> Connection for MaybeHttpsSt
             MaybeHttpsStream::Http(s) => s.connected(),
             MaybeHttpsStream::Https(s) => {
                 let (tcp, tls) = s.get_ref();
-                if tls.get_alpn_protocol() == Some(b"h2") {
+                if tls.alpn_protocol() == Some(b"h2") {
                     tcp.connected().negotiated_h2()
                 } else {
                     tcp.connected()

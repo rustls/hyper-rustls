@@ -3,6 +3,8 @@
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
 use hyper::{body::to_bytes, client, Body, Uri};
+use rustls::RootCertStore;
+
 use std::str::FromStr;
 use std::{env, fs, io};
 
@@ -46,11 +48,16 @@ async fn run_client() -> io::Result<()> {
             // Build an HTTP connector which supports HTTPS too.
             let mut http = client::HttpConnector::new();
             http.enforce_http(false);
-            // Build a TLS client, using the custom CA store for lookups.
-            let mut tls = rustls::ClientConfig::new();
-            tls.root_store
-                .add_pem_file(rd)
+            // Read trust roots
+            let certs = rustls_pemfile::certs(rd)
                 .map_err(|_| error("failed to load custom CA store".into()))?;
+            let mut roots = RootCertStore::empty();
+            roots.add_parsable_certificates(&certs);
+            // Build a TLS client, using the custom CA store for lookups.
+            let tls = rustls::ClientConfig::builder()
+                .with_safe_defaults()
+                .with_root_certificates(roots, &ct_logs::LOGS)
+                .with_no_client_auth();
             // Join the above part into an HTTPS connector.
             hyper_rustls::HttpsConnector::from((http, tls))
         }
