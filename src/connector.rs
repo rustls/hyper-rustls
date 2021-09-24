@@ -18,6 +18,7 @@ type BoxError = Box<dyn std::error::Error + Send + Sync>;
 /// A Connector for the `https` scheme.
 #[derive(Clone)]
 pub struct HttpsConnector<T> {
+    force_https: bool,
     http: T,
     tls_config: Arc<ClientConfig>,
 }
@@ -57,6 +58,13 @@ impl HttpsConnector<HttpConnector> {
         Self::build(config)
     }
 
+    /// Force the use of HTTPS when connecting.
+    ///
+    /// If a URL is not `https` when connecting, an error is returned. Disabled by default.
+    pub fn https_only(&mut self, enable: bool) {
+        self.force_https = enable;
+    }
+
     fn build(mut config: ClientConfig) -> Self {
         let mut http = HttpConnector::new();
         http.enforce_http(false);
@@ -79,7 +87,9 @@ impl HttpsConnector<HttpConnector> {
 
 impl<T> fmt::Debug for HttpsConnector<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("HttpsConnector").finish()
+        f.debug_struct("HttpsConnector")
+            .field("force_https", &self.force_https)
+            .finish()
     }
 }
 
@@ -89,6 +99,7 @@ where
 {
     fn from((http, cfg): (H, C)) -> Self {
         HttpsConnector {
+            force_https: false,
             http,
             tls_config: cfg.into(),
         }
@@ -120,7 +131,11 @@ where
     fn call(&mut self, dst: Uri) -> Self::Future {
         let is_https = dst.scheme_str() == Some("https");
 
-        if !is_https {
+        if !is_https && self.force_https {
+            // Early abort if HTTPS is forced but can't be used
+            let err = io::Error::new(io::ErrorKind::Other, "https required but URI was not https");
+            Box::pin(async move { Err(err.into()) })
+        } else if !is_https {
             let connecting_future = self.http.call(dst);
 
             let f = async move {
