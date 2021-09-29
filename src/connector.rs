@@ -61,7 +61,17 @@ impl HttpsConnector<HttpConnector> {
         let mut http = HttpConnector::new();
         http.enforce_http(false);
 
-        config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        config.alpn_protocols.clear();
+        #[cfg(feature = "http2")]
+        {
+            config.alpn_protocols.push(b"h2".to_vec());
+        }
+
+        #[cfg(feature = "http1")]
+        {
+            config.alpn_protocols.push(b"http/1.1".to_vec());
+        }
+
         config.ct_logs = Some(&ct_logs::LOGS);
         (http, config).into()
     }

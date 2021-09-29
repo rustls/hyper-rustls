@@ -27,7 +27,9 @@ hyper = { version = "0.14", features = ["full"] }
 futures-util = { version = "0.3.1", default-features = false }
 
 [features]
-default = ["native-tokio"]
+default = ["native-tokio", "http1"]
+http1 = ["hyper/http1"]
+http2 = ["hyper/http2"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
 tokio-runtime =  ["hyper/runtime", "ct-logs"]
