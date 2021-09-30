@@ -8,7 +8,6 @@ use hyper::client::connect::{Connected, Connection};
 
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio_rustls::client::TlsStream;
-use tokio_rustls::rustls::{Connection as _};
 
 /// A stream that might be protected with TLS.
 pub enum MaybeHttpsStream<T> {

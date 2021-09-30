@@ -24,8 +24,10 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+mod config;
 mod connector;
 mod stream;
 
+pub use crate::config::ConfigBuilderExt;
 pub use crate::connector::HttpsConnector;
 pub use crate::stream::MaybeHttpsStream;

@@ -3,6 +3,7 @@
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
 use hyper::{body::to_bytes, client, Body, Uri};
+use hyper_rustls::ConfigBuilderExt;
 use rustls::RootCertStore;
 
 use std::str::FromStr;
@@ -42,28 +43,31 @@ async fn run_client() -> io::Result<()> {
         None => None,
     };
 
-    // Prepare the HTTPS connector.
-    let https = match ca {
+    // Prepare the TLS client config
+    let tls = match ca {
         Some(ref mut rd) => {
-            // Build an HTTP connector which supports HTTPS too.
-            let mut http = client::HttpConnector::new();
-            http.enforce_http(false);
             // Read trust roots
             let certs = rustls_pemfile::certs(rd)
                 .map_err(|_| error("failed to load custom CA store".into()))?;
             let mut roots = RootCertStore::empty();
             roots.add_parsable_certificates(&certs);
             // Build a TLS client, using the custom CA store for lookups.
-            let tls = rustls::ClientConfig::builder()
+            rustls::ClientConfig::builder()
                 .with_safe_defaults()
-                .with_root_certificates(roots, &ct_logs::LOGS)
-                .with_no_client_auth();
-            // Join the above part into an HTTPS connector.
-            hyper_rustls::HttpsConnector::from((http, tls))
+                .with_root_certificates(roots)
+                .with_no_client_auth()
         }
-        // Default HTTPS connector.
-        None => hyper_rustls::HttpsConnector::with_native_roots(),
+        None => rustls::ClientConfig::builder()
+            .with_safe_defaults()
+            .with_native_roots(),
     };
+
+    // Build an HTTP connector which supports HTTPS too.
+    let mut http = client::HttpConnector::new();
+    http.enforce_http(false);
+
+    // Join the above parts into an HTTPS connector.
+    let https = hyper_rustls::HttpsConnector::from((http, tls));
 
     // Build the hyper client from the HTTPS connector.
     let client: client::Client<_, hyper::Body> = client::Client::builder().build(https);
