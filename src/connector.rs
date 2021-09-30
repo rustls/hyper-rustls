@@ -1,14 +1,14 @@
+use std::convert::TryFrom;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::{fmt, io};
-use std::convert::TryFrom;
 
 #[cfg(feature = "tokio-runtime")]
 use hyper::client::connect::HttpConnector;
 use hyper::{client::connect::Connection, service::Service, Uri};
-use rustls::{ClientConfig, RootCertStore};
+use rustls::ClientConfig;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsConnector;
 
@@ -29,59 +29,11 @@ pub struct HttpsConnector<T> {
     feature = "tokio-runtime"
 ))]
 impl HttpsConnector<HttpConnector> {
-    /// Construct a new `HttpsConnector` using the OS root store
-    #[cfg(feature = "rustls-native-certs")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
-    pub fn with_native_roots() -> Self {
-        let certs = match rustls_native_certs::load_native_certs() {
-            Ok(certs) => certs,
-            Err(err) => Err(err).expect("cannot access native cert store"),
-        };
-
-        if certs.is_empty() {
-            panic!("no CA certificates found");
-        }
-
-        let mut roots = RootCertStore::empty();
-        for cert in certs {
-            roots.add_parsable_certificates(&[cert.0]);
-        }
-
-        Self::build(roots)
-    }
-
-    /// Construct a new `HttpsConnector` using the `webpki_roots`
-    #[cfg(feature = "webpki-roots")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
-    pub fn with_webpki_roots() -> Self {
-        let mut roots = rustls::RootCertStore::empty();
-        roots.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0);
-        Self::build(roots)
-    }
-
     /// Force the use of HTTPS when connecting.
     ///
     /// If a URL is not `https` when connecting, an error is returned. Disabled by default.
     pub fn https_only(&mut self, enable: bool) {
         self.force_https = enable;
-    }
-
-    fn build(mut config: ClientConfig) -> Self {
-        let mut http = HttpConnector::new();
-        http.enforce_http(false);
-
-        config.alpn_protocols.clear();
-        #[cfg(feature = "http2")]
-        {
-            config.alpn_protocols.push(b"h2".to_vec());
-        }
-
-        #[cfg(feature = "http1")]
-        {
-            config.alpn_protocols.push(b"http/1.1".to_vec());
-        }
-
-        (http, config).into()
     }
 }
 

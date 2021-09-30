@@ -4,7 +4,6 @@
 //! Certificate and private key are hardcoded to sample files.
 //! hyper will automatically use HTTP/2 if a client starts talking HTTP/2,
 //! otherwise HTTP/1.1 will be used.
-use std::pin::Pin;
 use std::{env, fs, io, sync};
 
 use async_stream::stream;
