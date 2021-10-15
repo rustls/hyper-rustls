@@ -51,23 +51,23 @@ async fn run_client() -> io::Result<()> {
                 .map_err(|_| error("failed to load custom CA store".into()))?;
             let mut roots = RootCertStore::empty();
             roots.add_parsable_certificates(&certs);
-            // Build a TLS client, using the custom CA store for lookups.
+            // TLS client config using the custom CA store for lookups
             rustls::ClientConfig::builder()
                 .with_safe_defaults()
                 .with_root_certificates(roots)
                 .with_no_client_auth()
         }
+        // Default TLS client config with native roots
         None => rustls::ClientConfig::builder()
             .with_safe_defaults()
             .with_native_roots(),
     };
-
-    // Build an HTTP connector which supports HTTPS too.
-    let mut http = client::HttpConnector::new();
-    http.enforce_http(false);
-
-    // Join the above parts into an HTTPS connector.
-    let https = hyper_rustls::HttpsConnector::from((http, tls));
+    // Prepare the HTTPS connector
+    let https = hyper_rustls::HttpsConnectorBuilder::new()
+        .with_tls_config(tls)
+        .https_or_http()
+        .enable_http1()
+        .build();
 
     // Build the hyper client from the HTTPS connector.
     let client: client::Client<_, hyper::Body> = client::Client::builder().build(https);

@@ -11,7 +11,8 @@ repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
 log = "0.4.4"
-hyper = { version = "0.14", default-features = false, features = ["client", "http1"] }
+http = "0.2"
+hyper = { version = "0.14", default-features = false, features = ["client"] }
 rustls = "0.20"
 rustls-native-certs = { version = "0.6", optional = true }
 tokio = "1.0"
