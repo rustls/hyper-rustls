@@ -34,6 +34,18 @@ mod config;
 mod connector;
 mod stream;
 
+#[cfg(feature = "logging")]
+mod log {
+    pub use log::{debug, trace};
+}
+
+#[cfg(not(feature = "logging"))]
+mod log {
+    macro_rules! trace    ( ($($tt:tt)*) => {{}} );
+    macro_rules! debug    ( ($($tt:tt)*) => {{}} );
+    pub(crate) use {debug, trace};
+}
+
 pub use crate::config::ConfigBuilderExt;
 pub use crate::connector::builder::ConnectorBuilder as HttpsConnectorBuilder;
 pub use crate::connector::HttpsConnector;

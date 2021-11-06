@@ -21,6 +21,7 @@ pub trait ConfigBuilderExt {
 impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
+    #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
     fn with_native_roots(self) -> ClientConfig {
         let mut roots = rustls::RootCertStore::empty();
         let mut valid_count = 0;
@@ -32,13 +33,13 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
             match roots.add(&cert) {
                 Ok(_) => valid_count += 1,
                 Err(err) => {
-                    log::trace!("invalid cert der {:?}", cert.0);
-                    log::debug!("certificate parsing failed: {:?}", err);
+                    crate::log::trace!("invalid cert der {:?}", cert.0);
+                    crate::log::debug!("certificate parsing failed: {:?}", err);
                     invalid_count += 1
                 }
             }
         }
-        log::debug!(
+        crate::log::debug!(
             "with_native_roots processed {} valid and {} invalid certs",
             valid_count, invalid_count
         );
