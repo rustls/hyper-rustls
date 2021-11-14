@@ -1,3 +1,4 @@
+use rustls::client::WantsTransparencyPolicyOrClientCert;
 use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 
 /// Methods for configuring roots
@@ -9,20 +10,20 @@ pub trait ConfigBuilderExt {
     /// rustls-native-certs
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
-    fn with_native_roots(self) -> ClientConfig;
+    fn with_native_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>;
 
     /// This configures the webpki roots, which are Mozilla's set of
     /// trusted roots as packaged by webpki-roots.
     #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
-    fn with_webpki_roots(self) -> ClientConfig;
+    fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>;
 }
 
 impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
-    fn with_native_roots(self) -> ClientConfig {
+    fn with_native_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert> {
         let mut roots = rustls::RootCertStore::empty();
         let mut valid_count = 0;
         let mut invalid_count = 0;
@@ -41,16 +42,17 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
         }
         crate::log::debug!(
             "with_native_roots processed {} valid and {} invalid certs",
-            valid_count, invalid_count
+            valid_count,
+            invalid_count
         );
         assert!(!roots.is_empty(), "no CA certificates found");
 
-        self.with_root_certificates(roots).with_no_client_auth()
+        self.with_root_certificates(roots)
     }
 
     #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
-    fn with_webpki_roots(self) -> ClientConfig {
+    fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert> {
         let mut roots = rustls::RootCertStore::empty();
         roots.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0.iter().map(|ta| {
             rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
@@ -59,6 +61,6 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
                 ta.name_constraints,
             )
         }));
-        self.with_root_certificates(roots).with_no_client_auth()
+        self.with_root_certificates(roots)
     }
 }
