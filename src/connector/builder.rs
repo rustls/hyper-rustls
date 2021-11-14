@@ -58,7 +58,8 @@ impl ConnectorBuilder<WantsTlsConfig> {
         self.with_tls_config(
             ClientConfig::builder()
                 .with_safe_defaults()
-                .with_native_roots(),
+                .with_native_roots()
+                .with_no_client_auth(),
         )
     }
 
@@ -74,7 +75,8 @@ impl ConnectorBuilder<WantsTlsConfig> {
         self.with_tls_config(
             ClientConfig::builder()
                 .with_safe_defaults()
-                .with_webpki_roots(),
+                .with_webpki_roots()
+                .with_no_client_auth(),
         )
     }
 }
