@@ -37,12 +37,14 @@ impl ConnectorBuilder<WantsTlsConfig> {
 
     /// Passes a rustls [`ClientConfig`] to configure the TLS connection
     ///
-    /// The [`alpn_protocols`](ClientConfig::alpn_protocols) field will be rewritten to
-    /// match the enabled schemes (see
+    /// The [`alpn_protocols`](ClientConfig::alpn_protocols) field is
+    /// required to be empty (or the function will panic) and will be
+    /// rewritten to match the enabled schemes (see
     /// [`enable_http1`](ConnectorBuilder::enable_http1),
     /// [`enable_http2`](ConnectorBuilder::enable_http2)) before the
     /// connector is built.
     pub fn with_tls_config(self, config: ClientConfig) -> ConnectorBuilder<WantsSchemes> {
+        assert!(config.alpn_protocols.is_empty());
         ConnectorBuilder(WantsSchemes { tls_config: config })
     }
 
@@ -126,8 +128,8 @@ pub struct WantsProtocols1 {
 }
 
 impl WantsProtocols1 {
-    fn wrap_connector<H>(mut self, conn: H) -> HttpsConnector<H> {
-        self.tls_config.alpn_protocols.clear();
+    fn wrap_connector<H>(self, conn: H) -> HttpsConnector<H> {
+        assert!(self.tls_config.alpn_protocols.is_empty());
         HttpsConnector {
             force_https: self.https_only,
             http: conn,
