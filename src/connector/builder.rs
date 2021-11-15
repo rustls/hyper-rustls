@@ -129,7 +129,10 @@ pub struct WantsProtocols1 {
 
 impl WantsProtocols1 {
     fn wrap_connector<H>(self, conn: H) -> HttpsConnector<H> {
-        assert!(self.tls_config.alpn_protocols.is_empty());
+        assert!(self
+            .tls_config
+            .alpn_protocols
+            .is_empty());
         HttpsConnector {
             force_https: self.https_only,
             http: conn,
