@@ -8,6 +8,9 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 [![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 
 # Release history
+- 0.23.0 (2021-11-16):
+  * Upgrade to rustls 0.20. Thanks to @g2p.
+  * Add new HttpsConnectorBuilder API. Thanks to @g2p.
 - 0.22.1 (2020-12-27):
   * Fixing docs.rs build; no other changes.
 - 0.22.0 (2020-12-26):
@@ -41,4 +44,3 @@ hyper-rustls is distributed under the following three licenses:
 These are included as LICENSE-APACHE, LICENSE-MIT and LICENSE-ISC
 respectively.  You may use this software under the terms of any
 of these licenses, at your option.
-
