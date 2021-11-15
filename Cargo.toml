@@ -1,6 +1,6 @@
 [package]
 name = "hyper-rustls"
-version = "0.22.1"
+version = "0.23.0"
 edition = "2018"
 authors = ["Joseph Birr-Pixton <jpixton@gmail.com>"]
 license = "Apache-2.0/ISC/MIT"
