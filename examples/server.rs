@@ -109,7 +109,10 @@ fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
     // Load and return certificate.
     let certs = rustls_pemfile::certs(&mut reader)
         .map_err(|_| error("failed to load certificate".into()))?;
-    Ok(certs.into_iter().map(rustls::Certificate).collect())
+    Ok(certs
+        .into_iter()
+        .map(rustls::Certificate)
+        .collect())
 }
 
 // Load private key from file.

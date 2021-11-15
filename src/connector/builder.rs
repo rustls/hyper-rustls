@@ -284,7 +284,10 @@ mod tests {
             .https_only()
             .enable_http1()
             .build();
-        assert!(connector.tls_config.alpn_protocols.is_empty());
+        assert!(connector
+            .tls_config
+            .alpn_protocols
+            .is_empty());
         let connector = HttpsConnectorBuilder::new()
             .with_tls_config(tls_config.clone())
             .https_only()

@@ -74,18 +74,25 @@ where
                 let connecting_future = self.http.call(dst);
 
                 let f = async move {
-                    let tcp = connecting_future.await.map_err(Into::into)?;
+                    let tcp = connecting_future
+                        .await
+                        .map_err(Into::into)?;
 
                     Ok(MaybeHttpsStream::Http(tcp))
                 };
                 Box::pin(f)
             } else if sch == &http::uri::Scheme::HTTPS {
                 let cfg = self.tls_config.clone();
-                let hostname = dst.host().unwrap_or_default().to_string();
+                let hostname = dst
+                    .host()
+                    .unwrap_or_default()
+                    .to_string();
                 let connecting_future = self.http.call(dst);
 
                 let f = async move {
-                    let tcp = connecting_future.await.map_err(Into::into)?;
+                    let tcp = connecting_future
+                        .await
+                        .map_err(Into::into)?;
                     let connector = TlsConnector::from(cfg);
                     let dnsname = rustls::ServerName::try_from(hostname.as_str())
                         .map_err(|_| io::Error::new(io::ErrorKind::Other, "invalid dnsname"))?;
