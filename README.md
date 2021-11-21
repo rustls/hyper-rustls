@@ -7,7 +7,7 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 [![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 
 # Release history
-- 0.23.0 (2021-11-16):
+- 0.23.0 (2021-11-21):
   * Upgrade to rustls 0.20. Thanks to @g2p.
   * Add new HttpsConnectorBuilder API. Thanks to @g2p.
   * Add the tls12, logging, http1 and http2 features. Thanks to @g2p and @marwes.
