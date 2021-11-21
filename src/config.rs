@@ -54,13 +54,18 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert> {
         let mut roots = rustls::RootCertStore::empty();
-        roots.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0.iter().map(|ta| {
-            rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
-                ta.subject,
-                ta.spki,
-                ta.name_constraints,
-            )
-        }));
+        roots.add_server_trust_anchors(
+            webpki_roots::TLS_SERVER_ROOTS
+                .0
+                .iter()
+                .map(|ta| {
+                    rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
+                        ta.subject,
+                        ta.spki,
+                        ta.name_constraints,
+                    )
+                }),
+        );
         self.with_root_certificates(roots)
     }
 }
