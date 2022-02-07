@@ -24,7 +24,7 @@ async-stream = "0.3.0"
 futures-util = { version = "0.3.1", default-features = false }
 hyper = { version = "0.14", features = ["full"] }
 rustls = { version = "0.20.1", default-features = false, features = ["tls12"] }
-rustls-pemfile = "0.2.1"
+rustls-pemfile = "0.3.0"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
