@@ -174,6 +174,19 @@ impl ConnectorBuilder<WantsProtocols1> {
         })
     }
 
+    /// Enable all HTTP versions
+    ///
+    /// For now, this enables both HTTP 1 and 2. In the future, other supported versions
+    /// will be enabled as well.
+    #[cfg(all(feature = "http1", feature = "http2"))]
+    pub fn enable_all_versions(mut self) -> ConnectorBuilder<WantsProtocols3> {
+        self.0.tls_config.alpn_protocols = vec![b"h2".to_vec()];
+        ConnectorBuilder(WantsProtocols3 {
+            inner: self.0,
+            enable_http1: true,
+        })
+    }
+
     /// Override server name for the TLS stack
     ///
     /// By default, for each connection hyper-rustls will extract host portion
