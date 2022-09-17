@@ -21,6 +21,7 @@ pub struct HttpsConnector<T> {
     force_https: bool,
     http: T,
     tls_config: Arc<rustls::ClientConfig>,
+    server_name_override: Option<String>,
 }
 
 impl<T> fmt::Debug for HttpsConnector<T> {
@@ -40,6 +41,7 @@ where
             force_https: false,
             http,
             tls_config: cfg.into(),
+            server_name_override: None,
         }
     }
 }
@@ -83,10 +85,19 @@ where
                 Box::pin(f)
             } else if sch == &http::uri::Scheme::HTTPS {
                 let cfg = self.tls_config.clone();
-                let hostname = dst
-                    .host()
-                    .unwrap_or_default()
-                    .to_string();
+                let hostname = match self.server_name_override.as_deref() {
+                    Some(h) => h,
+                    None => dst.host().unwrap_or_default(),
+                };
+                let hostname = match rustls::ServerName::try_from(hostname) {
+                    Ok(dnsname) => dnsname,
+                    Err(_) => {
+                        let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
+                        let err: Box<dyn std::error::Error + Send + Sync + 'static> = Box::new(err);
+                        let res = std::future::ready(Err(err));
+                        return Box::pin(res);
+                    }
+                };
                 let connecting_future = self.http.call(dst);
 
                 let f = async move {
@@ -94,10 +105,8 @@ where
                         .await
                         .map_err(Into::into)?;
                     let connector = TlsConnector::from(cfg);
-                    let dnsname = rustls::ServerName::try_from(hostname.as_str())
-                        .map_err(|_| io::Error::new(io::ErrorKind::Other, "invalid dnsname"))?;
                     let tls = connector
-                        .connect(dnsname, tcp)
+                        .connect(hostname, tcp)
                         .await
                         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
                     Ok(MaybeHttpsStream::Https(tls))

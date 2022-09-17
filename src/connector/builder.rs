@@ -106,6 +106,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: true,
+            server_name_override: None,
         })
     }
 
@@ -117,6 +118,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: false,
+            server_name_override: None,
         })
     }
 }
@@ -128,6 +130,7 @@ impl ConnectorBuilder<WantsSchemes> {
 pub struct WantsProtocols1 {
     tls_config: ClientConfig,
     https_only: bool,
+    server_name_override: Option<String>,
 }
 
 impl WantsProtocols1 {
@@ -136,6 +139,7 @@ impl WantsProtocols1 {
             force_https: self.https_only,
             http: conn,
             tls_config: std::sync::Arc::new(self.tls_config),
+            server_name_override: None,
         }
     }
 
@@ -169,6 +173,15 @@ impl ConnectorBuilder<WantsProtocols1> {
             enable_http1: false,
         })
     }
+
+    /// Override expected server name
+    ///
+    /// If called, server certificates will be validated against `server_name_override`,
+    /// and host portion of URL will not be used for server authentication.
+    pub fn override_server_name(mut self, server_name_override: String) -> Self {
+        self.0.server_name_override = Some(server_name_override);
+        self
+    }
 }
 
 /// State of a builder with HTTP1 enabled, that may have some other
@@ -193,6 +206,15 @@ impl ConnectorBuilder<WantsProtocols2> {
             inner: self.0.inner,
             enable_http1: true,
         })
+    }
+
+    /// Override expected server name
+    ///
+    /// If called, server certificates will be validated against `server_name_override`,
+    /// and host portion of URL will not be used for server authentication.
+    pub fn override_server_name(mut self, server_name_override: String) -> Self {
+        self.0.inner.server_name_override = Some(server_name_override);
+        self
     }
 
     /// This builds an [`HttpsConnector`] built on hyper's default [`HttpConnector`]
@@ -226,6 +248,15 @@ pub struct WantsProtocols3 {
 
 #[cfg(feature = "http2")]
 impl ConnectorBuilder<WantsProtocols3> {
+    /// Override expected server name
+    ///
+    /// If called, server certificates will be validated against `server_name_override`,
+    /// and host portion of URL will not be used for server authentication.
+    pub fn override_server_name(mut self, server_name_override: String) -> Self {
+        self.0.inner.server_name_override = Some(server_name_override);
+        self
+    }
+
     /// This builds an [`HttpsConnector`] built on hyper's default [`HttpConnector`]
     #[cfg(feature = "tokio-runtime")]
     pub fn build(self) -> HttpsConnector<HttpConnector> {
