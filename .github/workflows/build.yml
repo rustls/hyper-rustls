@@ -17,7 +17,7 @@ jobs:
           - stable
           - beta
           - nightly
-          - 1.51.0
+          - 1.56.1
         os: [ubuntu-18.04]
         # but only stable on macos/windows (slower platforms)
         include:
