@@ -93,9 +93,7 @@ where
                     Ok(dnsname) => dnsname,
                     Err(_) => {
                         let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
-                        let err: Box<dyn std::error::Error + Send + Sync + 'static> = Box::new(err);
-                        let res = std::future::ready(Err(err));
-                        return Box::pin(res);
+                        return Box::pin(std::future::ready(Err(Box::new(err) as BoxError)));
                     }
                 };
                 let connecting_future = self.http.call(dst);
