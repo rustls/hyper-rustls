@@ -174,11 +174,16 @@ impl ConnectorBuilder<WantsProtocols1> {
         })
     }
 
-    /// Override expected server name
+    /// Override server name for the purposes of TLS connection establishment
     ///
-    /// If called, server certificates will be validated against `override_server_name`,
-    /// and host portion of URL will not be used for server authentication.
-    pub fn override_server_name(mut self, override_server_name: String) -> Self {
+    /// By default, for each connection hyper-rustls will extract host portion
+    /// of the destination URL and verify that server certificate contains
+    /// this value.
+    /// 
+    /// If this method is called, hyper-rustls will instead verify that server
+    /// certificate contains `override_server_name`. Domain name included in
+    /// the URL will not affect certificate validation.
+    pub fn with_server_name(mut self, override_server_name: String) -> Self {
         self.0.override_server_name = Some(override_server_name);
         self
     }
