@@ -106,7 +106,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: true,
-            server_name_override: None,
+            override_server_name: None,
         })
     }
 
@@ -118,7 +118,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: false,
-            server_name_override: None,
+            override_server_name: None,
         })
     }
 }
@@ -130,7 +130,7 @@ impl ConnectorBuilder<WantsSchemes> {
 pub struct WantsProtocols1 {
     tls_config: ClientConfig,
     https_only: bool,
-    server_name_override: Option<String>,
+    override_server_name: Option<String>,
 }
 
 impl WantsProtocols1 {
@@ -139,7 +139,7 @@ impl WantsProtocols1 {
             force_https: self.https_only,
             http: conn,
             tls_config: std::sync::Arc::new(self.tls_config),
-            server_name_override: None,
+            override_server_name: self.override_server_name,
         }
     }
 
@@ -176,10 +176,10 @@ impl ConnectorBuilder<WantsProtocols1> {
 
     /// Override expected server name
     ///
-    /// If called, server certificates will be validated against `server_name_override`,
+    /// If called, server certificates will be validated against `override_server_name`,
     /// and host portion of URL will not be used for server authentication.
-    pub fn override_server_name(mut self, server_name_override: String) -> Self {
-        self.0.server_name_override = Some(server_name_override);
+    pub fn override_server_name(mut self, override_server_name: String) -> Self {
+        self.0.override_server_name = Some(override_server_name);
         self
     }
 }
@@ -210,10 +210,10 @@ impl ConnectorBuilder<WantsProtocols2> {
 
     /// Override expected server name
     ///
-    /// If called, server certificates will be validated against `server_name_override`,
+    /// If called, server certificates will be validated against `override_server_name`,
     /// and host portion of URL will not be used for server authentication.
-    pub fn override_server_name(mut self, server_name_override: String) -> Self {
-        self.0.inner.server_name_override = Some(server_name_override);
+    pub fn override_server_name(mut self, override_server_name: String) -> Self {
+        self.0.inner.override_server_name = Some(override_server_name);
         self
     }
 
@@ -250,10 +250,10 @@ pub struct WantsProtocols3 {
 impl ConnectorBuilder<WantsProtocols3> {
     /// Override expected server name
     ///
-    /// If called, server certificates will be validated against `server_name_override`,
+    /// If called, server certificates will be validated against `override_server_name`,
     /// and host portion of URL will not be used for server authentication.
-    pub fn override_server_name(mut self, server_name_override: String) -> Self {
-        self.0.inner.server_name_override = Some(server_name_override);
+    pub fn override_server_name(mut self, override_server_name: String) -> Self {
+        self.0.inner.override_server_name = Some(override_server_name);
         self
     }
 

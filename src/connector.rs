@@ -21,7 +21,7 @@ pub struct HttpsConnector<T> {
     force_https: bool,
     http: T,
     tls_config: Arc<rustls::ClientConfig>,
-    server_name_override: Option<String>,
+    override_server_name: Option<String>,
 }
 
 impl<T> fmt::Debug for HttpsConnector<T> {
@@ -41,7 +41,7 @@ where
             force_https: false,
             http,
             tls_config: cfg.into(),
-            server_name_override: None,
+            override_server_name: None,
         }
     }
 }
@@ -85,7 +85,7 @@ where
                 Box::pin(f)
             } else if sch == &http::uri::Scheme::HTTPS {
                 let cfg = self.tls_config.clone();
-                let hostname = match self.server_name_override.as_deref() {
+                let hostname = match self.override_server_name.as_deref() {
                     Some(h) => h,
                     None => dst.host().unwrap_or_default(),
                 };
