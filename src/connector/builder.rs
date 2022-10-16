@@ -174,7 +174,7 @@ impl ConnectorBuilder<WantsProtocols1> {
         })
     }
 
-    /// Override server name for the purposes of TLS connection establishment
+    /// Override server name for the TLS stack
     ///
     /// By default, for each connection hyper-rustls will extract host portion
     /// of the destination URL and verify that server certificate contains
