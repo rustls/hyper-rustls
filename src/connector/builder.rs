@@ -179,7 +179,7 @@ impl ConnectorBuilder<WantsProtocols1> {
     /// By default, for each connection hyper-rustls will extract host portion
     /// of the destination URL and verify that server certificate contains
     /// this value.
-    /// 
+    ///
     /// If this method is called, hyper-rustls will instead verify that server
     /// certificate contains `override_server_name`. Domain name included in
     /// the URL will not affect certificate validation.
@@ -212,7 +212,7 @@ impl ConnectorBuilder<WantsProtocols2> {
             enable_http1: true,
         })
     }
-    
+
     /// This builds an [`HttpsConnector`] built on hyper's default [`HttpConnector`]
     #[cfg(feature = "tokio-runtime")]
     pub fn build(self) -> HttpsConnector<HttpConnector> {
