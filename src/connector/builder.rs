@@ -106,6 +106,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: true,
+            override_server_name: None,
         })
     }
 
@@ -117,6 +118,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: false,
+            override_server_name: None,
         })
     }
 }
@@ -128,6 +130,7 @@ impl ConnectorBuilder<WantsSchemes> {
 pub struct WantsProtocols1 {
     tls_config: ClientConfig,
     https_only: bool,
+    override_server_name: Option<String>,
 }
 
 impl WantsProtocols1 {
@@ -136,6 +139,7 @@ impl WantsProtocols1 {
             force_https: self.https_only,
             http: conn,
             tls_config: std::sync::Arc::new(self.tls_config),
+            override_server_name: self.override_server_name,
         }
     }
 
@@ -168,6 +172,20 @@ impl ConnectorBuilder<WantsProtocols1> {
             inner: self.0,
             enable_http1: false,
         })
+    }
+
+    /// Override server name for the TLS stack
+    ///
+    /// By default, for each connection hyper-rustls will extract host portion
+    /// of the destination URL and verify that server certificate contains
+    /// this value.
+    ///
+    /// If this method is called, hyper-rustls will instead verify that server
+    /// certificate contains `override_server_name`. Domain name included in
+    /// the URL will not affect certificate validation.
+    pub fn with_server_name(mut self, override_server_name: String) -> Self {
+        self.0.override_server_name = Some(override_server_name);
+        self
     }
 }
 

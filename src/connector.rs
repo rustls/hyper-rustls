@@ -21,6 +21,7 @@ pub struct HttpsConnector<T> {
     force_https: bool,
     http: T,
     tls_config: Arc<rustls::ClientConfig>,
+    override_server_name: Option<String>,
 }
 
 impl<T> fmt::Debug for HttpsConnector<T> {
@@ -40,6 +41,7 @@ where
             force_https: false,
             http,
             tls_config: cfg.into(),
+            override_server_name: None,
         }
     }
 }
@@ -83,10 +85,17 @@ where
                 Box::pin(f)
             } else if sch == &http::uri::Scheme::HTTPS {
                 let cfg = self.tls_config.clone();
-                let hostname = dst
-                    .host()
-                    .unwrap_or_default()
-                    .to_string();
+                let hostname = match self.override_server_name.as_deref() {
+                    Some(h) => h,
+                    None => dst.host().unwrap_or_default(),
+                };
+                let hostname = match rustls::ServerName::try_from(hostname) {
+                    Ok(dnsname) => dnsname,
+                    Err(_) => {
+                        let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
+                        return Box::pin(async move { Err(Box::new(err).into()) });
+                    }
+                };
                 let connecting_future = self.http.call(dst);
 
                 let f = async move {
@@ -94,10 +103,8 @@ where
                         .await
                         .map_err(Into::into)?;
                     let connector = TlsConnector::from(cfg);
-                    let dnsname = rustls::ServerName::try_from(hostname.as_str())
-                        .map_err(|_| io::Error::new(io::ErrorKind::Other, "invalid dnsname"))?;
                     let tls = connector
-                        .connect(dnsname, tcp)
+                        .connect(hostname, tcp)
                         .await
                         .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
                     Ok(MaybeHttpsStream::Https(tls))
