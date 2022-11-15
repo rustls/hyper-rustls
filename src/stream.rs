@@ -10,6 +10,7 @@ use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio_rustls::client::TlsStream;
 
 /// A stream that might be protected with TLS.
+#[allow(clippy::large_enum_variant)]
 pub enum MaybeHttpsStream<T> {
     /// A stream over plain text.
     Http(T),
