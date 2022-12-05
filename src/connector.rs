@@ -85,10 +85,19 @@ where
                 Box::pin(f)
             } else if sch == &http::uri::Scheme::HTTPS {
                 let cfg = self.tls_config.clone();
-                let hostname = match self.override_server_name.as_deref() {
+                let mut hostname = match self.override_server_name.as_deref() {
                     Some(h) => h,
                     None => dst.host().unwrap_or_default(),
                 };
+
+                // Remove square brackets around IPv6 address.
+                if let Some(trimmed) = hostname
+                    .strip_prefix('[')
+                    .and_then(|h| h.strip_suffix(']'))
+                {
+                    hostname = trimmed;
+                }
+
                 let hostname = match rustls::ServerName::try_from(hostname) {
                     Ok(dnsname) => dnsname,
                     Err(_) => {
