@@ -7,6 +7,8 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 [![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 
 # Release history
+- 0.23.2 (2022-12-08):
+  * Strip brackets from IPv6 addresses in the servername. Thanks to @digitwolf.
 - 0.23.1 (2022-10-26):
   * Allow overriding the servername. Thanks to @MikailBag.
 - 0.23.0 (2021-11-21):
