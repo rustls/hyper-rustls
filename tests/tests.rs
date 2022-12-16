@@ -4,27 +4,21 @@ use std::process::Command;
 use std::thread;
 use std::time;
 
-fn target_dir() -> PathBuf {
-    env::var("CARGO_TARGET_DIR")
-        .unwrap_or_else(|_| "target".to_string())
-        .into()
-}
-
 fn examples_dir() -> PathBuf {
-    target_dir()
+    let target_dir: PathBuf = env::var("CARGO_TARGET_DIR")
+        .unwrap_or_else(|_| "target".to_string())
+        .into();
+    target_dir
         .join("debug")
         .join("examples")
 }
 
 fn server_command() -> Command {
-    let server_bin_path = examples_dir().join("server");
-    Command::new(server_bin_path)
+    Command::new(examples_dir().join("server"))
 }
 
 fn client_command() -> Command {
-    let client_bin_path = examples_dir().join("client");
-    println!("client_bin_path: {:?}", client_bin_path);
-    Command::new(client_bin_path)
+    Command::new(examples_dir().join("client"))
 }
 
 #[test]
