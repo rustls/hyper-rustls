@@ -48,3 +48,17 @@ hyper-rustls is distributed under the following three licenses:
 These are included as LICENSE-APACHE, LICENSE-MIT and LICENSE-ISC
 respectively.  You may use this software under the terms of any
 of these licenses, at your option.
+
+## Running examples
+
+### server
+
+```bash
+cargo run --example server
+```
+
+### client
+
+```bash
+cargo run --example client "https://docs.rs/hyper-rustls/latest/hyper_rustls/"
+```
