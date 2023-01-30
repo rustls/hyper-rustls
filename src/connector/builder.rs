@@ -315,7 +315,7 @@ mod tests {
             .build();
         assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
         let connector = HttpsConnectorBuilder::new()
-            .with_tls_config(tls_config.clone())
+            .with_tls_config(tls_config)
             .https_only()
             .enable_http1()
             .enable_http2()
