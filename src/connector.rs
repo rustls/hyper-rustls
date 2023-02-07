@@ -23,6 +23,15 @@ pub struct HttpsConnector<T> {
     override_server_name: Option<String>,
 }
 
+impl<T> HttpsConnector<T> {
+    /// Force the use of HTTPS when connecting.
+    ///
+    /// If a URL is not `https` when connecting, an error is returned.
+    pub fn https_only(&mut self, enable: bool) {
+        self.force_https = enable;
+    }
+}
+
 impl<T> fmt::Debug for HttpsConnector<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("HttpsConnector")
