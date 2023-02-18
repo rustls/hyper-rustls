@@ -4,8 +4,7 @@ use super::HttpsConnector;
 #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
 use crate::config::ConfigBuilderExt;
 
-#[cfg(feature = "tokio-runtime")]
-use hyper::client::HttpConnector;
+use hyper_util::client::connect::HttpConnector;
 
 /// A builder for an [`HttpsConnector`]
 ///

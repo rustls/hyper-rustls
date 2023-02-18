@@ -1,10 +1,10 @@
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use std::task::{Context, Poll};
 use std::{fmt, io};
 
-use hyper::{client::connect::Connection, service::Service, Uri};
+use hyper::{service::Service, Uri};
+use hyper_util::client::connect::Connection;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsConnector;
 
@@ -58,14 +58,6 @@ where
     #[allow(clippy::type_complexity)]
     type Future =
         Pin<Box<dyn Future<Output = Result<MaybeHttpsStream<T::Response>, BoxError>> + Send>>;
-
-    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-        match self.http.poll_ready(cx) {
-            Poll::Ready(Ok(())) => Poll::Ready(Ok(())),
-            Poll::Ready(Err(e)) => Poll::Ready(Err(e.into())),
-            Poll::Pending => Poll::Pending,
-        }
-    }
 
     fn call(&mut self, dst: Uri) -> Self::Future {
         // dst.scheme() would need to derive Eq to be matchable;

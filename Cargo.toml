@@ -11,7 +11,8 @@ repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
 http = "0.2"
-hyper = { version = "0.14", default-features = false, features = ["client"] }
+hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false, features = ["client"] }
+hyper-util = { git = "https://github.com/hyperium/hyper-util.git", rev = "91d8b0a", features = ["runtime", "http1", "http2", "tcp", "client"] }
 log = { version = "0.4.4", optional = true }
 rustls-native-certs = { version = "0.6", optional = true }
 rustls = { version = "0.20.1", default-features = false }
@@ -21,8 +22,6 @@ webpki-roots = { version = "0.22", optional = true }
 
 [dev-dependencies]
 futures-util = { version = "0.3.1", default-features = false }
-hyper = { version = "0.14", features = ["full"] }
-rustls = { version = "0.20.1", default-features = false, features = ["tls12"] }
 rustls-pemfile = "1.0.0"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
@@ -32,7 +31,7 @@ http1 = ["hyper/http1"]
 http2 = ["hyper/http2"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
-tokio-runtime =  ["hyper/runtime"]
+tokio-runtime = ["hyper-util/runtime"]
 tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
 logging = ["log", "tokio-rustls/logging", "rustls/logging"]
 
