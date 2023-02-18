@@ -4,19 +4,17 @@
 //! Certificate and private key are hardcoded to sample files.
 //! hyper will automatically use HTTP/2 if a client starts talking HTTP/2,
 //! otherwise HTTP/1.1 will be used.
-use core::task::{Context, Poll};
-use futures_util::ready;
-use hyper::server::accept::Accept;
-use hyper::server::conn::{AddrIncoming, AddrStream};
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Method, Request, Response, Server, StatusCode};
-use std::future::Future;
-use std::pin::Pin;
-use std::sync::Arc;
 use std::vec::Vec;
 use std::{env, fs, io, sync};
-use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
-use tokio_rustls::rustls::ServerConfig;
+
+use http_body_util::{BodyExt, Full};
+use hyper::body::{Bytes, Incoming};
+use hyper::server::conn::http2;
+use hyper::service::service_fn;
+use hyper::{Method, Request, Response, StatusCode};
+use hyper_util::rt::TokioExecutor;
+use tokio::net::TcpListener;
+use tokio_rustls::TlsAcceptor;
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
@@ -37,7 +35,7 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Some(ref p) => p.to_owned(),
         None => "1337".to_owned(),
     };
-    let addr = format!("127.0.0.1:{}", port).parse()?;
+    let addr = format!("127.0.0.1:{}", port);
 
     // Build TLS configuration.
     let tls_cfg = {
@@ -56,134 +54,47 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         sync::Arc::new(cfg)
     };
 
+    let acceptor = TlsAcceptor::from(tls_cfg);
     // Create a TCP listener via tokio.
-    let incoming = AddrIncoming::bind(&addr)?;
-    let service = make_service_fn(|_| async { Ok::<_, io::Error>(service_fn(echo)) });
-    let server = Server::builder(TlsAcceptor::new(tls_cfg, incoming)).serve(service);
-
+    let listener = TcpListener::bind(&addr).await?;
     // Run the future, keep going until an error occurs.
     println!("Starting to serve on https://{}.", addr);
-    server.await?;
-    Ok(())
-}
+    loop {
+        let (stream, _) = listener.accept().await?;
+        let acceptor = acceptor.clone();
 
-enum State {
-    Handshaking(tokio_rustls::Accept<AddrStream>),
-    Streaming(tokio_rustls::server::TlsStream<AddrStream>),
-}
-
-// tokio_rustls::server::TlsStream doesn't expose constructor methods,
-// so we have to TlsAcceptor::accept and handshake to have access to it
-// TlsStream implements AsyncRead/AsyncWrite handshaking tokio_rustls::Accept first
-pub struct TlsStream {
-    state: State,
-}
-
-impl TlsStream {
-    fn new(stream: AddrStream, config: Arc<ServerConfig>) -> TlsStream {
-        let accept = tokio_rustls::TlsAcceptor::from(config).accept(stream);
-        TlsStream {
-            state: State::Handshaking(accept),
-        }
-    }
-}
-
-impl AsyncRead for TlsStream {
-    fn poll_read(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-        buf: &mut ReadBuf,
-    ) -> Poll<io::Result<()>> {
-        let pin = self.get_mut();
-        match pin.state {
-            State::Handshaking(ref mut accept) => match ready!(Pin::new(accept).poll(cx)) {
-                Ok(mut stream) => {
-                    let result = Pin::new(&mut stream).poll_read(cx, buf);
-                    pin.state = State::Streaming(stream);
-                    result
-                }
-                Err(err) => Poll::Ready(Err(err)),
-            },
-            State::Streaming(ref mut stream) => Pin::new(stream).poll_read(cx, buf),
-        }
-    }
-}
-
-impl AsyncWrite for TlsStream {
-    fn poll_write(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &[u8],
-    ) -> Poll<io::Result<usize>> {
-        let pin = self.get_mut();
-        match pin.state {
-            State::Handshaking(ref mut accept) => match ready!(Pin::new(accept).poll(cx)) {
-                Ok(mut stream) => {
-                    let result = Pin::new(&mut stream).poll_write(cx, buf);
-                    pin.state = State::Streaming(stream);
-                    result
-                }
-                Err(err) => Poll::Ready(Err(err)),
-            },
-            State::Streaming(ref mut stream) => Pin::new(stream).poll_write(cx, buf),
-        }
-    }
-
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        match self.state {
-            State::Handshaking(_) => Poll::Ready(Ok(())),
-            State::Streaming(ref mut stream) => Pin::new(stream).poll_flush(cx),
-        }
-    }
-
-    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        match self.state {
-            State::Handshaking(_) => Poll::Ready(Ok(())),
-            State::Streaming(ref mut stream) => Pin::new(stream).poll_shutdown(cx),
-        }
-    }
-}
-
-pub struct TlsAcceptor {
-    config: Arc<ServerConfig>,
-    incoming: AddrIncoming,
-}
-
-impl TlsAcceptor {
-    pub fn new(config: Arc<ServerConfig>, incoming: AddrIncoming) -> TlsAcceptor {
-        TlsAcceptor { config, incoming }
-    }
-}
-
-impl Accept for TlsAcceptor {
-    type Conn = TlsStream;
-    type Error = io::Error;
-
-    fn poll_accept(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
-        let pin = self.get_mut();
-        match ready!(Pin::new(&mut pin.incoming).poll_accept(cx)) {
-            Some(Ok(sock)) => Poll::Ready(Some(Ok(TlsStream::new(sock, pin.config.clone())))),
-            Some(Err(e)) => Poll::Ready(Some(Err(e))),
-            None => Poll::Ready(None),
-        }
+        tokio::task::spawn(async move {
+            let stream = acceptor
+                .accept(stream)
+                .await
+                .expect("acceptor failed");
+            if let Err(err) = http2::Builder::new(TokioExecutor::new())
+                .serve_connection(stream, service_fn(echo))
+                .await
+            {
+                println!("Error serving connection: {:?}", err);
+            }
+        });
     }
 }
 
 // Custom echo service, handling two different routes and a
 // catch-all 404 responder.
-async fn echo(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
-    let mut response = Response::new(Body::empty());
+async fn echo(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, hyper::Error> {
+    let mut response = Response::default();
     match (req.method(), req.uri().path()) {
         // Help route.
         (&Method::GET, "/") => {
-            *response.body_mut() = Body::from("Try POST /echo\n");
+            *response.body_mut() = Full::new(Bytes::from("Try POST /echo\n"));
         }
         // Echo service route.
         (&Method::POST, "/echo") => {
-            *response.body_mut() = req.into_body();
+            *response.body_mut() = Full::new(
+                req.into_body()
+                    .collect()
+                    .await?
+                    .to_bytes(),
+            );
         }
         // Catch-all 404.
         _ => {

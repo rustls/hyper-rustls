@@ -11,7 +11,8 @@ repository = "https://github.com/ctz/hyper-rustls"
 
 [dependencies]
 http = "0.2"
-hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false, features = ["client"] }
+http-body-util = "0.1.0-rc.2"
+hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false, features = ["client", "server"] }
 hyper-util = { git = "https://github.com/hyperium/hyper-util.git", rev = "91d8b0a", features = ["runtime", "http1", "http2", "tcp", "client"] }
 log = { version = "0.4.4", optional = true }
 rustls-native-certs = { version = "0.6", optional = true }
@@ -19,9 +20,11 @@ rustls = { version = "0.20.1", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.23", default-features = false }
 webpki-roots = { version = "0.22", optional = true }
+tower-service = "0.3.2"
 
 [dev-dependencies]
 futures-util = { version = "0.3.1", default-features = false }
+hyper = { git = "https://github.com/hyperium/hyper.git", default-features = false, features = ["client", "server"] }
 rustls-pemfile = "1.0.0"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
