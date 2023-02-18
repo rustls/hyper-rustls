@@ -3,10 +3,7 @@
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
 use http_body_util::BodyExt;
-use hyper::{
-    body::{ Incoming},
-    Uri,
-};
+use hyper::{body::Incoming, Uri};
 use hyper_rustls::ConfigBuilderExt;
 use hyper_util::{client::legacy, rt::TokioExecutor};
 use rustls::RootCertStore;
