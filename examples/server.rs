@@ -51,8 +51,8 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .with_no_client_auth()
             .with_single_cert(certs, key)
             .map_err(|e| error(format!("{}", e)))?;
-        // Configure ALPN to accept HTTP/2, HTTP/1.1 in that order.
-        cfg.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        // Configure ALPN to accept HTTP/2, HTTP/1.1, and HTTP/1.0 in that order.
+        cfg.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec(), b"http/1.0".to_vec()];
         sync::Arc::new(cfg)
     };
 
