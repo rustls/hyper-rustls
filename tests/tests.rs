@@ -62,6 +62,12 @@ fn server() {
     srv.kill().unwrap();
 
     if !output.status.success() {
+        let version_stdout = Command::new("curl")
+            .arg("--version")
+            .output()
+            .expect("cannot run curl to collect --version")
+            .stdout;
+        println!("curl version: {}", String::from_utf8_lossy(&version_stdout));
         println!("curl stderr:\n{}", String::from_utf8_lossy(&output.stderr));
     }
 
