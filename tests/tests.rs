@@ -60,10 +60,10 @@ fn server() {
         .output()
         .expect("cannot run curl");
 
+    srv.kill().unwrap();
+
     println!("client output: {:?}", output.stdout);
     assert_eq!(output.stdout, b"Try POST /echo\n");
-
-    srv.kill().unwrap();
 }
 
 #[test]
