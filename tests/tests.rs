@@ -55,15 +55,17 @@ fn server() {
     let output = Command::new("curl")
         .arg("--insecure")
         .arg("--http1.0")
-        .arg("--silent")
         .arg(format!("https://{}", addr))
         .output()
         .expect("cannot run curl");
 
     srv.kill().unwrap();
 
-    println!("client output: {:?}", output.stdout);
-    assert_eq!(output.stdout, b"Try POST /echo\n");
+    if !output.status.success() {
+        println!("curl stderr:\n{}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    assert_eq!(String::from_utf8_lossy(&*output.stdout), "Try POST /echo\n");
 }
 
 #[test]
