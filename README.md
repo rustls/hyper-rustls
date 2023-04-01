@@ -1,8 +1,8 @@
 # hyper-rustls
-This is an integration between the [rustls TLS stack](https://github.com/ctz/rustls)
+This is an integration between the [rustls TLS stack](https://github.com/rustls/rustls)
 and the [hyper HTTP library](https://github.com/hyperium/hyper).
 
-[![Build Status](https://github.com/ctz/hyper-rustls/workflows/hyper-rustls/badge.svg)](https://github.com/ctz/hyper-rustls/actions)
+[![Build Status](https://github.com/rustls/hyper-rustls/workflows/hyper-rustls/badge.svg)](https://github.com/rustls/hyper-rustls/actions)
 [![Crate](https://img.shields.io/crates/v/hyper-rustls.svg)](https://crates.io/crates/hyper-rustls)
 [![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 

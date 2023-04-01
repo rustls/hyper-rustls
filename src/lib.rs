@@ -1,7 +1,7 @@
 //! # hyper-rustls
 //!
 //! A pure-Rust HTTPS connector for [hyper](https://hyper.rs), based on
-//! [Rustls](https://github.com/ctz/rustls).
+//! [Rustls](https://github.com/rustls/rustls).
 //!
 //! ## Example
 //!
