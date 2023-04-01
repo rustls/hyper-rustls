@@ -7,6 +7,9 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 [![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 
 # Release history
+- 0.24.0 (2023-04-01):
+  * Upgrade to rustls 0.21.0, tokio-rustls 0.24.0 and webpki-roots 0.23.0.
+  * Add `ConnectorBuilder::enable_all_versions()` helper.
 - 0.23.2 (2022-12-08):
   * Strip brackets from IPv6 addresses in the servername. Thanks to @digitwolf.
 - 0.23.1 (2022-10-26):
