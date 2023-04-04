@@ -27,8 +27,8 @@ impl<T> HttpsConnector<T> {
     /// Force the use of HTTPS when connecting.
     ///
     /// If a URL is not `https` when connecting, an error is returned.
-    pub fn https_only(&mut self, enable: bool) {
-        self.force_https = enable;
+    pub fn enforce_https(&mut self) {
+        self.force_https = true;
     }
 }
 
