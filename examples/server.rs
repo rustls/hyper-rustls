@@ -7,11 +7,13 @@
 
 #![cfg(feature = "acceptor")]
 
+use std::vec::Vec;
+use std::{env, fs, io};
+
 use hyper::server::conn::AddrIncoming;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
-use std::vec::Vec;
-use std::{env, fs, io};
+use hyper_rustls::TlsAcceptor;
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
@@ -25,10 +27,8 @@ fn error(err: String) -> io::Error {
     io::Error::new(io::ErrorKind::Other, err)
 }
 
-#[cfg(feature = "acceptor")]
 #[tokio::main]
 async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    use hyper_rustls::TlsAcceptor;
     // First parameter is port number (optional, defaults to 1337)
     let port = match env::args().nth(1) {
         Some(ref p) => p.to_owned(),

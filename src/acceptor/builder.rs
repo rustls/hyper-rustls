@@ -77,11 +77,10 @@ pub struct WantsIncoming(ServerConfig);
 impl AcceptorBuilder<WantsIncoming> {
     /// Passes a [`AddrIncoming`] to configure the TLS connection and
     /// creates the [`TlsAcceptor`]
-    pub fn with_incoming(self, incoming: impl Into<AddrIncoming>) -> TlsAcceptor {```
-    {
+    pub fn with_incoming(self, incoming: impl Into<AddrIncoming>) -> TlsAcceptor {
         TlsAcceptor {
             config: Arc::new(self.0 .0),
-            incoming: AddrIncoming::from(incoming),
+            incoming: incoming.into(),
         }
     }
 }
