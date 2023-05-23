@@ -12,10 +12,9 @@ use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 mod builder;
-
 pub use builder::AcceptorBuilder;
+use builder::WantsTlsConfig;
 
-use self::builder::WantsTlsConfig;
 enum State {
     Handshaking(tokio_rustls::Accept<AddrStream>),
     Streaming(tokio_rustls::server::TlsStream<AddrStream>),
