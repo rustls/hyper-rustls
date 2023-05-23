@@ -40,13 +40,6 @@ impl<T> fmt::Debug for HttpsConnector<T> {
     }
 }
 
-impl HttpsConnector<()> {
-    /// Provides a builder for a `HttpsConnector`.
-    pub fn builder() -> builder::ConnectorBuilder<builder::WantsTlsConfig> {
-        builder::ConnectorBuilder::new()
-    }
-}
-
 impl<H, C> From<(H, C)> for HttpsConnector<H>
 where
     C: Into<Arc<rustls::ClientConfig>>,

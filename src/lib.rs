@@ -12,7 +12,7 @@
 //!
 //! let mut rt = tokio::runtime::Runtime::new().unwrap();
 //! let url = ("https://hyper.rs").parse().unwrap();
-//! let https = hyper_rustls::HttpsConnector::builder()
+//! let https = hyper_rustls::HttpsConnectorBuilder::new()
 //!     .with_native_roots()
 //!     .https_only()
 //!     .enable_http1()

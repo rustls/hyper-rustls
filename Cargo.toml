@@ -26,12 +26,7 @@ futures-util = { version = "0.3.1", default-features = false }
 hyper = { version = "0.14", features = ["full"] }
 rustls = { version = "0.21.0", default-features = false, features = ["tls12"] }
 rustls-pemfile = "1.0.0"
-tokio = { version = "1.0", features = [
-    "io-std",
-    "macros",
-    "net",
-    "rt-multi-thread",
-] }
+tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
 default = ["native-tokio", "http1", "tls12", "logging", "acceptor"]
@@ -40,7 +35,7 @@ http1 = ["hyper/http1"]
 http2 = ["hyper/http2"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
-tokio-runtime = ["hyper/runtime"]
+tokio-runtime =  ["hyper/runtime"]
 tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
 logging = ["log", "tokio-rustls/logging", "rustls/logging"]
 

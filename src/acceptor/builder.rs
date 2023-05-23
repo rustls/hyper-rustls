@@ -12,7 +12,7 @@ pub struct WantsTlsConfig(());
 
 impl AcceptorBuilder<WantsTlsConfig> {
     /// Creates a new [`AcceptorBuilder`]
-    pub(super) fn new() -> Self {
+    pub fn new() -> Self {
         Self(WantsTlsConfig(()))
     }
 
