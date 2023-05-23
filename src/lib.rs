@@ -3,7 +3,7 @@
 //! A pure-Rust HTTPS connector for [hyper](https://hyper.rs), based on
 //! [Rustls](https://github.com/rustls/rustls).
 //!
-//! ## Example Client
+//! ## Example client
 //!
 //! ```no_run
 //! # #[cfg(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1"))]
@@ -42,21 +42,17 @@
 //! let mut rt = tokio::runtime::Runtime::new().unwrap();
 //! let addr = "127.0.0.1:1337".parse().unwrap();
 //!
-//!
 //! // Load public certificate.
 //! let certfile = File::open("examples/sample.pem").unwrap();
 //! let mut reader = io::BufReader::new(certfile);
 //!
-//!
 //! // Load and return certificate.
 //! let certs = rustls_pemfile::certs(&mut reader).unwrap();
-//! let certs =certs.into_iter().map(rustls::Certificate).collect();
-//!
+//! let certs = certs.into_iter().map(rustls::Certificate).collect();
 //!
 //! // Load private key. (see `examples/server.rs`)
 //! let keyfile = File::open("examples/sample.rsa").unwrap();
 //! let mut reader = io::BufReader::new(keyfile);
-//!
 //!
 //! // Load and return a single private key.
 //! let keys = rustls_pemfile::rsa_private_keys(&mut reader).unwrap();

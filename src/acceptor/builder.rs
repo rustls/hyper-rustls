@@ -17,14 +17,11 @@ impl AcceptorBuilder<WantsTlsConfig> {
     }
 
     /// Passes a rustls [`ServerConfig`] to configure the TLS connection
-    ///
     pub fn with_tls_config(self, config: ServerConfig) -> AcceptorBuilder<WantsAlpn> {
         AcceptorBuilder(WantsAlpn(config))
     }
 
-    /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
-    /// and [no client auth][with_no_client_auth]
-    ///
+    /// Use rustls [defaults][with_safe_defaults] without [client authentication][with_no_client_auth]
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     /// [with_no_client_auth]: rustls::ConfigBuilder::with_no_client_auth
@@ -76,12 +73,11 @@ impl AcceptorBuilder<WantsAlpn> {
 
 /// State of a builder that needs a incoming address next
 pub struct WantsIncoming(ServerConfig);
+
 impl AcceptorBuilder<WantsIncoming> {
     /// Passes a [`AddrIncoming`] to configure the TLS connection and
     /// creates the [`TlsAcceptor`]
-    pub fn with_incoming<I>(self, incoming: I) -> TlsAcceptor
-    where
-        AddrIncoming: From<I>,
+    pub fn with_incoming(self, incoming: impl Into<AddrIncoming>) -> TlsAcceptor {```
     {
         TlsAcceptor {
             config: Arc::new(self.0 .0),
