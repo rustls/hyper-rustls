@@ -5,17 +5,14 @@
 //! hyper will automatically use HTTP/2 if a client starts talking HTTP/2,
 //! otherwise HTTP/1.1 will be used.
 
+#![cfg(feature = "acceptor")]
+
 use hyper::server::conn::AddrIncoming;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use std::vec::Vec;
 use std::{env, fs, io};
 
-#[cfg(not(feature = "acceptor"))]
-fn main() {
-    println!("This example requires the `acceptor` feature");
-}
-#[cfg(feature = "acceptor")]
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
     if let Err(e) = run_server() {
@@ -50,7 +47,7 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let acceptor = TlsAcceptor::builder()
         .with_single_cert(certs, key)
         .map_err(|e| error(format!("{}", e)))?
-        .with_http_alpn()
+        .with_all_versions_alpn()
         .with_incoming(incoming);
     let service = make_service_fn(|_| async { Ok::<_, io::Error>(service_fn(echo)) });
     let server = Server::builder(acceptor).serve(service);
