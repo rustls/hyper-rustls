@@ -17,7 +17,6 @@ jobs:
           - stable
           - beta
           - nightly
-          - 1.57
         os: [ubuntu-20.04]
         # but only stable on macos/windows (slower platforms)
         include:
@@ -67,6 +66,22 @@ jobs:
 
       - name: cargo test (release; no run)
         run: cargo test --release --no-run
+
+  msrv:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.57"
+
+      - name: Check MSRV
+        run: cargo check --lib --all-features
 
   docs:
     name: Check for documentation errors
