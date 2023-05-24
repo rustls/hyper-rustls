@@ -47,7 +47,7 @@ required-features = ["native-tokio", "http1"]
 [[example]]
 name = "server"
 path = "examples/server.rs"
-required-features = ["tokio-runtime"]
+required-features = ["tokio-runtime", "acceptor"]
 
 [package.metadata.docs.rs]
 all-features = true
