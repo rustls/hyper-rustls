@@ -52,13 +52,13 @@ impl AcceptorBuilder<WantsAlpn> {
         AcceptorBuilder(WantsIncoming(self.0 .0))
     }
 
-    /// Configure ALPN to accep HTTP/2
+    /// Configure ALPN to accept HTTP/2
     pub fn with_http2_alpn(mut self) -> AcceptorBuilder<WantsIncoming> {
         self.0 .0.alpn_protocols = vec![b"h2".to_vec()];
         AcceptorBuilder(WantsIncoming(self.0 .0))
     }
 
-    /// Configure ALPN to accep HTTP/1.1
+    /// Configure ALPN to accept HTTP/1.1
     pub fn with_http1_alpn(mut self) -> AcceptorBuilder<WantsIncoming> {
         self.0 .0.alpn_protocols = vec![b"http/1.1".to_vec()];
         AcceptorBuilder(WantsIncoming(self.0 .0))

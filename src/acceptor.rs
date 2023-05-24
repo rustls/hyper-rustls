@@ -23,7 +23,7 @@ enum State {
 
 // tokio_rustls::server::TlsStream doesn't expose constructor methods,
 // so we have to TlsAcceptor::accept and handshake to have access to it
-// TlsStream implements AsyncRead/AsyncWrite handshaking tokio_rustls::Accept first
+// TlsStream implements AsyncRead/AsyncWrite by handshaking with tokio_rustls::Accept first
 pub struct TlsStream {
     state: State,
 }
@@ -99,7 +99,7 @@ pub struct TlsAcceptor {
     incoming: AddrIncoming,
 }
 
-/// A Acceptor for the `https` scheme.
+/// An Acceptor for the `https` scheme.
 impl TlsAcceptor {
     /// Provides a builder for a `TlsAcceptor`.
     pub fn builder() -> AcceptorBuilder<WantsTlsConfig> {
