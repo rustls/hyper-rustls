@@ -39,6 +39,12 @@ impl AcceptorBuilder<WantsTlsConfig> {
     }
 }
 
+impl Default for AcceptorBuilder<WantsTlsConfig> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// State of a builder that needs a incoming address next
 pub struct WantsAlpn(ServerConfig);
 
@@ -58,15 +64,21 @@ impl AcceptorBuilder<WantsAlpn> {
         AcceptorBuilder(WantsIncoming(self.0 .0))
     }
 
+    /// Configure ALPN to accept HTTP/1.0
+    pub fn with_http10_alpn(mut self) -> AcceptorBuilder<WantsIncoming> {
+        self.0 .0.alpn_protocols = vec![b"http/1.0".to_vec()];
+        AcceptorBuilder(WantsIncoming(self.0 .0))
+    }
+
     /// Configure ALPN to accept HTTP/1.1
-    pub fn with_http1_alpn(mut self) -> AcceptorBuilder<WantsIncoming> {
+    pub fn with_http11_alpn(mut self) -> AcceptorBuilder<WantsIncoming> {
         self.0 .0.alpn_protocols = vec![b"http/1.1".to_vec()];
         AcceptorBuilder(WantsIncoming(self.0 .0))
     }
 
-    /// Configure ALPN to accept HTTP/2, HTTP/1.1 in that order.
+    /// Configure ALPN to accept HTTP/2, HTTP/1.1, HTTP/1.0 in that order.
     pub fn with_all_versions_alpn(mut self) -> AcceptorBuilder<WantsIncoming> {
-        self.0 .0.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        self.0 .0.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec(), b"http/1.0".to_vec()];
         AcceptorBuilder(WantsIncoming(self.0 .0))
     }
 }
