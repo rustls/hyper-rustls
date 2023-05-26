@@ -19,6 +19,7 @@ rustls = { version = "0.21.0", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.24.0", default-features = false }
 webpki-roots = { version = "0.23", optional = true }
+futures-util = { version = "0.3" }
 
 [dev-dependencies]
 futures-util = { version = "0.3.1", default-features = false }
@@ -28,7 +29,8 @@ rustls-pemfile = "1.0.0"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
-default = ["native-tokio", "http1", "tls12", "logging"]
+default = ["native-tokio", "http1", "tls12", "logging", "acceptor"]
+acceptor = ["hyper/server", "tokio-runtime"]
 http1 = ["hyper/http1"]
 http2 = ["hyper/http2"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
@@ -45,7 +47,7 @@ required-features = ["native-tokio", "http1"]
 [[example]]
 name = "server"
 path = "examples/server.rs"
-required-features = ["tokio-runtime"]
+required-features = ["tokio-runtime", "acceptor"]
 
 [package.metadata.docs.rs]
 all-features = true

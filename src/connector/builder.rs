@@ -274,13 +274,11 @@ impl ConnectorBuilder<WantsProtocols3> {
 
 #[cfg(test)]
 mod tests {
-    use super::ConnectorBuilder as HttpsConnectorBuilder;
-
     // Typical usage
     #[test]
     #[cfg(all(feature = "webpki-roots", feature = "http1"))]
     fn test_builder() {
-        let _connector = HttpsConnectorBuilder::new()
+        let _connector = super::ConnectorBuilder::new()
             .with_webpki_roots()
             .https_only()
             .enable_http1()
@@ -297,7 +295,7 @@ mod tests {
             .with_root_certificates(roots)
             .with_no_client_auth();
         config_with_alpn.alpn_protocols = vec![b"fancyprotocol".to_vec()];
-        let _connector = HttpsConnectorBuilder::new()
+        let _connector = super::ConnectorBuilder::new()
             .with_tls_config(config_with_alpn)
             .https_only()
             .enable_http1()
@@ -312,7 +310,7 @@ mod tests {
             .with_safe_defaults()
             .with_root_certificates(roots)
             .with_no_client_auth();
-        let connector = HttpsConnectorBuilder::new()
+        let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config.clone())
             .https_only()
             .enable_http1()
@@ -321,13 +319,13 @@ mod tests {
             .tls_config
             .alpn_protocols
             .is_empty());
-        let connector = HttpsConnectorBuilder::new()
+        let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config.clone())
             .https_only()
             .enable_http2()
             .build();
         assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
-        let connector = HttpsConnectorBuilder::new()
+        let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config)
             .https_only()
             .enable_http1()

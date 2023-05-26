@@ -42,6 +42,7 @@ fn client() {
     assert!(rc.status.success());
 }
 
+#[cfg(feature = "acceptor")]
 #[test]
 fn server() {
     let mut srv = server_command()
