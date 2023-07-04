@@ -7,39 +7,8 @@ and the [hyper HTTP library](https://github.com/hyperium/hyper).
 [![Documentation](https://docs.rs/hyper-rustls/badge.svg)](https://docs.rs/hyper-rustls/)
 
 # Release history
-- 0.24.0 (2023-04-01):
-  * Upgrade to rustls 0.21.0, tokio-rustls 0.24.0 and webpki-roots 0.23.0.
-  * Add `ConnectorBuilder::enable_all_versions()` helper.
-- 0.23.2 (2022-12-08):
-  * Strip brackets from IPv6 addresses in the servername. Thanks to @digitwolf.
-- 0.23.1 (2022-10-26):
-  * Allow overriding the servername. Thanks to @MikailBag.
-- 0.23.0 (2021-11-21):
-  * Upgrade to rustls 0.20. Thanks to @g2p.
-  * Add new HttpsConnectorBuilder API. Thanks to @g2p.
-  * Add the tls12, logging, http1 and http2 features. Thanks to @g2p and @marwes.
-- 0.22.1 (2020-12-27):
-  * Fixing docs.rs build; no other changes.
-- 0.22.0 (2020-12-26):
-  * Use tokio 1.0, hyper 0.14, and rustls 0.19. Thanks to @paolobarbolini and @messense.
-  * Rework how the certificate store is chosen: now by an explicit API rather than
-    implicitly by crate features. Thanks to @djc.
-- 0.21.0 (2020-07-05):
-  * Update dependencies.
-- 0.20.0 (2020-02-24):
-  * Use newer rustls-native-certs which works in presence of invalid certificates.
-  * Update dependencies.
-- 0.19.1 (2020-01-19):
-  * Remove dependency on hyper's tcp feature.
-- 0.19.0 (2019-12-17):
-  * First release with async/await support.  Many thanks to @CryZe, @alex, @markuskobler and @dbcfd.
-- 0.18.0 (2019-11-23)
-  * Uses [rustls-native-certs](https://crates.io/crates/rustls-native-certs)
-    instead of compiled-in root certificates.
-- 0.17.1 (2019-08-19)
-  * Fix accidental use of sync read/write.
-- 0.17.0 (2019-08-11)
-  * Update dependencies.
+
+Release history can be found [on GitHub](https://github.com/rustls/hyper-rustls/releases).
 
 # License
 hyper-rustls is distributed under the following three licenses:
