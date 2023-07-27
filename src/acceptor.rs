@@ -35,6 +35,13 @@ impl TlsStream {
             state: State::Handshaking(accept),
         }
     }
+
+    pub fn stream_mut(&mut self) -> Option<(&mut AddrStream, &mut rustls::ServerConnection)> {
+        match &mut self.state {
+            State::Handshaking(_) => None,
+            State::Streaming(stream) => Some(stream.get_mut()),
+        }
+    }
 }
 
 impl AsyncRead for TlsStream {
