@@ -1,7 +1,7 @@
 use core::task::{Context, Poll};
-use std::net::SocketAddr;
 use std::future::Future;
 use std::io;
+use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -27,7 +27,7 @@ enum State {
 // TlsStream implements AsyncRead/AsyncWrite by handshaking with tokio_rustls::Accept first
 pub struct TlsStream {
     state: State,
-    _remote_addr:SocketAddr
+    _remote_addr: SocketAddr,
 }
 
 impl TlsStream {
@@ -36,10 +36,10 @@ impl TlsStream {
         let accept = tokio_rustls::TlsAcceptor::from(config).accept(stream);
         TlsStream {
             state: State::Handshaking(accept),
-            _remote_addr: remote_addr
+            _remote_addr: remote_addr,
         }
     }
-    
+
     pub fn remote_addr(&self) -> SocketAddr {
         self._remote_addr
     }
