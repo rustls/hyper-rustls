@@ -98,7 +98,7 @@ mod log {
 }
 
 #[cfg(feature = "acceptor")]
-pub use crate::acceptor::{AcceptorBuilder, TlsAcceptor};
+pub use crate::acceptor::{AcceptorBuilder, TlsAcceptor, TlsStream};
 pub use crate::config::ConfigBuilderExt;
 pub use crate::connector::builder::ConnectorBuilder as HttpsConnectorBuilder;
 pub use crate::connector::HttpsConnector;
