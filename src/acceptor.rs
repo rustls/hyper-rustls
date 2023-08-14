@@ -16,6 +16,52 @@ mod builder;
 pub use builder::AcceptorBuilder;
 use builder::WantsTlsConfig;
 
+/// A TLS acceptor that can be used with hyper servers.
+pub struct TlsAcceptor {
+    config: Arc<ServerConfig>,
+    incoming: AddrIncoming,
+}
+
+/// An Acceptor for the `https` scheme.
+impl TlsAcceptor {
+    /// Provides a builder for a `TlsAcceptor`.
+    pub fn builder() -> AcceptorBuilder<WantsTlsConfig> {
+        AcceptorBuilder::new()
+    }
+
+    /// Creates a new `TlsAcceptor` from a `ServerConfig` and an `AddrIncoming`.
+    pub fn new(config: Arc<ServerConfig>, incoming: AddrIncoming) -> TlsAcceptor {
+        TlsAcceptor { config, incoming }
+    }
+}
+
+impl Accept for TlsAcceptor {
+    type Conn = TlsStream;
+    type Error = io::Error;
+
+    fn poll_accept(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
+        let pin = self.get_mut();
+        match ready!(Pin::new(&mut pin.incoming).poll_accept(cx)) {
+            Some(Ok(sock)) => Poll::Ready(Some(Ok(TlsStream::new(sock, pin.config.clone())))),
+            Some(Err(e)) => Poll::Ready(Some(Err(e))),
+            None => Poll::Ready(None),
+        }
+    }
+}
+
+impl<C, I> From<(C, I)> for TlsAcceptor
+where
+    C: Into<Arc<ServerConfig>>,
+    I: Into<AddrIncoming>,
+{
+    fn from((config, incoming): (C, I)) -> TlsAcceptor {
+        TlsAcceptor::new(config.into(), incoming.into())
+    }
+}
+
 enum State {
     Handshaking(tokio_rustls::Accept<AddrStream>),
     Streaming(tokio_rustls::server::TlsStream<AddrStream>),
@@ -89,51 +135,6 @@ impl AsyncWrite for TlsStream {
         match self.state {
             State::Handshaking(_) => Poll::Ready(Ok(())),
             State::Streaming(ref mut stream) => Pin::new(stream).poll_shutdown(cx),
-        }
-    }
-}
-
-/// A TLS acceptor that can be used with hyper servers.
-pub struct TlsAcceptor {
-    config: Arc<ServerConfig>,
-    incoming: AddrIncoming,
-}
-
-/// An Acceptor for the `https` scheme.
-impl TlsAcceptor {
-    /// Provides a builder for a `TlsAcceptor`.
-    pub fn builder() -> AcceptorBuilder<WantsTlsConfig> {
-        AcceptorBuilder::new()
-    }
-    /// Creates a new `TlsAcceptor` from a `ServerConfig` and an `AddrIncoming`.
-    pub fn new(config: Arc<ServerConfig>, incoming: AddrIncoming) -> TlsAcceptor {
-        TlsAcceptor { config, incoming }
-    }
-}
-
-impl<C, I> From<(C, I)> for TlsAcceptor
-where
-    C: Into<Arc<ServerConfig>>,
-    I: Into<AddrIncoming>,
-{
-    fn from((config, incoming): (C, I)) -> TlsAcceptor {
-        TlsAcceptor::new(config.into(), incoming.into())
-    }
-}
-
-impl Accept for TlsAcceptor {
-    type Conn = TlsStream;
-    type Error = io::Error;
-
-    fn poll_accept(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
-        let pin = self.get_mut();
-        match ready!(Pin::new(&mut pin.incoming).poll_accept(cx)) {
-            Some(Ok(sock)) => Poll::Ready(Some(Ok(TlsStream::new(sock, pin.config.clone())))),
-            Some(Err(e)) => Poll::Ready(Some(Err(e))),
-            None => Poll::Ready(None),
         }
     }
 }
