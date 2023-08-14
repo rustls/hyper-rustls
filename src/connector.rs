@@ -10,7 +10,7 @@ use tokio_rustls::TlsConnector;
 
 use crate::stream::MaybeHttpsStream;
 
-pub mod builder;
+pub(crate) mod builder;
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
 

@@ -76,7 +76,7 @@
 //! # fn main() {}
 //! ```
 
-#![warn(missing_docs)]
+#![warn(missing_docs, unreachable_pub)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "acceptor")]
@@ -87,7 +87,7 @@ mod stream;
 
 #[cfg(feature = "logging")]
 mod log {
-    pub use log::{debug, trace};
+    pub(crate) use log::{debug, trace};
 }
 
 #[cfg(not(feature = "logging"))]
