@@ -9,7 +9,7 @@ use hyper::server::{
     accept::Accept,
     conn::{AddrIncoming, AddrStream},
 };
-use rustls::ServerConfig;
+use rustls::{ServerConfig, ServerConnection};
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 mod builder;
@@ -75,6 +75,26 @@ impl TlsStream {
         let accept = tokio_rustls::TlsAcceptor::from(config).accept(stream);
         Self {
             state: State::Handshaking(accept),
+        }
+    }
+
+    /// Returns a reference to the underlying IO stream.
+    ///
+    /// This should always return `Some`, except if an error has already been yielded.
+    pub fn io(&self) -> Option<&AddrStream> {
+        match &self.state {
+            State::Handshaking(accept) => accept.get_ref(),
+            State::Streaming(stream) => Some(stream.get_ref().0),
+        }
+    }
+
+    /// Returns a reference to the underlying [`rustls::ServerConnection'].
+    ///
+    /// This will start yielding `Some` only after the handshake has completed.
+    pub fn connection(&self) -> Option<&ServerConnection> {
+        match &self.state {
+            State::Handshaking(_) => None,
+            State::Streaming(stream) => Some(stream.get_ref().1),
         }
     }
 }
