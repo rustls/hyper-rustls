@@ -15,7 +15,7 @@ http = "0.2"
 hyper = { version = "0.14", default-features = false, features = ["client"] }
 log = { version = "0.4.4", optional = true }
 rustls-native-certs = { version = "0.6", optional = true }
-rustls = { version = "0.21.0", default-features = false }
+rustls = { version = "0.21.6", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.24.0", default-features = false }
 webpki-roots = { version = "0.25", optional = true }
