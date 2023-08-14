@@ -45,7 +45,7 @@ where
     C: Into<Arc<rustls::ClientConfig>>,
 {
     fn from((http, cfg): (H, C)) -> Self {
-        HttpsConnector {
+        Self {
             force_https: false,
             http,
             tls_config: cfg.into(),

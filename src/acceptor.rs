@@ -30,8 +30,8 @@ impl TlsAcceptor {
     }
 
     /// Creates a new `TlsAcceptor` from a `ServerConfig` and an `AddrIncoming`.
-    pub fn new(config: Arc<ServerConfig>, incoming: AddrIncoming) -> TlsAcceptor {
-        TlsAcceptor { config, incoming }
+    pub fn new(config: Arc<ServerConfig>, incoming: AddrIncoming) -> Self {
+        Self { config, incoming }
     }
 }
 
@@ -57,8 +57,8 @@ where
     C: Into<Arc<ServerConfig>>,
     I: Into<AddrIncoming>,
 {
-    fn from((config, incoming): (C, I)) -> TlsAcceptor {
-        TlsAcceptor::new(config.into(), incoming.into())
+    fn from((config, incoming): (C, I)) -> Self {
+        Self::new(config.into(), incoming.into())
     }
 }
 
@@ -70,9 +70,9 @@ pub struct TlsStream {
 }
 
 impl TlsStream {
-    fn new(stream: AddrStream, config: Arc<ServerConfig>) -> TlsStream {
+    fn new(stream: AddrStream, config: Arc<ServerConfig>) -> Self {
         let accept = tokio_rustls::TlsAcceptor::from(config).accept(stream);
-        TlsStream {
+        Self {
             state: State::Handshaking(accept),
         }
     }
