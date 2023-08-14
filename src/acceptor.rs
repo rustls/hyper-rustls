@@ -62,6 +62,7 @@ where
     }
 }
 
+/// A TLS stream constructed by a [`TlsAcceptor`].
 // tokio_rustls::server::TlsStream doesn't expose constructor methods,
 // so we have to TlsAcceptor::accept and handshake to have access to it
 // TlsStream implements AsyncRead/AsyncWrite by handshaking with tokio_rustls::Accept first

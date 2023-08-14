@@ -80,7 +80,8 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "acceptor")]
-mod acceptor;
+/// TLS acceptor implementing hyper's `Accept` trait.
+pub mod acceptor;
 mod config;
 mod connector;
 mod stream;
