@@ -62,11 +62,6 @@ where
     }
 }
 
-enum State {
-    Handshaking(tokio_rustls::Accept<AddrStream>),
-    Streaming(tokio_rustls::server::TlsStream<AddrStream>),
-}
-
 // tokio_rustls::server::TlsStream doesn't expose constructor methods,
 // so we have to TlsAcceptor::accept and handshake to have access to it
 // TlsStream implements AsyncRead/AsyncWrite by handshaking with tokio_rustls::Accept first
@@ -137,4 +132,9 @@ impl AsyncWrite for TlsStream {
             State::Streaming(ref mut stream) => Pin::new(stream).poll_shutdown(cx),
         }
     }
+}
+
+enum State {
+    Handshaking(tokio_rustls::Accept<AddrStream>),
+    Streaming(tokio_rustls::server::TlsStream<AddrStream>),
 }
