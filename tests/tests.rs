@@ -24,7 +24,7 @@ fn client_command() -> Command {
 
 fn wait_for_server(addr: &str) {
     for i in 0..10 {
-        if let Ok(_) = TcpStream::connect(addr) {
+        if TcpStream::connect(addr).is_ok() {
             return;
         }
         thread::sleep(time::Duration::from_millis(i * 100));
@@ -72,7 +72,7 @@ fn server() {
         println!("curl stderr:\n{}", String::from_utf8_lossy(&output.stderr));
     }
 
-    assert_eq!(String::from_utf8_lossy(&*output.stdout), "Try POST /echo\n");
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "Try POST /echo\n");
 }
 
 #[test]
