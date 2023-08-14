@@ -125,16 +125,16 @@ impl AsyncWrite for TlsStream {
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        match self.state {
+        match &mut self.state {
             State::Handshaking(_) => Poll::Ready(Ok(())),
-            State::Streaming(ref mut stream) => Pin::new(stream).poll_flush(cx),
+            State::Streaming(stream) => Pin::new(stream).poll_flush(cx),
         }
     }
 
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        match self.state {
+        match &mut self.state {
             State::Handshaking(_) => Poll::Ready(Ok(())),
-            State::Streaming(ref mut stream) => Pin::new(stream).poll_shutdown(cx),
+            State::Streaming(stream) => Pin::new(stream).poll_shutdown(cx),
         }
     }
 }
