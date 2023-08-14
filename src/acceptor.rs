@@ -44,11 +44,11 @@ impl Accept for TlsAcceptor {
         cx: &mut Context<'_>,
     ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
         let pin = self.get_mut();
-        match ready!(Pin::new(&mut pin.incoming).poll_accept(cx)) {
-            Some(Ok(sock)) => Poll::Ready(Some(Ok(TlsStream::new(sock, pin.config.clone())))),
-            Some(Err(e)) => Poll::Ready(Some(Err(e))),
-            None => Poll::Ready(None),
-        }
+        Poll::Ready(match ready!(Pin::new(&mut pin.incoming).poll_accept(cx)) {
+            Some(Ok(sock)) => Some(Ok(TlsStream::new(sock, pin.config.clone()))),
+            Some(Err(e)) => Some(Err(e)),
+            None => None,
+        })
     }
 }
 
