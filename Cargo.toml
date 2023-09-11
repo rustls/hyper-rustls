@@ -12,21 +12,33 @@ documentation = "https://docs.rs/hyper-rustls/"
 
 [dependencies]
 http = "0.2"
-hyper = { version = "0.14", default-features = false, features = ["client"] }
+hyper = { version = "0.14", git = "https://github.com/wasix-org/hyper.git", branch = "v0.14.27", default-features = false, features = [
+    "client",
+] }
 log = { version = "0.4.4", optional = true }
-rustls-native-certs = { version = "0.6", optional = true }
-rustls = { version = "0.21.0", default-features = false }
-tokio = { git = "https://github.com/wasix-org/tokio.git", branch = "epoll" }
-tokio-rustls = { version = "0.24.0", default-features = false }
-webpki-roots = { version = "0.24", optional = true }
+rustls-native-certs = { version = "0.6", git = "https://github.com/wasix-org/rustls-native-certs.git", branch = "main", optional = true }
+rustls = { version = "0.21.5", git = "https://github.com/wasix-org/rustls.git", branch = "v0.21.5", default-features = false }
+tokio = { version = "=1.24.2", git = "https://github.com/wasix-org/tokio.git", branch = "epoll" }
+tokio-rustls = { git = "https://github.com/wasix-org/tokio-rustls.git", version = "0.24.0", default-features = false }
+webpki-roots = { git = "https://github.com/wasix-org/webpki-roots.git", branch = "v0.24.0", version = "0.24", optional = true }
 futures-util = { version = "0.3" }
 
 [dev-dependencies]
 futures-util = { version = "0.3.1", default-features = false }
-hyper = { version = "0.14", features = ["full"] }
-rustls = { version = "0.21.0", default-features = false, features = ["tls12"] }
+hyper = { version = "0.14", git = "https://github.com/wasix-org/hyper.git", branch = "v0.14.27", default-features = false, features = [
+    "full",
+] }
+rustls = { version = "0.21.5", git = "https://github.com/wasix-org/rustls.git", branch = "v0.21.5", default-features = false, features = [
+    "tls12",
+] }
 rustls-pemfile = "1.0.0"
-tokio = { git = "https://github.com/wasix-org/tokio.git", branch = "epoll", features = ["io-std", "macros", "net", "rt-multi-thread"] }
+tokio = { version = "=1.24.2", git = "https://github.com/wasix-org/tokio.git", branch = "epoll", features = [
+    "io-std",
+    "fs",
+    "macros",
+    "net",
+    "rt-multi-thread",
+] }
 
 [features]
 default = ["native-tokio", "http1", "tls12", "logging", "acceptor"]
@@ -35,7 +47,7 @@ http1 = ["hyper/http1"]
 http2 = ["hyper/http2"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
-tokio-runtime =  ["hyper/runtime"]
+tokio-runtime = ["hyper/runtime"]
 tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
 logging = ["log", "tokio-rustls/logging", "rustls/logging"]
 
