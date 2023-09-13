@@ -1,7 +1,10 @@
 use rustls::ClientConfig;
 
 use super::HttpsConnector;
-#[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+#[cfg(all(
+    any(feature = "rustls-native-certs", feature = "webpki-roots"),
+    feature = "ring"
+))]
 use crate::config::ConfigBuilderExt;
 
 #[cfg(feature = "tokio-runtime")]
@@ -57,7 +60,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     /// See [`ConfigBuilderExt::with_native_roots`]
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
-    #[cfg(feature = "rustls-native-certs")]
+    #[cfg(all(feature = "rustls-native-certs", feature = "ring"))]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     pub fn with_native_roots(self) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(

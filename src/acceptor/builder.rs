@@ -3,6 +3,11 @@ use std::sync::Arc;
 use hyper::server::conn::AddrIncoming;
 use rustls::ServerConfig;
 
+#[cfg(feature = "ring")]
+use pki_types::CertificateDer;
+#[cfg(feature = "ring")]
+use pki_types::PrivateKeyDer;
+
 use super::TlsAcceptor;
 /// Builder for [`TlsAcceptor`]
 pub struct AcceptorBuilder<State>(State);
@@ -25,10 +30,11 @@ impl AcceptorBuilder<WantsTlsConfig> {
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     /// [with_no_client_auth]: rustls::ConfigBuilder::with_no_client_auth
+    #[cfg(feature = "ring")]
     pub fn with_single_cert(
         self,
-        cert_chain: Vec<rustls::Certificate>,
-        key_der: rustls::PrivateKey,
+        cert_chain: Vec<CertificateDer<'static>>,
+        key_der: PrivateKeyDer<'static>,
     ) -> Result<AcceptorBuilder<WantsAlpn>, rustls::Error> {
         Ok(AcceptorBuilder(WantsAlpn(
             ServerConfig::builder()
