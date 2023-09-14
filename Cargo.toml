@@ -15,22 +15,22 @@ http = "0.2"
 hyper = { version = "0.14", default-features = false, features = ["client"] }
 log = { version = "0.4.4", optional = true }
 rustls-native-certs = { version = "0.6", optional = true }
-rustls = { git = "https://github.com/rustls/rustls", branch = "jbp-generalise-crypto-usage-pt4", version = "0.22.0-alpha.2", default-features = false, features = ["webpki", "dangerous_configuration"] }
+rustls = { git = "https://github.com/stevefan1999-personal/rustls", branch = "jbp-generalise-crypto-usage-pt4", version = "0.22.0-alpha.2", default-features = false, features = ["dangerous_configuration"] }
 tokio = "1.0"
 tokio-rustls = { git = "https://github.com/stevefan1999-personal/tokio-rustls", branch = "part-4-patch", version = "0.24.0", default-features = false }
 webpki-roots = { version = "0.25", optional = true }
 futures-util = { version = "0.3", default-features = false }
-webpki = { package = "rustls-webpki", version = "0.102.0-alpha.2", default-features = false, features = ["alloc", "std"] }
-pki-types = { package = "rustls-pki-types", version = "0.2.0" }
+webpki = { package = "rustls-webpki", version = "0.102.0-alpha.3", default-features = false }
+pki-types = { package = "rustls-pki-types", version = "0.2.1", default-features = false }
 
 [dev-dependencies]
 hyper = { version = "0.14", features = ["full"] }
-rustls = { git = "https://github.com/rustls/rustls", branch = "jbp-generalise-crypto-usage-pt4", version = "0.22.0-alpha.2", default-features = false, features = ["webpki", "tls12"] }
+rustls = { git = "https://github.com/stevefan1999-personal/rustls", branch = "jbp-generalise-crypto-usage-pt4", version = "0.22.0-alpha.2", default-features = false, features = ["tls12"] }
 rustls-pemfile = "1.0.0"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
-default = ["native-tokio", "http1", "tls12", "logging", "acceptor"]
+default = ["native-tokio", "http1", "tls12", "logging", "acceptor", "std"]
 acceptor = ["hyper/server", "tokio-runtime"]
 http1 = ["hyper/http1"]
 http2 = ["hyper/http2"]
@@ -40,6 +40,8 @@ tokio-runtime =  ["hyper/runtime"]
 tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
 logging = ["log", "tokio-rustls/logging", "rustls/logging"]
 ring = ["rustls/ring"]
+std = ["rustls/std", "webpki/std", "pki-types/std"]
+alloc = ["rustls/alloc", "webpki/alloc", "pki-types/alloc"]
 
 [[example]]
 name = "client"
