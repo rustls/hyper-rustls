@@ -90,9 +90,17 @@ impl AcceptorBuilder<WantsIncoming> {
     /// Passes a [`AddrIncoming`] to configure the TLS connection and
     /// creates the [`TlsAcceptor`]
     pub fn with_incoming(self, incoming: impl Into<AddrIncoming>) -> TlsAcceptor {
+        self.with_acceptor(incoming.into())
+    }
+
+    /// Passes an acceptor implementing [`Accept`] to configure the TLS connection and
+    /// creates the [`TlsAcceptor`]
+    ///
+    /// [`Accept`]: hyper::server::accept::Accept
+    pub fn with_acceptor<A>(self, acceptor: A) -> TlsAcceptor<A> {
         TlsAcceptor {
             config: Arc::new(self.0 .0),
-            incoming: incoming.into(),
+            acceptor,
         }
     }
 }
