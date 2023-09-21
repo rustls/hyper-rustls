@@ -4,9 +4,7 @@ use hyper::server::conn::AddrIncoming;
 use rustls::ServerConfig;
 
 #[cfg(feature = "ring")]
-use pki_types::CertificateDer;
-#[cfg(feature = "ring")]
-use pki_types::PrivateKeyDer;
+use pki_types::{CertificateDer, PrivateKeyDer};
 
 use super::TlsAcceptor;
 /// Builder for [`TlsAcceptor`]
