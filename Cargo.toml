@@ -56,4 +56,4 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [patch.crates-io]
 rustls = { git = 'https://github.com/rustls/rustls' }
-tokio-rustls = { git = 'https://github.com/stevefan1999-personal/tokio-rustls' }
+tokio-rustls = { git = 'https://github.com/rustls/tokio-rustls' }
