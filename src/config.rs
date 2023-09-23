@@ -30,11 +30,10 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
 
         for cert in rustls_native_certs::load_native_certs().expect("could not load platform certs")
         {
-            let cert = CertificateDer::from(cert.0);
-            match roots.add(cert.clone()) {
+            match roots.add(cert.0.clone().into()) {
                 Ok(_) => valid_count += 1,
                 Err(err) => {
-                    crate::log::trace!("invalid cert der {:?}", cert);
+                    crate::log::trace!("invalid cert der {:?}", cert.0);
                     crate::log::debug!("certificate parsing failed: {:?}", err);
                     invalid_count += 1
                 }
