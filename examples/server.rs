@@ -14,8 +14,7 @@ use hyper::server::conn::AddrIncoming;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use hyper_rustls::TlsAcceptor;
-use pki_types::CertificateDer;
-use pki_types::PrivateKeyDer;
+use pki_types::{CertificateDer, PrivateKeyDer};
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
