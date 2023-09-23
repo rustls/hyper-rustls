@@ -48,9 +48,11 @@ async fn run_client() -> io::Result<()> {
         Some(ref mut rd) => {
             // Read trust roots
             let certs = rustls_pemfile::certs(rd)
-                .map_err(|_| error("failed to load custom CA store".into()))?;
+                .map_err(|_| error("failed to load custom CA store".into()))?
+                .into_iter()
+                .map(Into::into);
             let mut roots = RootCertStore::empty();
-            roots.add_parsable_certificates(&certs);
+            roots.add_parsable_certificates(certs);
             // TLS client config using the custom CA store for lookups
             rustls::ClientConfig::builder()
                 .with_safe_defaults()

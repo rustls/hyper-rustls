@@ -48,7 +48,7 @@
 //!
 //! // Load and return certificate.
 //! let certs = rustls_pemfile::certs(&mut reader).unwrap();
-//! let certs = certs.into_iter().map(rustls::Certificate).collect();
+//! let certs = certs.into_iter().map(Into::into).collect();
 //!
 //! // Load private key. (see `examples/server.rs`)
 //! let keyfile = File::open("examples/sample.rsa").unwrap();
@@ -56,7 +56,7 @@
 //!
 //! // Load and return a single private key.
 //! let keys = rustls_pemfile::rsa_private_keys(&mut reader).unwrap();
-//! let key = rustls::PrivateKey(keys[0].clone());
+//! let key = pki_types::PrivateKeyDer::Pkcs1(keys[0].clone().into());
 //! let https = hyper_rustls::HttpsConnectorBuilder::new()
 //!     .with_native_roots()
 //!     .https_only()
