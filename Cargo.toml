@@ -14,10 +14,10 @@ documentation = "https://docs.rs/hyper-rustls/"
 http = "0.2"
 hyper = { version = "0.14", default-features = false, features = ["client"] }
 log = { version = "0.4.4", optional = true }
-rustls-native-certs = { version = "0.6", optional = true }
+rustls-native-certs = { version = "0.7.0-alpha.0", optional = true }
 rustls = { version = "0.22.0-alpha.3", default-features = false }
 tokio = "1.0"
-tokio-rustls = { version = "0.24.1", default-features = false }
+tokio-rustls = { version = "0.25.0-alpha.1", default-features = false }
 webpki-roots = { version = "0.26.0-alpha.1", optional = true }
 futures-util = { version = "0.3", default-features = false }
 pki-types = { package = "rustls-pki-types", version = "0.2.1" }
@@ -25,7 +25,7 @@ pki-types = { package = "rustls-pki-types", version = "0.2.1" }
 [dev-dependencies]
 hyper = { version = "0.14", features = ["full"] }
 rustls = { version = "0.22.0-alpha.3", default-features = false, features = ["tls12"] }
-rustls-pemfile = "1.0.0"
+rustls-pemfile = "2.0.0-alpha.1"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
@@ -55,4 +55,5 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [patch.crates-io]
+rustls-native-certs = { git = 'https://github.com/rustls/rustls-native-certs' }
 tokio-rustls = { git = 'https://github.com/rustls/tokio-rustls' }

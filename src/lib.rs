@@ -47,16 +47,16 @@
 //! let mut reader = io::BufReader::new(certfile);
 //!
 //! // Load and return certificate.
-//! let certs = rustls_pemfile::certs(&mut reader).unwrap();
-//! let certs = certs.into_iter().map(Into::into).collect();
+//! let certs = rustls_pemfile::certs(&mut reader).flat_map(|x| x);
+//! let certs = certs.map(Into::into).collect();
 //!
 //! // Load private key. (see `examples/server.rs`)
 //! let keyfile = File::open("examples/sample.rsa").unwrap();
 //! let mut reader = io::BufReader::new(keyfile);
 //!
 //! // Load and return a single private key.
-//! let keys = rustls_pemfile::rsa_private_keys(&mut reader).unwrap();
-//! let key = pki_types::PrivateKeyDer::Pkcs1(keys[0].clone().into());
+//! let keys: Vec<pki_types::PrivatePkcs1KeyDer<'static>> = rustls_pemfile::rsa_private_keys(&mut reader).flat_map(|x| x).collect();
+//! let key = pki_types::PrivateKeyDer::Pkcs1(keys[0].secret_pkcs1_der().to_vec().into());
 //! let https = hyper_rustls::HttpsConnectorBuilder::new()
 //!     .with_native_roots()
 //!     .https_only()
