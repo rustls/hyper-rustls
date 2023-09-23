@@ -18,9 +18,9 @@ rustls-native-certs = { version = "0.6", optional = true }
 rustls = { version = "0.22.0-alpha.3", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.24.1", default-features = false }
-webpki-roots = { version = "0.25", optional = true }
+webpki-roots = { version = "0.26.0-alpha.1", optional = true }
 futures-util = { version = "0.3", default-features = false }
-pki-types = { package = "rustls-pki-types", version = "0.2.1", optional = true }
+pki-types = { package = "rustls-pki-types", version = "0.2.1" }
 
 [dev-dependencies]
 hyper = { version = "0.14", features = ["full"] }
@@ -38,7 +38,7 @@ native-tokio = ["tokio-runtime", "rustls-native-certs"]
 tokio-runtime =  ["hyper/runtime"]
 tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
 logging = ["log", "tokio-rustls/logging", "rustls/logging"]
-ring = ["rustls/ring", "pki-types"]
+ring = ["rustls/ring"]
 
 [[example]]
 name = "client"

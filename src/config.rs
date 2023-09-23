@@ -1,4 +1,3 @@
-use pki_types::CertificateDer;
 use rustls::client::WantsClientCert;
 use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 
@@ -55,16 +54,10 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsClientCert> {
         let mut roots = rustls::RootCertStore::empty();
-        roots.add_trust_anchors(
+        roots.extend(
             webpki_roots::TLS_SERVER_ROOTS
                 .iter()
-                .map(|ta| {
-                    rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
-                        ta.subject,
-                        ta.spki,
-                        ta.name_constraints,
-                    )
-                }),
+                .cloned(),
         );
         self.with_root_certificates(roots)
     }
