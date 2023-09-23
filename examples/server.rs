@@ -88,11 +88,8 @@ fn load_certs(filename: &str) -> io::Result<Vec<CertificateDer>> {
     let mut reader = io::BufReader::new(certfile);
 
     // Load and return certificate.
-    let certs = rustls_pemfile::certs(&mut reader).flat_map(|x| x);
-    Ok(certs
-        .into_iter()
-        .map(Into::into)
-        .collect())
+    let certs = rustls_pemfile::certs(&mut reader).collect::<Result<Vec<_>, _>>()?;
+    Ok(certs)
 }
 
 // Load private key from file.
@@ -104,9 +101,7 @@ fn load_private_key(filename: &str) -> io::Result<PrivateKeyDer> {
 
     // Load and return a single private key.
     let keys: Vec<pki_types::PrivatePkcs1KeyDer<'static>> =
-        rustls_pemfile::rsa_private_keys(&mut reader)
-            .flat_map(|x| x)
-            .collect();
+        rustls_pemfile::rsa_private_keys(&mut reader).collect::<Result<Vec<_>, _>>()?;
     if keys.len() != 1 {
         return Err(error("expected a single private key".into()));
     }

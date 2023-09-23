@@ -47,7 +47,7 @@ async fn run_client() -> io::Result<()> {
     let tls = match ca {
         Some(ref mut rd) => {
             // Read trust roots
-            let certs = rustls_pemfile::certs(rd).flat_map(|x| x);
+            let certs = rustls_pemfile::certs(rd).collect::<Result<Vec<_>, _>>()?;
             let mut roots = RootCertStore::empty();
             roots.add_parsable_certificates(certs);
             // TLS client config using the custom CA store for lookups
