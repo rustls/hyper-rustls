@@ -174,16 +174,22 @@ impl ConnectorBuilder<WantsProtocols1> {
         })
     }
 
-    /// Enable all HTTP versions
+    /// Enable all HTTP versions built into this library
     ///
-    /// For now, this enables both HTTP 1 and 2. In the future, other supported versions
-    /// will be enabled as well.
-    #[cfg(all(feature = "http1", feature = "http2"))]
+    /// For now, this could enable both HTTP 1 and 2, depending on active features.
+    /// In the future, other supported versions will be enabled as well.
+    #[cfg(feature = "http2")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "http2")))]
     pub fn enable_all_versions(mut self) -> ConnectorBuilder<WantsProtocols3> {
-        self.0.tls_config.alpn_protocols = vec![b"h2".to_vec()];
+        #[cfg(feature = "http1")]
+        let alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        #[cfg(not(feature = "http1"))]
+        let alpn_protocols = vec![b"h2".to_vec()];
+
+        self.0.tls_config.alpn_protocols = alpn_protocols;
         ConnectorBuilder(WantsProtocols3 {
             inner: self.0,
-            enable_http1: true,
+            enable_http1: cfg!(feature = "http1"),
         })
     }
 
@@ -326,10 +332,19 @@ mod tests {
             .build();
         assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
         let connector = super::ConnectorBuilder::new()
-            .with_tls_config(tls_config)
+            .with_tls_config(tls_config.clone())
             .https_only()
             .enable_http1()
             .enable_http2()
+            .build();
+        assert_eq!(
+            &connector.tls_config.alpn_protocols,
+            &[b"h2".to_vec(), b"http/1.1".to_vec()]
+        );
+        let connector = super::ConnectorBuilder::new()
+            .with_tls_config(tls_config)
+            .https_only()
+            .enable_all_versions()
             .build();
         assert_eq!(
             &connector.tls_config.alpn_protocols,
