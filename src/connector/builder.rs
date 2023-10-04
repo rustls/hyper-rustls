@@ -174,7 +174,7 @@ impl ConnectorBuilder<WantsProtocols1> {
         })
     }
 
-    /// Enable all HTTP versions built into this library
+    /// Enable all HTTP versions built into this library (enabled with Cargo features)
     ///
     /// For now, this could enable both HTTP 1 and 2, depending on active features.
     /// In the future, other supported versions will be enabled as well.
@@ -350,5 +350,27 @@ mod tests {
             &connector.tls_config.alpn_protocols,
             &[b"h2".to_vec(), b"http/1.1".to_vec()]
         );
+    }
+
+    #[test]
+    #[cfg(all(not(feature = "http1"), feature = "http2"))]
+    fn test_alpn_http2() {
+        let roots = rustls::RootCertStore::empty();
+        let tls_config = rustls::ClientConfig::builder()
+            .with_safe_defaults()
+            .with_root_certificates(roots)
+            .with_no_client_auth();
+        let connector = super::ConnectorBuilder::new()
+            .with_tls_config(tls_config.clone())
+            .https_only()
+            .enable_http2()
+            .build();
+        assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
+        let connector = super::ConnectorBuilder::new()
+            .with_tls_config(tls_config)
+            .https_only()
+            .enable_all_versions()
+            .build();
+        assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
     }
 }
