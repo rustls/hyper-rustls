@@ -10,7 +10,7 @@ use tokio_rustls::TlsConnector;
 
 use crate::stream::MaybeHttpsStream;
 
-pub mod builder;
+pub(crate) mod builder;
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -45,7 +45,7 @@ where
     C: Into<Arc<rustls::ClientConfig>>,
 {
     fn from((http, cfg): (H, C)) -> Self {
-        HttpsConnector {
+        Self {
             force_https: false,
             http,
             tls_config: cfg.into(),

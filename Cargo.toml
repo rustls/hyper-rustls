@@ -1,8 +1,8 @@
 [package]
 name = "hyper-rustls"
-version = "0.24.1"
+version = "0.24.2"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.63"
 license = "Apache-2.0 OR ISC OR MIT"
 readme = "README.md"
 description = "Rustls+hyper integration for pure rust HTTPS"
@@ -21,7 +21,7 @@ rustls = { version = "0.21.5", git = "https://github.com/wasix-org/rustls.git", 
 tokio = { version = "=1.24.2", git = "https://github.com/wasix-org/tokio.git", branch = "epoll" }
 tokio-rustls = { git = "https://github.com/wasix-org/tokio-rustls.git", version = "0.24.0", default-features = false }
 webpki-roots = { git = "https://github.com/wasix-org/webpki-roots.git", branch = "v0.24.0", version = "0.24", optional = true }
-futures-util = { version = "0.3" }
+futures-util = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 futures-util = { version = "0.3.1", default-features = false }
@@ -31,6 +31,7 @@ hyper = { version = "0.14", git = "https://github.com/wasix-org/hyper.git", bran
 rustls = { version = "0.21.5", git = "https://github.com/wasix-org/rustls.git", branch = "v0.21.5", default-features = false, features = [
     "tls12",
 ] }
+webpki-roots = { version = "0.25", optional = true }
 rustls-pemfile = "1.0.0"
 tokio = { version = "=1.24.2", git = "https://github.com/wasix-org/tokio.git", branch = "epoll", features = [
     "io-std",
