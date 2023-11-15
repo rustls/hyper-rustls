@@ -8,9 +8,14 @@ use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 pub trait ConfigBuilderExt {
     /// This configures the platform's trusted certs, as implemented by
     /// rustls-native-certs
+    ///
+    /// This will return an error if no valid certs were found. In that case,
+    /// it's recommended to use `with_webpki_roots`.
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
-    fn with_native_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>;
+    fn with_native_roots(
+        self,
+    ) -> std::io::Result<ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>>;
 
     /// This configures the webpki roots, which are Mozilla's set of
     /// trusted roots as packaged by webpki-roots.
@@ -23,7 +28,9 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
-    fn with_native_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert> {
+    fn with_native_roots(
+        self,
+    ) -> std::io::Result<ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>> {
         let mut roots = rustls::RootCertStore::empty();
         let mut valid_count = 0;
         let mut invalid_count = 0;
@@ -45,9 +52,15 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
             valid_count,
             invalid_count
         );
-        assert!(!roots.is_empty(), "no CA certificates found");
+        if roots.is_empty() {
+            crate::log::debug!("no valid native root CA certificates found");
+            Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("no valid native root CA certificates found ({invalid_count} invalid)"),
+            ))?
+        }
 
-        self.with_root_certificates(roots)
+        Ok(self.with_root_certificates(roots))
     }
 
     #[cfg(feature = "webpki-roots")]

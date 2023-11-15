@@ -59,13 +59,13 @@ impl ConnectorBuilder<WantsTlsConfig> {
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
-    pub fn with_native_roots(self) -> ConnectorBuilder<WantsSchemes> {
-        self.with_tls_config(
+    pub fn with_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
+        Ok(self.with_tls_config(
             ClientConfig::builder()
                 .with_safe_defaults()
-                .with_native_roots()
+                .with_native_roots()?
                 .with_no_client_auth(),
-        )
+        ))
     }
 
     /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
