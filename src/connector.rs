@@ -60,8 +60,20 @@ where
     fn call(&mut self, dst: Uri) -> Self::Future {
         // dst.scheme() would need to derive Eq to be matchable;
         // use an if cascade instead
-        let scheme = match dst.scheme() {
-            Some(scheme) => scheme,
+        match dst.scheme() {
+            Some(scheme) if scheme == &http::uri::Scheme::HTTP => {
+                let future = self.http.call(dst);
+                return Box::pin(async move {
+                    Ok(MaybeHttpsStream::Http(future.await.map_err(Into::into)?))
+                });
+            }
+            Some(scheme) if scheme != &http::uri::Scheme::HTTPS => {
+                let message = format!("unsupported scheme {scheme}");
+                return Box::pin(async move {
+                    Err(io::Error::new(io::ErrorKind::Other, message).into())
+                });
+            }
+            Some(_) => {}
             None => {
                 return Box::pin(async move {
                     Err(io::Error::new(io::ErrorKind::Other, "missing scheme").into())
@@ -69,49 +81,41 @@ where
             }
         };
 
-        if scheme == &http::uri::Scheme::HTTP && !self.force_https {
-            let future = self.http.call(dst);
-            Box::pin(async move { Ok(MaybeHttpsStream::Http(future.await.map_err(Into::into)?)) })
-        } else if scheme == &http::uri::Scheme::HTTPS {
-            let cfg = self.tls_config.clone();
-            let mut hostname = match self.override_server_name.as_deref() {
-                Some(h) => h,
-                None => dst.host().unwrap_or_default(),
-            };
+        let cfg = self.tls_config.clone();
+        let mut hostname = match self.override_server_name.as_deref() {
+            Some(h) => h,
+            None => dst.host().unwrap_or_default(),
+        };
 
-            // Remove square brackets around IPv6 address.
-            if let Some(trimmed) = hostname
-                .strip_prefix('[')
-                .and_then(|h| h.strip_suffix(']'))
-            {
-                hostname = trimmed;
-            }
-
-            let hostname = match ServerName::try_from(hostname) {
-                Ok(dns_name) => dns_name.to_owned(),
-                Err(_) => {
-                    let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
-                    return Box::pin(async move { Err(Box::new(err).into()) });
-                }
-            };
-            let connecting_future = self.http.call(dst);
-
-            let f = async move {
-                let tcp = connecting_future
-                    .await
-                    .map_err(Into::into)?;
-                let connector = TlsConnector::from(cfg);
-                let tls = connector
-                    .connect(hostname, tcp)
-                    .await
-                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-                Ok(MaybeHttpsStream::Https(tls))
-            };
-            Box::pin(f)
-        } else {
-            let err = io::Error::new(io::ErrorKind::Other, format!("Unsupported scheme {scheme}"));
-            Box::pin(async move { Err(err.into()) })
+        // Remove square brackets around IPv6 address.
+        if let Some(trimmed) = hostname
+            .strip_prefix('[')
+            .and_then(|h| h.strip_suffix(']'))
+        {
+            hostname = trimmed;
         }
+
+        let hostname = match ServerName::try_from(hostname) {
+            Ok(dns_name) => dns_name.to_owned(),
+            Err(_) => {
+                let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
+                return Box::pin(async move { Err(Box::new(err).into()) });
+            }
+        };
+        let connecting_future = self.http.call(dst);
+
+        let f = async move {
+            let tcp = connecting_future
+                .await
+                .map_err(Into::into)?;
+            let connector = TlsConnector::from(cfg);
+            let tls = connector
+                .connect(hostname, tcp)
+                .await
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            Ok(MaybeHttpsStream::Https(tls))
+        };
+        Box::pin(f)
     }
 }
 
