@@ -70,16 +70,8 @@ where
         };
 
         if scheme == &http::uri::Scheme::HTTP && !self.force_https {
-            let connecting_future = self.http.call(dst);
-
-            let f = async move {
-                let tcp = connecting_future
-                    .await
-                    .map_err(Into::into)?;
-
-                Ok(MaybeHttpsStream::Http(tcp))
-            };
-            Box::pin(f)
+            let future = self.http.call(dst);
+            Box::pin(async move { Ok(MaybeHttpsStream::Http(future.await.map_err(Into::into)?)) })
         } else if scheme == &http::uri::Scheme::HTTPS {
             let cfg = self.tls_config.clone();
             let mut hostname = match self.override_server_name.as_deref() {
