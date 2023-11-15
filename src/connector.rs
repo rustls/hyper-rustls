@@ -102,20 +102,19 @@ where
                 return Box::pin(async move { Err(Box::new(err).into()) });
             }
         };
-        let connecting_future = self.http.call(dst);
 
-        let f = async move {
+        let connecting_future = self.http.call(dst);
+        Box::pin(async move {
             let tcp = connecting_future
                 .await
                 .map_err(Into::into)?;
-            let connector = TlsConnector::from(cfg);
-            let tls = connector
-                .connect(hostname, tcp)
-                .await
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-            Ok(MaybeHttpsStream::Https(tls))
-        };
-        Box::pin(f)
+            Ok(MaybeHttpsStream::Https(
+                TlsConnector::from(cfg)
+                    .connect(hostname, tcp)
+                    .await
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?,
+            ))
+        })
     }
 }
 
