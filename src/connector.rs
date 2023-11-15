@@ -33,28 +33,6 @@ impl<T> HttpsConnector<T> {
     }
 }
 
-impl<T> fmt::Debug for HttpsConnector<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("HttpsConnector")
-            .field("force_https", &self.force_https)
-            .finish()
-    }
-}
-
-impl<H, C> From<(H, C)> for HttpsConnector<H>
-where
-    C: Into<Arc<rustls::ClientConfig>>,
-{
-    fn from((http, cfg): (H, C)) -> Self {
-        Self {
-            force_https: false,
-            http,
-            tls_config: cfg.into(),
-            override_server_name: None,
-        }
-    }
-}
-
 impl<T> Service<Uri> for HttpsConnector<T>
 where
     T: Service<Uri>,
@@ -137,5 +115,27 @@ where
             let err = io::Error::new(io::ErrorKind::Other, "Missing scheme");
             Box::pin(async move { Err(err.into()) })
         }
+    }
+}
+
+impl<H, C> From<(H, C)> for HttpsConnector<H>
+where
+    C: Into<Arc<rustls::ClientConfig>>,
+{
+    fn from((http, cfg): (H, C)) -> Self {
+        Self {
+            force_https: false,
+            http,
+            tls_config: cfg.into(),
+            override_server_name: None,
+        }
+    }
+}
+
+impl<T> fmt::Debug for HttpsConnector<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("HttpsConnector")
+            .field("force_https", &self.force_https)
+            .finish()
     }
 }
