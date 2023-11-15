@@ -11,7 +11,7 @@ repository = "https://github.com/rustls/hyper-rustls"
 documentation = "https://docs.rs/hyper-rustls/"
 
 [dependencies]
-http = "0.2"
+http = "1.0"
 hyper = { version = "0.14", default-features = false, features = ["client"] }
 log = { version = "0.4.4", optional = true }
 rustls-native-certs = { version = "0.6", optional = true }
