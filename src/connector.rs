@@ -4,7 +4,9 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::{fmt, io};
 
-use hyper::{client::connect::Connection, service::Service, Uri};
+use hyper::client::connect::Connection;
+use hyper::service::Service;
+use hyper::Uri;
 use pki_types::ServerName;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsConnector;

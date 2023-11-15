@@ -5,10 +5,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use futures_util::ready;
-use hyper::server::{
-    accept::Accept,
-    conn::{AddrIncoming, AddrStream},
-};
+use hyper::server::accept::Accept;
+use hyper::server::conn::{AddrIncoming, AddrStream};
 use rustls::{ServerConfig, ServerConnection};
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
