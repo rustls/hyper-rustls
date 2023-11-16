@@ -8,19 +8,19 @@ use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 pub trait ConfigBuilderExt {
     /// This configures the platform's trusted certs, as implemented by
     /// rustls-native-certs
-    #[cfg(all(feature = "rustls-native-certs", feature = "ring"))]
+    #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>>;
 
     /// This configures the webpki roots, which are Mozilla's set of
     /// trusted roots as packaged by webpki-roots.
-    #[cfg(all(feature = "webpki-roots", feature = "ring"))]
+    #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsClientCert>;
 }
 
 impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
-    #[cfg(all(feature = "rustls-native-certs", feature = "ring"))]
+    #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
     fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>> {
@@ -55,7 +55,7 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
         Ok(self.with_root_certificates(roots))
     }
 
-    #[cfg(all(feature = "webpki-roots", feature = "ring"))]
+    #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsClientCert> {
         let mut roots = rustls::RootCertStore::empty();

@@ -82,7 +82,6 @@
 #[cfg(feature = "acceptor")]
 /// TLS acceptor implementing hyper's `Accept` trait.
 pub mod acceptor;
-#[cfg(feature = "ring")]
 mod config;
 mod connector;
 mod stream;
@@ -101,7 +100,6 @@ mod log {
 
 #[cfg(feature = "acceptor")]
 pub use crate::acceptor::{AcceptorBuilder, TlsAcceptor};
-#[cfg(feature = "ring")]
 pub use crate::config::ConfigBuilderExt;
 pub use crate::connector::builder::ConnectorBuilder as HttpsConnectorBuilder;
 pub use crate::connector::HttpsConnector;

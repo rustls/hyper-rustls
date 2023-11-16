@@ -46,7 +46,7 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Create a TCP listener via tokio.
     let incoming = AddrIncoming::bind(&addr)?;
     let acceptor = TlsAcceptor::builder()
-        .with_single_cert(certs, key)
+        .with_ring_and_single_cert(certs, key)
         .map_err(|e| error(format!("{}", e)))?
         .with_all_versions_alpn()
         .with_incoming(incoming);

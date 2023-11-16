@@ -1,14 +1,12 @@
 use rustls::ClientConfig;
 
 use super::HttpsConnector;
-#[cfg(all(
-    any(feature = "rustls-native-certs", feature = "webpki-roots"),
-    feature = "ring"
-))]
+#[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
 use crate::config::ConfigBuilderExt;
 
 #[cfg(feature = "tokio-runtime")]
 use hyper::client::HttpConnector;
+use rustls::crypto::CryptoProvider;
 
 /// A builder for an [`HttpsConnector`]
 ///
@@ -55,14 +53,14 @@ impl ConnectorBuilder<WantsTlsConfig> {
     }
 
     /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
-    /// and native roots
+    /// and native roots, with ring as the provided crypto suites
     ///
     /// See [`ConfigBuilderExt::with_native_roots`]
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(all(feature = "rustls-native-certs", feature = "ring"))]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
-    pub fn with_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
+    pub fn with_ring_and_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
             ClientConfig::builder_with_ring()
                 .with_safe_defaults()
@@ -72,16 +70,56 @@ impl ConnectorBuilder<WantsTlsConfig> {
     }
 
     /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
-    /// and Mozilla roots
+    /// and Mozilla roots, with ring as the provided crypto suites
+    ///
+    /// See [`ConfigBuilderExt::with_webpki_roots`]
+    ///
+    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
+    #[cfg(all(feature = "webpki-roots", feature = "ring"))]
+    #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
+    pub fn with_ring_and_webpki_roots(self) -> ConnectorBuilder<WantsSchemes> {
+        self.with_tls_config(
+            ClientConfig::builder_with_ring()
+                .with_safe_defaults()
+                .with_webpki_roots()
+                .with_no_client_auth(),
+        )
+    }
+
+    /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
+    /// and native roots, with user's provided crypto suites
+    ///
+    /// See [`ConfigBuilderExt::with_native_roots`]
+    ///
+    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
+    #[cfg(feature = "rustls-native-certs")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
+    pub fn with_provider_and_native_roots(
+        self,
+        provider: &'static dyn CryptoProvider,
+    ) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
+        Ok(self.with_tls_config(
+            ClientConfig::builder_with_provider(provider)
+                .with_safe_defaults()
+                .with_native_roots()?
+                .with_no_client_auth(),
+        ))
+    }
+
+    /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
+    /// and Mozilla roots, with user's provided crypto suites
     ///
     /// See [`ConfigBuilderExt::with_webpki_roots`]
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
-    pub fn with_webpki_roots(self) -> ConnectorBuilder<WantsSchemes> {
+    pub fn with_provider_and_webpki_roots(
+        self,
+        provider: &'static dyn CryptoProvider,
+    ) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(
-            ClientConfig::builder_with_ring()
+            ClientConfig::builder_with_provider(provider)
                 .with_safe_defaults()
                 .with_webpki_roots()
                 .with_no_client_auth(),

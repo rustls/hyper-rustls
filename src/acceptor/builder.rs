@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use hyper::server::conn::AddrIncoming;
-use rustls::{ServerConfig, crypto::CryptoProvider};
+use rustls::{crypto::CryptoProvider, ServerConfig};
 
 use super::TlsAcceptor;
 /// Builder for [`TlsAcceptor`]
@@ -22,7 +22,7 @@ impl AcceptorBuilder<WantsTlsConfig> {
     }
 
     #[cfg(feature = "ring")]
-    /// Use rustls [defaults][with_safe_defaults] without [client authentication][with_no_client_auth], 
+    /// Use rustls [defaults][with_safe_defaults] without [client authentication][with_no_client_auth],
     /// with ring as the provided crypto suites
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
