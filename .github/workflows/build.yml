@@ -88,6 +88,18 @@ jobs:
       - name: Check MSRV
         run: cargo check --lib --all-features
 
+  semver:
+    name: Check semver compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+
   docs:
     name: Check for documentation errors
     runs-on: ubuntu-20.04

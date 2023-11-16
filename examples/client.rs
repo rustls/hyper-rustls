@@ -59,7 +59,7 @@ async fn run_client() -> io::Result<()> {
         // Default TLS client config with native roots
         None => rustls::ClientConfig::builder()
             .with_safe_defaults()
-            .with_native_roots()
+            .with_native_roots()?
             .with_no_client_auth(),
     };
     // Prepare the HTTPS connector
