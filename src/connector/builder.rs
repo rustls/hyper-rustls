@@ -64,7 +64,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     pub fn with_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
-            ClientConfig::builder()
+            ClientConfig::builder_with_ring()
                 .with_safe_defaults()
                 .with_native_roots()?
                 .with_no_client_auth(),
@@ -81,7 +81,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     pub fn with_webpki_roots(self) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(
-            ClientConfig::builder()
+            ClientConfig::builder_with_ring()
                 .with_safe_defaults()
                 .with_webpki_roots()
                 .with_no_client_auth(),
@@ -295,11 +295,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "http1")]
+    #[cfg(all(feature = "http1", feature = "ring"))]
     #[should_panic(expected = "ALPN protocols should not be pre-defined")]
     fn test_reject_predefined_alpn() {
         let roots = rustls::RootCertStore::empty();
-        let mut config_with_alpn = rustls::ClientConfig::builder()
+        let mut config_with_alpn = rustls::ClientConfig::builder_with_ring()
             .with_safe_defaults()
             .with_root_certificates(roots)
             .with_no_client_auth();
@@ -315,7 +315,7 @@ mod tests {
     #[cfg(all(feature = "http1", feature = "http2"))]
     fn test_alpn() {
         let roots = rustls::RootCertStore::empty();
-        let tls_config = rustls::ClientConfig::builder()
+        let tls_config = rustls::ClientConfig::builder_with_ring()
             .with_safe_defaults()
             .with_root_certificates(roots)
             .with_no_client_auth();
@@ -359,7 +359,7 @@ mod tests {
     #[cfg(all(not(feature = "http1"), feature = "http2"))]
     fn test_alpn_http2() {
         let roots = rustls::RootCertStore::empty();
-        let tls_config = rustls::ClientConfig::builder()
+        let tls_config = rustls::ClientConfig::builder_with_ring()
             .with_safe_defaults()
             .with_root_certificates(roots)
             .with_no_client_auth();

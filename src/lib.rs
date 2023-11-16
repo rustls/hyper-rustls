@@ -6,7 +6,7 @@
 //! ## Example client
 //!
 //! ```no_run
-//! # #[cfg(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1"))]
+//! # #[cfg(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1", feature = "ring"))]
 //! # fn main() {
 //! use hyper::{Body, Client, StatusCode, Uri};
 //!
@@ -24,14 +24,14 @@
 //! let res = rt.block_on(client.get(url)).unwrap();
 //! assert_eq!(res.status(), StatusCode::OK);
 //! # }
-//! # #[cfg(not(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1")))]
+//! # #[cfg(not(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1", feature = "ring")))]
 //! # fn main() {}
 //! ```
 //!
 //! ## Example server
 //!
 //! ```no_run
-//! # #[cfg(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1", feature = "acceptor"))]
+//! # #[cfg(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1", feature = "acceptor", feature = "ring"))]
 //! # fn main() {
 //! use hyper::server::conn::AddrIncoming;
 //! use hyper::service::{make_service_fn, service_fn};
@@ -72,7 +72,7 @@
 //! let server = Server::builder(acceptor).serve(service);
 //! // server.await.unwrap();
 //! # }
-//! # #[cfg(not(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1")))]
+//! # #[cfg(not(all(feature = "rustls-native-certs", feature = "tokio-runtime", feature = "http1", feature = "ring")))]
 //! # fn main() {}
 //! ```
 

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use hyper::server::conn::AddrIncoming;
-use rustls::ServerConfig;
+use rustls::{ServerConfig, crypto::CryptoProvider};
 
 use super::TlsAcceptor;
 /// Builder for [`TlsAcceptor`]
@@ -21,18 +21,38 @@ impl AcceptorBuilder<WantsTlsConfig> {
         AcceptorBuilder(WantsAlpn(config))
     }
 
-    /// Use rustls [defaults][with_safe_defaults] without [client authentication][with_no_client_auth]
+    #[cfg(feature = "ring")]
+    /// Use rustls [defaults][with_safe_defaults] without [client authentication][with_no_client_auth], 
+    /// with ring as the provided crypto suites
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     /// [with_no_client_auth]: rustls::ConfigBuilder::with_no_client_auth
-    #[cfg(feature = "ring")]
-    pub fn with_single_cert(
+    pub fn with_ring_and_single_cert(
         self,
         cert_chain: Vec<pki_types::CertificateDer<'static>>,
         key_der: pki_types::PrivateKeyDer<'static>,
     ) -> Result<AcceptorBuilder<WantsAlpn>, rustls::Error> {
         Ok(AcceptorBuilder(WantsAlpn(
-            ServerConfig::builder()
+            ServerConfig::builder_with_ring()
+                .with_safe_defaults()
+                .with_no_client_auth()
+                .with_single_cert(cert_chain, key_der)?,
+        )))
+    }
+
+    /// Use rustls [defaults][with_safe_defaults] without [client authentication][with_no_client_auth],
+    /// and the user has to provide a crypto suite implemention
+    ///
+    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
+    /// [with_no_client_auth]: rustls::ConfigBuilder::with_no_client_auth
+    pub fn with_provider_and_single_cert(
+        self,
+        provider: &'static dyn CryptoProvider,
+        cert_chain: Vec<pki_types::CertificateDer<'static>>,
+        key_der: pki_types::PrivateKeyDer<'static>,
+    ) -> Result<AcceptorBuilder<WantsAlpn>, rustls::Error> {
+        Ok(AcceptorBuilder(WantsAlpn(
+            ServerConfig::builder_with_provider(provider)
                 .with_safe_defaults()
                 .with_no_client_auth()
                 .with_single_cert(cert_chain, key_der)?,
