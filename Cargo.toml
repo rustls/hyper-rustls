@@ -57,3 +57,4 @@ rustdoc-args = ["--cfg", "docsrs"]
 [patch.crates-io]
 rustls-native-certs = { git = 'https://github.com/rustls/rustls-native-certs' }
 tokio-rustls = { git = 'https://github.com/rustls/tokio-rustls' }
+rustls-pemfile = { git = 'https://github.com/rustls/pemfile' }

@@ -88,7 +88,8 @@ fn load_certs(filename: &str) -> io::Result<Vec<CertificateDer>> {
     let mut reader = io::BufReader::new(certfile);
 
     // Load and return certificate.
-    let certs = rustls_pemfile::certs(&mut reader).collect::<Result<Vec<_>, _>>()?;
+    let certs: Vec<CertificateDer<'_>> =
+        rustls_pemfile::certs(&mut reader).collect::<Result<Vec<_>, _>>()?;
     Ok(certs)
 }
 
@@ -100,17 +101,7 @@ fn load_private_key(filename: &str) -> io::Result<PrivateKeyDer> {
     let mut reader = io::BufReader::new(keyfile);
 
     // Load and return a single private key.
-    let keys: Vec<pki_types::PrivatePkcs1KeyDer<'static>> =
-        rustls_pemfile::rsa_private_keys(&mut reader).collect::<Result<Vec<_>, _>>()?;
-    if keys.len() != 1 {
-        return Err(error("expected a single private key".into()));
-    }
-
-    // TODO: should PKCS#8 be supported?
-    Ok(PrivateKeyDer::Pkcs1(
-        keys[0]
-            .secret_pkcs1_der()
-            .to_owned()
-            .into(),
+    rustls_pemfile::private_key(&mut reader)?.ok_or(error(
+        "expected a valid private key from the key file".into(),
     ))
 }

@@ -55,8 +55,7 @@
 //! let mut reader = io::BufReader::new(keyfile);
 //!
 //! // Load and return a single private key.
-//! let keys: Vec<pki_types::PrivatePkcs1KeyDer<'static>> = rustls_pemfile::rsa_private_keys(&mut reader).collect::<Result<Vec<_>, _>>().unwrap();
-//! let key = pki_types::PrivateKeyDer::Pkcs1(keys[0].secret_pkcs1_der().to_vec().into());
+//! let key = rustls_pemfile::private_key(&mut reader).unwrap().unwrap();
 //! let https = hyper_rustls::HttpsConnectorBuilder::new()
 //!     .with_native_roots()
 //!     .expect("no native root CA certificates found")
