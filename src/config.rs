@@ -1,5 +1,7 @@
-use rustls::client::WantsClientCert;
 use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
+
+#[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+use rustls::client::WantsClientCert;
 
 /// Methods for configuring roots
 ///
