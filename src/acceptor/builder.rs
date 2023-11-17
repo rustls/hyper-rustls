@@ -27,13 +27,13 @@ impl AcceptorBuilder<WantsTlsConfig> {
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     /// [with_no_client_auth]: rustls::ConfigBuilder::with_no_client_auth
-    pub fn with_ring_and_single_cert(
+    pub fn with_single_cert(
         self,
         cert_chain: Vec<pki_types::CertificateDer<'static>>,
         key_der: pki_types::PrivateKeyDer<'static>,
     ) -> Result<AcceptorBuilder<WantsAlpn>, rustls::Error> {
         Ok(AcceptorBuilder(WantsAlpn(
-            ServerConfig::builder_with_ring()
+            ServerConfig::builder()
                 .with_safe_defaults()
                 .with_no_client_auth()
                 .with_single_cert(cert_chain, key_der)?,

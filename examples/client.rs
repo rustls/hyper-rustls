@@ -51,13 +51,13 @@ async fn run_client() -> io::Result<()> {
             let mut roots = RootCertStore::empty();
             roots.add_parsable_certificates(certs);
             // TLS client config using the custom CA store for lookups
-            rustls::ClientConfig::builder_with_ring()
+            rustls::ClientConfig::builder()
                 .with_safe_defaults()
                 .with_root_certificates(roots)
                 .with_no_client_auth()
         }
         // Default TLS client config with native roots
-        None => rustls::ClientConfig::builder_with_ring()
+        None => rustls::ClientConfig::builder()
             .with_safe_defaults()
             .with_native_roots()?
             .with_no_client_auth(),
