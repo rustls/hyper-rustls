@@ -17,7 +17,7 @@ log = { version = "0.4.4", optional = true }
 rustls-native-certs = { version = "=0.7.0-alpha.1", optional = true }
 rustls = { version = "=0.22.0-alpha.4", default-features = false }
 tokio = "1.0"
-tokio-rustls = { version = "=0.25.0-alpha.1", default-features = false }
+tokio-rustls = { version = "=0.25.0-alpha.2", default-features = false }
 webpki-roots = { version = "=0.26.0-alpha.1", optional = true }
 futures-util = { version = "0.3", default-features = false }
 pki-types = { package = "rustls-pki-types", version = "0.2.1" }
@@ -56,5 +56,5 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [patch.crates-io]
 rustls-native-certs = { git = 'https://github.com/rustls/rustls-native-certs' }
-tokio-rustls = { git = 'https://github.com/stevefan1999-personal/tokio-rustls', branch = "patch-1" }
+tokio-rustls = { git = 'https://github.com/rustls/tokio-rustls' }
 rustls-pemfile = { git = 'https://github.com/rustls/pemfile' }
