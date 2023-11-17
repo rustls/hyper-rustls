@@ -8,6 +8,9 @@ use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 pub trait ConfigBuilderExt {
     /// This configures the platform's trusted certs, as implemented by
     /// rustls-native-certs
+    ///
+    /// This will return an error if no valid certs were found. In that case,
+    /// it's recommended to use `with_webpki_roots`.
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>>;
