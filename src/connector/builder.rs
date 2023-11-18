@@ -1,5 +1,4 @@
-#[cfg(feature = "tokio-runtime")]
-use hyper::client::HttpConnector;
+use hyper_util::client::legacy::connect::HttpConnector;
 #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
 use rustls::crypto::CryptoProvider;
 use rustls::ClientConfig;
@@ -18,7 +17,7 @@ use crate::config::ConfigBuilderExt;
 /// ```
 /// use hyper_rustls::HttpsConnectorBuilder;
 ///
-/// # #[cfg(all(feature = "webpki-roots", feature = "tokio-runtime", feature = "http1"))]
+/// # #[cfg(all(feature = "webpki-roots", feature = "http1"))]
 /// let https = HttpsConnectorBuilder::new()
 ///     .with_webpki_roots()
 ///     .https_only()
@@ -170,7 +169,6 @@ impl WantsProtocols1 {
         }
     }
 
-    #[cfg(feature = "tokio-runtime")]
     fn build(self) -> HttpsConnector<HttpConnector> {
         let mut http = HttpConnector::new();
         // HttpConnector won't enforce scheme, but HttpsConnector will
@@ -257,7 +255,6 @@ impl ConnectorBuilder<WantsProtocols2> {
     }
 
     /// This builds an [`HttpsConnector`] built on hyper's default [`HttpConnector`]
-    #[cfg(feature = "tokio-runtime")]
     pub fn build(self) -> HttpsConnector<HttpConnector> {
         self.0.inner.build()
     }
@@ -288,7 +285,6 @@ pub struct WantsProtocols3 {
 #[cfg(feature = "http2")]
 impl ConnectorBuilder<WantsProtocols3> {
     /// This builds an [`HttpsConnector`] built on hyper's default [`HttpConnector`]
-    #[cfg(feature = "tokio-runtime")]
     pub fn build(self) -> HttpsConnector<HttpConnector> {
         self.0.inner.build()
     }

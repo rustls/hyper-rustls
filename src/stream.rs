@@ -4,9 +4,10 @@ use std::io;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-use hyper::client::connect::{Connected, Connection};
+use hyper::rt;
+use hyper_util::client::legacy::connect::{Connected, Connection};
 
-use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
+use hyper_util::rt::TokioIo;
 use tokio_rustls::client::TlsStream;
 
 /// A stream that might be protected with TLS.
@@ -15,19 +16,19 @@ pub enum MaybeHttpsStream<T> {
     /// A stream over plain text.
     Http(T),
     /// A stream protected with TLS.
-    Https(TlsStream<T>),
+    Https(TokioIo<TlsStream<TokioIo<T>>>),
 }
 
-impl<T: AsyncRead + AsyncWrite + Connection + Unpin> Connection for MaybeHttpsStream<T> {
+impl<T: rt::Read + rt::Write + Connection + Unpin> Connection for MaybeHttpsStream<T> {
     fn connected(&self) -> Connected {
         match self {
             Self::Http(s) => s.connected(),
             Self::Https(s) => {
-                let (tcp, tls) = s.get_ref();
+                let (tcp, tls) = s.inner().get_ref();
                 if tls.alpn_protocol() == Some(b"h2") {
-                    tcp.connected().negotiated_h2()
+                    tcp.inner().connected().negotiated_h2()
                 } else {
-                    tcp.connected()
+                    tcp.inner().connected()
                 }
             }
         }
@@ -49,18 +50,18 @@ impl<T> From<T> for MaybeHttpsStream<T> {
     }
 }
 
-impl<T> From<TlsStream<T>> for MaybeHttpsStream<T> {
-    fn from(inner: TlsStream<T>) -> Self {
-        Self::Https(inner)
+impl<T> From<TlsStream<TokioIo<T>>> for MaybeHttpsStream<T> {
+    fn from(inner: TlsStream<TokioIo<T>>) -> Self {
+        Self::Https(TokioIo::new(inner))
     }
 }
 
-impl<T: AsyncRead + AsyncWrite + Unpin> AsyncRead for MaybeHttpsStream<T> {
+impl<T: rt::Read + rt::Write + Unpin> rt::Read for MaybeHttpsStream<T> {
     #[inline]
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context,
-        buf: &mut ReadBuf<'_>,
+        buf: rt::ReadBufCursor<'_>,
     ) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
             Self::Http(s) => Pin::new(s).poll_read(cx, buf),
@@ -69,7 +70,7 @@ impl<T: AsyncRead + AsyncWrite + Unpin> AsyncRead for MaybeHttpsStream<T> {
     }
 }
 
-impl<T: AsyncWrite + AsyncRead + Unpin> AsyncWrite for MaybeHttpsStream<T> {
+impl<T: rt::Write + rt::Read + Unpin> rt::Write for MaybeHttpsStream<T> {
     #[inline]
     fn poll_write(
         self: Pin<&mut Self>,
