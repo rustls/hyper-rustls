@@ -2,8 +2,11 @@
 //!
 //! First parameter is the mandatory URL to GET.
 //! Second parameter is an optional path to CA store.
-use hyper::{body::to_bytes, client, Body, Uri};
+use http::Uri;
+use http_body_util::{BodyExt, Empty};
+use hyper::body::Bytes;
 use hyper_rustls::ConfigBuilderExt;
+use hyper_util::{client::legacy::Client, rt::TokioExecutor};
 use rustls::RootCertStore;
 
 use std::str::FromStr;
@@ -68,7 +71,7 @@ async fn run_client() -> io::Result<()> {
         .build();
 
     // Build the hyper client from the HTTPS connector.
-    let client: client::Client<_, hyper::Body> = client::Client::builder().build(https);
+    let client: Client<_, Empty<Bytes>> = Client::builder(TokioExecutor::new()).build(https);
 
     // Prepare a chain of futures which sends a GET request, inspects
     // the returned headers, collects the whole body and prints it to
@@ -81,10 +84,12 @@ async fn run_client() -> io::Result<()> {
         println!("Status:\n{}", res.status());
         println!("Headers:\n{:#?}", res.headers());
 
-        let body: Body = res.into_body();
-        let body = to_bytes(body)
+        let body = res
+            .into_body()
+            .collect()
             .await
-            .map_err(|e| error(format!("Could not get body: {:?}", e)))?;
+            .map_err(|e| error(format!("Could not get body: {:?}", e)))?
+            .to_bytes();
         println!("Body:\n{}", String::from_utf8_lossy(&body));
 
         Ok(())

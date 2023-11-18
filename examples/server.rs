@@ -1,20 +1,25 @@
-//! Simple HTTPS echo service based on hyper-rustls
+//! Simple HTTPS echo service based on hyper_util and rustls
 //!
 //! First parameter is the mandatory port to use.
 //! Certificate and private key are hardcoded to sample files.
 //! hyper will automatically use HTTP/2 if a client starts talking HTTP/2,
 //! otherwise HTTP/1.1 will be used.
 
-#![cfg(feature = "acceptor")]
-
+use std::net::{Ipv4Addr, SocketAddr};
+use std::sync::Arc;
 use std::vec::Vec;
 use std::{env, fs, io};
 
-use hyper::server::conn::AddrIncoming;
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Method, Request, Response, Server, StatusCode};
-use hyper_rustls::TlsAcceptor;
+use http::{Method, Request, Response, StatusCode};
+use http_body_util::{BodyExt, Full};
+use hyper::body::{Bytes, Incoming};
+use hyper::service::service_fn;
+use hyper_util::rt::{TokioExecutor, TokioIo};
+use hyper_util::server::conn::auto::Builder;
 use pki_types::{CertificateDer, PrivateKeyDer};
+use rustls::ServerConfig;
+use tokio::net::TcpListener;
+use tokio_rustls::TlsAcceptor;
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
@@ -32,45 +37,70 @@ fn error(err: String) -> io::Error {
 async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // First parameter is port number (optional, defaults to 1337)
     let port = match env::args().nth(1) {
-        Some(ref p) => p.to_owned(),
-        None => "1337".to_owned(),
+        Some(ref p) => p.parse()?,
+        None => 1337,
     };
-    let addr = format!("127.0.0.1:{}", port).parse()?;
+    let addr = SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port);
 
     // Load public certificate.
     let certs = load_certs("examples/sample.pem")?;
     // Load private key.
     let key = load_private_key("examples/sample.rsa")?;
-    // Build TLS configuration.
+
+    println!("Starting to serve on https://{}", addr);
 
     // Create a TCP listener via tokio.
-    let incoming = AddrIncoming::bind(&addr)?;
-    let acceptor = TlsAcceptor::builder()
-        .with_single_cert(certs, key)
-        .map_err(|e| error(format!("{}", e)))?
-        .with_all_versions_alpn()
-        .with_incoming(incoming);
-    let service = make_service_fn(|_| async { Ok::<_, io::Error>(service_fn(echo)) });
-    let server = Server::builder(acceptor).serve(service);
+    let incoming = TcpListener::bind(&addr).await?;
 
-    // Run the future, keep going until an error occurs.
-    println!("Starting to serve on https://{}.", addr);
-    server.await?;
-    Ok(())
+    // Build TLS configuration.
+    let mut server_config = ServerConfig::builder()
+        .with_no_client_auth()
+        .with_single_cert(certs, key)
+        .map_err(|e| error(e.to_string()))?;
+    server_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec(), b"http/1.0".to_vec()];
+    let tls_acceptor = TlsAcceptor::from(Arc::new(server_config));
+
+    let service = service_fn(echo);
+
+    loop {
+        let (tcp_stream, _remote_addr) = incoming.accept().await?;
+
+        let tls_acceptor = tls_acceptor.clone();
+        tokio::spawn(async move {
+            let tls_stream = match tls_acceptor.accept(tcp_stream).await {
+                Ok(tls_stream) => tls_stream,
+                Err(err) => {
+                    eprintln!("failed to perform tls handshake: {err:#}");
+                    return;
+                }
+            };
+            if let Err(err) = Builder::new(TokioExecutor::new())
+                .serve_connection(TokioIo::new(tls_stream), service)
+                .await
+            {
+                eprintln!("failed to serve connection: {err:#}");
+            }
+        });
+    }
 }
 
 // Custom echo service, handling two different routes and a
 // catch-all 404 responder.
-async fn echo(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
-    let mut response = Response::new(Body::empty());
+async fn echo(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, hyper::Error> {
+    let mut response = Response::new(Full::default());
     match (req.method(), req.uri().path()) {
         // Help route.
         (&Method::GET, "/") => {
-            *response.body_mut() = Body::from("Try POST /echo\n");
+            *response.body_mut() = Full::from("Try POST /echo\n");
         }
         // Echo service route.
         (&Method::POST, "/echo") => {
-            *response.body_mut() = req.into_body();
+            *response.body_mut() = Full::from(
+                req.into_body()
+                    .collect()
+                    .await?
+                    .to_bytes(),
+            );
         }
         // Catch-all 404.
         _ => {
