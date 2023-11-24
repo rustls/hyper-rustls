@@ -59,10 +59,6 @@ impl ConnectorBuilder<WantsTlsConfig> {
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(all(feature = "ring", feature = "rustls-native-certs"))]
-    #[cfg_attr(
-        docsrs,
-        doc(cfg(all(feature = "ring", feature = "rustls-native-certs")))
-    )]
     pub fn with_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
             ClientConfig::builder()
@@ -79,7 +75,6 @@ impl ConnectorBuilder<WantsTlsConfig> {
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(feature = "rustls-native-certs")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     pub fn with_provider_and_native_roots(
         self,
         provider: &'static dyn CryptoProvider,
@@ -99,7 +94,6 @@ impl ConnectorBuilder<WantsTlsConfig> {
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(all(feature = "ring", feature = "webpki-roots"))]
-    #[cfg_attr(docsrs, doc(cfg(all(feature = "ring", feature = "webpki-roots"))))]
     pub fn with_webpki_roots(self) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(
             ClientConfig::builder()
@@ -116,7 +110,6 @@ impl ConnectorBuilder<WantsTlsConfig> {
     ///
     /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(feature = "webpki-roots")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
     pub fn with_provider_and_webpki_roots(
         self,
         provider: &'static dyn CryptoProvider,
@@ -209,7 +202,6 @@ impl ConnectorBuilder<WantsProtocols1> {
     ///
     /// This needs to be called explicitly, no protocol is enabled by default
     #[cfg(feature = "http2")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "http2")))]
     pub fn enable_http2(mut self) -> ConnectorBuilder<WantsProtocols3> {
         self.0.tls_config.alpn_protocols = vec![b"h2".to_vec()];
         ConnectorBuilder(WantsProtocols3 {
@@ -223,7 +215,6 @@ impl ConnectorBuilder<WantsProtocols1> {
     /// For now, this could enable both HTTP 1 and 2, depending on active features.
     /// In the future, other supported versions will be enabled as well.
     #[cfg(feature = "http2")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "http2")))]
     pub fn enable_all_versions(mut self) -> ConnectorBuilder<WantsProtocols3> {
         #[cfg(feature = "http1")]
         let alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
@@ -267,7 +258,6 @@ impl ConnectorBuilder<WantsProtocols2> {
     ///
     /// This needs to be called explicitly, no protocol is enabled by default
     #[cfg(feature = "http2")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "http2")))]
     pub fn enable_http2(mut self) -> ConnectorBuilder<WantsProtocols3> {
         self.0.inner.tls_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
         ConnectorBuilder(WantsProtocols3 {
