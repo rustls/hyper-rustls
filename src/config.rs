@@ -1,4 +1,5 @@
-use rustls::client::WantsTransparencyPolicyOrClientCert;
+#[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+use rustls::client::WantsClientCert;
 use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 
 /// Methods for configuring roots
@@ -13,35 +14,29 @@ pub trait ConfigBuilderExt {
     /// it's recommended to use `with_webpki_roots`.
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
-    fn with_native_roots(
-        self,
-    ) -> std::io::Result<ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>>;
+    fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>>;
 
     /// This configures the webpki roots, which are Mozilla's set of
     /// trusted roots as packaged by webpki-roots.
     #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
-    fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>;
+    fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsClientCert>;
 }
 
 impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-native-certs")))]
     #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
-    fn with_native_roots(
-        self,
-    ) -> std::io::Result<ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>> {
+    fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>> {
         let mut roots = rustls::RootCertStore::empty();
         let mut valid_count = 0;
         let mut invalid_count = 0;
 
         for cert in rustls_native_certs::load_native_certs().expect("could not load platform certs")
         {
-            let cert = rustls::Certificate(cert.0);
-            match roots.add(&cert) {
+            match roots.add(cert) {
                 Ok(_) => valid_count += 1,
                 Err(err) => {
-                    crate::log::trace!("invalid cert der {:?}", cert.0);
                     crate::log::debug!("certificate parsing failed: {:?}", err);
                     invalid_count += 1
                 }
@@ -65,18 +60,12 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
 
     #[cfg(feature = "webpki-roots")]
     #[cfg_attr(docsrs, doc(cfg(feature = "webpki-roots")))]
-    fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert> {
+    fn with_webpki_roots(self) -> ConfigBuilder<ClientConfig, WantsClientCert> {
         let mut roots = rustls::RootCertStore::empty();
-        roots.add_trust_anchors(
+        roots.extend(
             webpki_roots::TLS_SERVER_ROOTS
                 .iter()
-                .map(|ta| {
-                    rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
-                        ta.subject,
-                        ta.spki,
-                        ta.name_constraints,
-                    )
-                }),
+                .cloned(),
         );
         self.with_root_certificates(roots)
     }

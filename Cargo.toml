@@ -14,26 +14,28 @@ documentation = "https://docs.rs/hyper-rustls/"
 http = "0.2"
 hyper = { version = "0.14", default-features = false, features = ["client"] }
 log = { version = "0.4.4", optional = true }
-rustls-native-certs = { version = "0.6", optional = true }
-rustls = { version = "0.21.6", default-features = false }
+pki-types = { package = "rustls-pki-types", version = "0.2" }
+rustls-native-certs = { version = "=0.7.0-alpha.2", optional = true }
+rustls = { version = "=0.22.0-alpha.5", default-features = false }
 tokio = "1.0"
-tokio-rustls = { version = "0.24.0", default-features = false }
-webpki-roots = { version = "0.25", optional = true }
+tokio-rustls = { version = "=0.25.0-alpha.3", default-features = false }
+webpki-roots = { version = "=0.26.0-alpha.2", optional = true }
 futures-util = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 hyper = { version = "0.14", features = ["full"] }
-rustls = { version = "0.21.0", default-features = false, features = ["tls12"] }
-rustls-pemfile = "1.0.0"
+rustls = { version = "=0.22.0-alpha.5", default-features = false, features = ["tls12"] }
+rustls-pemfile = "=2.0.0-alpha.2"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
-default = ["native-tokio", "http1", "tls12", "logging", "acceptor"]
+default = ["native-tokio", "http1", "tls12", "logging", "acceptor", "ring"]
 acceptor = ["hyper/server", "tokio-runtime"]
 http1 = ["hyper/http1"]
 http2 = ["hyper/http2"]
 webpki-tokio = ["tokio-runtime", "webpki-roots"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
+ring = ["rustls/ring"]
 tokio-runtime =  ["hyper/runtime"]
 tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
 logging = ["log", "tokio-rustls/logging", "rustls/logging"]
