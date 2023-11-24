@@ -14,6 +14,7 @@ use hyper::server::conn::AddrIncoming;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
 use hyper_rustls::TlsAcceptor;
+use pki_types::{CertificateDer, PrivateKeyDer};
 
 fn main() {
     // Serve an echo service over HTTPS, with proper error handling.
@@ -80,34 +81,23 @@ async fn echo(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 }
 
 // Load public certificate from file.
-fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
+fn load_certs(filename: &str) -> io::Result<Vec<CertificateDer<'static>>> {
     // Open certificate file.
     let certfile = fs::File::open(filename)
         .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(certfile);
 
     // Load and return certificate.
-    let certs = rustls_pemfile::certs(&mut reader)
-        .map_err(|_| error("failed to load certificate".into()))?;
-    Ok(certs
-        .into_iter()
-        .map(rustls::Certificate)
-        .collect())
+    rustls_pemfile::certs(&mut reader).collect()
 }
 
 // Load private key from file.
-fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
+fn load_private_key(filename: &str) -> io::Result<PrivateKeyDer<'static>> {
     // Open keyfile.
     let keyfile = fs::File::open(filename)
         .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(keyfile);
 
     // Load and return a single private key.
-    let keys = rustls_pemfile::rsa_private_keys(&mut reader)
-        .map_err(|_| error("failed to load private key".into()))?;
-    if keys.len() != 1 {
-        return Err(error("expected a single private key".into()));
-    }
-
-    Ok(rustls::PrivateKey(keys[0].clone()))
+    rustls_pemfile::private_key(&mut reader).map(|key| key.unwrap())
 }

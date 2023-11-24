@@ -5,6 +5,7 @@ use std::task::{Context, Poll};
 use std::{fmt, io};
 
 use hyper::{client::connect::Connection, service::Service, Uri};
+use pki_types::ServerName;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_rustls::TlsConnector;
 
@@ -106,8 +107,8 @@ where
                     hostname = trimmed;
                 }
 
-                let hostname = match rustls::ServerName::try_from(hostname) {
-                    Ok(dnsname) => dnsname,
+                let hostname = match ServerName::try_from(hostname) {
+                    Ok(dnsname) => dnsname.to_owned(),
                     Err(_) => {
                         let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
                         return Box::pin(async move { Err(Box::new(err).into()) });
