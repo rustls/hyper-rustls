@@ -79,7 +79,7 @@
 //! ```
 
 #![warn(missing_docs, unreachable_pub, clippy::use_self)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[cfg(feature = "acceptor")]
 /// TLS acceptor implementing hyper's `Accept` trait.
