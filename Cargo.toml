@@ -25,7 +25,7 @@ futures-util = { version = "0.3", default-features = false }
 [dev-dependencies]
 hyper = { version = "0.14", features = ["full"] }
 rustls = { version = "=0.22.0-alpha.6", default-features = false, features = ["tls12"] }
-rustls-pemfile = "=2.0.0-alpha.2"
+rustls-pemfile = "=2.0.0"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
