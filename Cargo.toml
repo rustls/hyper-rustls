@@ -1,6 +1,6 @@
 [package]
 name = "hyper-rustls"
-version = "0.25.0-alpha.0"
+version = "0.25.0"
 edition = "2021"
 rust-version = "1.63"
 license = "Apache-2.0 OR ISC OR MIT"
