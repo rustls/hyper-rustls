@@ -52,74 +52,64 @@ impl ConnectorBuilder<WantsTlsConfig> {
         ConnectorBuilder(WantsSchemes { tls_config: config })
     }
 
-    /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
-    /// and native roots
+    /// Shorthand for using rustls' default crypto provider and safe defaults, with
+    /// native roots.
     ///
     /// See [`ConfigBuilderExt::with_native_roots`]
-    ///
-    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(all(feature = "ring", feature = "rustls-native-certs"))]
     pub fn with_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
             ClientConfig::builder()
-                .with_safe_defaults()
                 .with_native_roots()?
                 .with_no_client_auth(),
         ))
     }
 
-    /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
-    /// with a custom [`CryptoProvider`] and native roots
+    /// Shorthand for using a custom [`CryptoProvider`] and native roots
     ///
     /// See [`ConfigBuilderExt::with_native_roots`]
-    ///
-    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(feature = "rustls-native-certs")]
     pub fn with_provider_and_native_roots(
         self,
-        provider: &'static dyn CryptoProvider,
+        provider: CryptoProvider,
     ) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
-            ClientConfig::builder_with_provider(provider)
-                .with_safe_defaults()
+            ClientConfig::builder_with_provider(provider.into())
+                .with_safe_default_protocol_versions()
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?
                 .with_native_roots()?
                 .with_no_client_auth(),
         ))
     }
 
-    /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
-    /// and Mozilla roots
+    /// Shorthand for using rustls' default crypto provider and its
+    /// safe defaults.
     ///
     /// See [`ConfigBuilderExt::with_webpki_roots`]
-    ///
-    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(all(feature = "ring", feature = "webpki-roots"))]
     pub fn with_webpki_roots(self) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(
             ClientConfig::builder()
-                .with_safe_defaults()
                 .with_webpki_roots()
                 .with_no_client_auth(),
         )
     }
 
-    /// Shorthand for using rustls' [safe defaults][with_safe_defaults]
-    /// with a custom [`CryptoProvider`] and Mozilla roots
+    /// Shorthand for using a custom [`CryptoProvider`], Rustls' safe default
+    /// protocol versions and Mozilla roots
     ///
     /// See [`ConfigBuilderExt::with_webpki_roots`]
-    ///
-    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     #[cfg(feature = "webpki-roots")]
     pub fn with_provider_and_webpki_roots(
         self,
-        provider: &'static dyn CryptoProvider,
-    ) -> ConnectorBuilder<WantsSchemes> {
-        self.with_tls_config(
-            ClientConfig::builder_with_provider(provider)
-                .with_safe_defaults()
+        provider: CryptoProvider,
+    ) -> Result<ConnectorBuilder<WantsSchemes>, rustls::Error> {
+        Ok(self.with_tls_config(
+            ClientConfig::builder_with_provider(provider.into())
+                .with_safe_default_protocol_versions()?
                 .with_webpki_roots()
                 .with_no_client_auth(),
-        )
+        ))
     }
 }
 
@@ -331,7 +321,6 @@ mod tests {
     fn test_reject_predefined_alpn() {
         let roots = rustls::RootCertStore::empty();
         let mut config_with_alpn = rustls::ClientConfig::builder()
-            .with_safe_defaults()
             .with_root_certificates(roots)
             .with_no_client_auth();
         config_with_alpn.alpn_protocols = vec![b"fancyprotocol".to_vec()];
@@ -347,7 +336,6 @@ mod tests {
     fn test_alpn() {
         let roots = rustls::RootCertStore::empty();
         let tls_config = rustls::ClientConfig::builder()
-            .with_safe_defaults()
             .with_root_certificates(roots)
             .with_no_client_auth();
         let connector = super::ConnectorBuilder::new()
