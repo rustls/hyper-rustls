@@ -22,9 +22,9 @@ impl AcceptorBuilder<WantsTlsConfig> {
         AcceptorBuilder(WantsAlpn(config))
     }
 
-    /// Use rustls [defaults][with_safe_defaults] without [client authentication][with_no_client_auth]
+    /// Use rustls default crypto provider and safe defaults without
+    /// [client authentication][with_no_client_auth]
     ///
-    /// [with_safe_defaults]: rustls::ConfigBuilder::with_safe_defaults
     /// [with_no_client_auth]: rustls::ConfigBuilder::with_no_client_auth
     pub fn with_single_cert(
         self,
@@ -33,7 +33,6 @@ impl AcceptorBuilder<WantsTlsConfig> {
     ) -> Result<AcceptorBuilder<WantsAlpn>, rustls::Error> {
         Ok(AcceptorBuilder(WantsAlpn(
             ServerConfig::builder()
-                .with_safe_defaults()
                 .with_no_client_auth()
                 .with_single_cert(cert_chain, key_der)?,
         )))
