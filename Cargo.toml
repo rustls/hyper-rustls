@@ -17,6 +17,7 @@ hyper-util = { version = "0.1", default-features = false, features = ["client-le
 log = { version = "0.4.4", optional = true }
 pki-types = { package = "rustls-pki-types", version = "1" }
 rustls-native-certs = { version = "0.7", optional = true }
+rustls-platform-verifier = { version = "0.2", optional = true }
 rustls = { version = "0.22", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.25", default-features = false }
