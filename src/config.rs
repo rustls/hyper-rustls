@@ -1,4 +1,11 @@
-#[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+#[cfg(feature = "rustls-platform-verifier")]
+use std::sync::Arc;
+
+#[cfg(any(
+    feature = "rustls-platform-verifier",
+    feature = "rustls-native-certs",
+    feature = "webpki-roots"
+))]
 use rustls::client::WantsClientCert;
 use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 
@@ -7,6 +14,14 @@ use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 /// This adds methods (gated by crate features) for easily configuring
 /// TLS server roots a rustls ClientConfig will trust.
 pub trait ConfigBuilderExt {
+    /// Use the platform's native verifier to verify server certificates.
+    ///
+    /// See the documentation for [rustls-platform-verifier] for more details.
+    ///
+    /// [rustls-platform-verifier]: https://docs.rs/rustls-platform-verifier
+    #[cfg(feature = "rustls-platform-verifier")]
+    fn with_platform_verifier(self) -> ConfigBuilder<ClientConfig, WantsClientCert>;
+
     /// This configures the platform's trusted certs, as implemented by
     /// rustls-native-certs
     ///
@@ -22,6 +37,14 @@ pub trait ConfigBuilderExt {
 }
 
 impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
+    #[cfg(feature = "rustls-platform-verifier")]
+    fn with_platform_verifier(self) -> ConfigBuilder<ClientConfig, WantsClientCert> {
+        self.dangerous()
+            .with_custom_certificate_verifier(Arc::new(
+                rustls_platform_verifier::Verifier::default(),
+            ))
+    }
+
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
     fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>> {

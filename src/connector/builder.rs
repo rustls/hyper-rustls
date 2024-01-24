@@ -51,6 +51,18 @@ impl ConnectorBuilder<WantsTlsConfig> {
         ConnectorBuilder(WantsSchemes { tls_config: config })
     }
 
+    /// Use rustls' default crypto provider and other defaults, and the platform verifier
+    ///
+    /// See [`ConfigBuilderExt::with_platform_verifier()`].
+    #[cfg(all(feature = "ring", feature = "rustls-platform-verifier"))]
+    pub fn with_platform_verifier(self) -> ConnectorBuilder<WantsSchemes> {
+        self.with_tls_config(
+            ClientConfig::builder()
+                .with_platform_verifier()
+                .with_no_client_auth(),
+        )
+    }
+
     /// Shorthand for using rustls' default crypto provider and safe defaults, with
     /// native roots.
     ///
