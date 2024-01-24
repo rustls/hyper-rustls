@@ -2,7 +2,7 @@
 name = "hyper-rustls"
 version = "0.26.0"
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.64"
 license = "Apache-2.0 OR ISC OR MIT"
 readme = "README.md"
 description = "Rustls+hyper integration for pure rust HTTPS"
