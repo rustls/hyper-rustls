@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use hyper_util::client::legacy::connect::HttpConnector;
 #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
 use rustls::crypto::CryptoProvider;
@@ -35,7 +37,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
         Self(WantsTlsConfig(()))
     }
 
-    /// Passes a rustls [`ClientConfig`] to configure the TLS connection
+    /// Passes a rustls [`ClientConfig`] to configure the TLS connection.
     ///
     /// The [`alpn_protocols`](ClientConfig::alpn_protocols) field is
     /// required to be empty (or the function will panic) and will be
@@ -43,12 +45,16 @@ impl ConnectorBuilder<WantsTlsConfig> {
     /// [`enable_http1`](ConnectorBuilder::enable_http1),
     /// [`enable_http2`](ConnectorBuilder::enable_http2)) before the
     /// connector is built.
-    pub fn with_tls_config(self, config: ClientConfig) -> ConnectorBuilder<WantsSchemes> {
+    pub fn with_tls_config(
+        self,
+        config: impl Into<Arc<ClientConfig>>,
+    ) -> ConnectorBuilder<WantsSchemes> {
+        let tls_config = config.into();
         assert!(
-            config.alpn_protocols.is_empty(),
+            tls_config.alpn_protocols.is_empty(),
             "ALPN protocols should not be pre-defined"
         );
-        ConnectorBuilder(WantsSchemes { tls_config: config })
+        ConnectorBuilder(WantsSchemes { tls_config })
     }
 
     /// Use rustls' default crypto provider and other defaults, and the platform verifier
@@ -133,7 +139,7 @@ impl Default for ConnectorBuilder<WantsTlsConfig> {
 /// State of a builder that needs schemes (https:// and http://) to be
 /// configured next
 pub struct WantsSchemes {
-    tls_config: ClientConfig,
+    tls_config: Arc<ClientConfig>,
 }
 
 impl ConnectorBuilder<WantsSchemes> {
@@ -166,7 +172,7 @@ impl ConnectorBuilder<WantsSchemes> {
 ///
 /// No protocol has been enabled at this point.
 pub struct WantsProtocols1 {
-    tls_config: ClientConfig,
+    tls_config: Arc<ClientConfig>,
     https_only: bool,
     override_server_name: Option<String>,
 }
@@ -176,7 +182,7 @@ impl WantsProtocols1 {
         HttpsConnector {
             force_https: self.https_only,
             http: conn,
-            tls_config: std::sync::Arc::new(self.tls_config),
+            tls_config: self.tls_config,
             override_server_name: self.override_server_name,
         }
     }
@@ -203,7 +209,7 @@ impl ConnectorBuilder<WantsProtocols1> {
     /// This needs to be called explicitly, no protocol is enabled by default
     #[cfg(feature = "http2")]
     pub fn enable_http2(mut self) -> ConnectorBuilder<WantsProtocols3> {
-        self.0.tls_config.alpn_protocols = vec![b"h2".to_vec()];
+        Arc::make_mut(&mut self.0.tls_config).alpn_protocols = vec![b"h2".to_vec()];
         ConnectorBuilder(WantsProtocols3 {
             inner: self.0,
             enable_http1: false,
@@ -221,7 +227,7 @@ impl ConnectorBuilder<WantsProtocols1> {
         #[cfg(not(feature = "http1"))]
         let alpn_protocols = vec![b"h2".to_vec()];
 
-        self.0.tls_config.alpn_protocols = alpn_protocols;
+        Arc::make_mut(&mut self.0.tls_config).alpn_protocols = alpn_protocols;
         ConnectorBuilder(WantsProtocols3 {
             inner: self.0,
             enable_http1: cfg!(feature = "http1"),
@@ -259,7 +265,8 @@ impl ConnectorBuilder<WantsProtocols2> {
     /// This needs to be called explicitly, no protocol is enabled by default
     #[cfg(feature = "http2")]
     pub fn enable_http2(mut self) -> ConnectorBuilder<WantsProtocols3> {
-        self.0.inner.tls_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        Arc::make_mut(&mut self.0.inner.tls_config).alpn_protocols =
+            vec![b"h2".to_vec(), b"http/1.1".to_vec()];
         ConnectorBuilder(WantsProtocols3 {
             inner: self.0.inner,
             enable_http1: true,
