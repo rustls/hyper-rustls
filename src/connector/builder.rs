@@ -228,6 +228,15 @@ impl ConnectorBuilder<WantsProtocols1> {
         })
     }
 
+    /// This wraps an arbitrary low-level connector into an [`HttpsConnector`]
+    pub fn wrap_connector<H>(self, conn: H) -> HttpsConnector<H> {
+        // HTTP1-only, alpn_protocols stays empty
+        // HttpConnector doesn't have a way to say http1-only;
+        // its connection pool may still support HTTP2
+        // though it won't be used
+        self.0.wrap_connector(conn)
+    }
+
     /// Override server name for the TLS stack
     ///
     /// By default, for each connection hyper-rustls will extract host portion
