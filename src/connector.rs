@@ -28,6 +28,13 @@ pub struct HttpsConnector<T> {
 }
 
 impl<T> HttpsConnector<T> {
+    /// Creates a [`crate::HttpsConnectorBuilder`] to configure a `HttpsConnector`.
+    ///
+    /// This is the same as [`crate::HttpsConnectorBuilder::new()`].
+    pub fn builder() -> builder::ConnectorBuilder<builder::WantsTlsConfig> {
+        builder::ConnectorBuilder::new()
+    }
+
     /// Force the use of HTTPS when connecting.
     ///
     /// If a URL is not `https` when connecting, an error is returned.
