@@ -7,7 +7,6 @@
 
 use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
-use std::vec::Vec;
 use std::{env, fs, io};
 
 use http::{Method, Request, Response, StatusCode};
