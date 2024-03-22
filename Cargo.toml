@@ -17,10 +17,10 @@ hyper-util = { version = "0.1", default-features = false, features = ["client-le
 log = { version = "0.4.4", optional = true }
 pki-types = { package = "rustls-pki-types", version = "1" }
 rustls-native-certs = { version = "0.7", optional = true }
-rustls-platform-verifier = { version = "0.2", optional = true }
-rustls = { version = "0.22", default-features = false }
+rustls-platform-verifier = { version = "0.3", optional = true }
+rustls = { version = "0.23", default-features = false }
 tokio = "1.0"
-tokio-rustls = { version = "0.25", default-features = false }
+tokio-rustls = { version = "0.26", default-features = false }
 tower-service = "0.3"
 webpki-roots = { version = "0.26", optional = true }
 futures-util = { version = "0.3", default-features = false }
@@ -28,12 +28,12 @@ futures-util = { version = "0.3", default-features = false }
 [dev-dependencies]
 http-body-util = "0.1"
 hyper-util = { version = "0.1", default-features = false, features = ["server-auto"] }
-rustls = { version = "0.22", default-features = false, features = ["tls12"] }
+rustls = { version = "0.23", default-features = false, features = ["tls12"] }
 rustls-pemfile = "2"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
 [features]
-default = ["native-tokio", "http1", "tls12", "logging", "ring"]
+default = ["native-tokio", "http1", "tls12", "logging", "aws-lc-rs"]
 aws-lc-rs = ["rustls/aws_lc_rs"]
 http1 = ["hyper-util/http1"]
 http2 = ["hyper-util/http2"]
@@ -51,7 +51,7 @@ required-features = ["native-tokio", "http1"]
 [[example]]
 name = "server"
 path = "examples/server.rs"
-required-features = ["ring"]
+required-features = ["aws-lc-rs"]
 
 [package.metadata.docs.rs]
 all-features = true
