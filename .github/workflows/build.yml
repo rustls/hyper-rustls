@@ -66,6 +66,11 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
+      - name: cargo test (debug; defaults+ring)
+        run: cargo test --no-default-features --features ring,native-tokio,http1,tls12,logging
+        env:
+          RUST_BACKTRACE: 1
+
       - name: cargo test (debug; all features)
         run: cargo test --all-features
         env:
