@@ -54,7 +54,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     /// Use rustls' default crypto provider and other defaults, and the platform verifier
     ///
     /// See [`ConfigBuilderExt::with_platform_verifier()`].
-    #[cfg(all(feature = "ring", feature = "rustls-platform-verifier"))]
+    #[cfg(feature = "rustls-platform-verifier")]
     pub fn with_platform_verifier(self) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(
             ClientConfig::builder()
@@ -67,7 +67,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     /// native roots.
     ///
     /// See [`ConfigBuilderExt::with_native_roots`]
-    #[cfg(all(feature = "ring", feature = "rustls-native-certs"))]
+    #[cfg(feature = "rustls-native-certs")]
     pub fn with_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
             ClientConfig::builder()
@@ -97,7 +97,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     /// safe defaults.
     ///
     /// See [`ConfigBuilderExt::with_webpki_roots`]
-    #[cfg(all(feature = "ring", feature = "webpki-roots"))]
+    #[cfg(feature = "webpki-roots")]
     pub fn with_webpki_roots(self) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(
             ClientConfig::builder()

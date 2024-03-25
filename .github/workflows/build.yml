@@ -56,18 +56,18 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
-      - name: cargo test (debug; native-tokio only)
-        run: cargo test --no-default-features --features native-tokio
+      - name: cargo test (debug; native-tokio)
+        run: cargo test --no-default-features --features native-tokio,aws-lc-rs
         env:
           RUST_BACKTRACE: 1
 
-      - name: cargo test (debug; webpki-tokio only)
-        run: cargo test --no-default-features --features webpki-tokio
+      - name: cargo test (debug; webpki-tokio)
+        run: cargo test --no-default-features --features webpki-tokio,aws-lc-rs
         env:
           RUST_BACKTRACE: 1
 
-      - name: cargo test (debug; all features)
-        run: cargo test --all-features
+      - name: cargo test (debug; http)
+        run: cargo test -F http1,http2
         env:
           RUST_BACKTRACE: 1
 
