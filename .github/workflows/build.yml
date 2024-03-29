@@ -11,8 +11,20 @@ on:
     - cron: '23 6 * * 5'
 
 jobs:
+  collect-features:
+    name: Collect package features
+    runs-on: ubuntu-latest
+    outputs:
+      NON_FIPS_FEATURES: ${{ steps.collect-non-fips-features.outputs.non-fips-features }}
+      DEFAULTS_WITH_RING_FEATURES: ${{ steps.collect-non-fips-features.outputs.defaults-with-ring-features }}
+    steps:
+      - id: collect-non-fips-features
+        run: |
+          yq --no-colors -oy '.features | keys | . - ["default", "fips"] | join(",") | "non-fips-features=" + @sh'  Cargo.toml >> "$GITHUB_OUTPUT"
+          yq --no-colors -oy '.features["default"] + ["ring"] | join(",") | "defaults-with-ring-features=" + @sh' Cargo.toml >> "$GITHUB_OUTPUT"
   build:
     name: Build+test
+    needs: collect-features
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -67,12 +79,23 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; defaults+ring)
-        run: cargo test --no-default-features --features ring,native-tokio,http1,tls12,logging
+        env:
+          DEFAULTS_WITH_RING_FEATURES: ${{ needs.collect-features.outputs.DEFAULTS_WITH_RING_FEATURES }}
+        run: cargo test --no-default-features --features $DEFAULTS_WITH_RING_FEATURES
         env:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; all features)
+        if: runner.os == 'Linux'
         run: cargo test --all-features
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: cargo test (debug; all features, excluding FIPS)
+        if: runner.os != 'Linux'
+        env:
+          NON_FIPS_FEATURES: ${{ needs.collect-features.outputs.NON_FIPS_FEATURES }}
+        run: cargo test --features $NON_FIPS_FEATURES
         env:
           RUST_BACKTRACE: 1
 
