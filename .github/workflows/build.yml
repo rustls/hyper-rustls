@@ -21,7 +21,7 @@ jobs:
       - id: collect-non-fips-features
         run: |
           yq --no-colors -oy '.features | keys | . - ["default", "fips"] | join(",") | "non-fips-features=" + @sh'  Cargo.toml >> "$GITHUB_OUTPUT"
-          yq --no-colors -oy '.features["default"] + ["ring"] | join(",") | "defaults-with-ring-features=" + @sh' Cargo.toml >> "$GITHUB_OUTPUT"
+          yq --no-colors -oy '.features["default"] - ["aws-lc-rs"] + ["ring"] | join(",") | "defaults-with-ring-features=" + @sh' Cargo.toml >> "$GITHUB_OUTPUT"
   build:
     name: Build+test
     needs: collect-features
