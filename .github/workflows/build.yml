@@ -13,7 +13,6 @@ on:
 jobs:
   build:
     name: Build+test
-    needs: collect-features
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
