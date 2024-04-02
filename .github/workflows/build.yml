@@ -72,7 +72,14 @@ jobs:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; all features)
+        if: runner.os == 'Linux'
         run: cargo test --all-features
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: cargo test (debug; all features, excluding FIPS)
+        if: runner.os != 'Linux'
+        run: cargo test --features aws-lc-rs,http1,http2,webpki-tokio,native-tokio,ring,tls12,logging
         env:
           RUST_BACKTRACE: 1
 
