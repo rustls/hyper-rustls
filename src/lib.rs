@@ -37,6 +37,7 @@
 
 mod config;
 mod connector;
+mod server_name_resolver;
 mod stream;
 
 #[cfg(feature = "logging")]

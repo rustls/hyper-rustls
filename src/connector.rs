@@ -12,6 +12,7 @@ use pki_types::ServerName;
 use tokio_rustls::TlsConnector;
 use tower_service::Service;
 
+use crate::server_name_resolver::ResolveServerName;
 use crate::stream::MaybeHttpsStream;
 
 pub(crate) mod builder;
@@ -24,7 +25,7 @@ pub struct HttpsConnector<T> {
     force_https: bool,
     http: T,
     tls_config: Arc<rustls::ClientConfig>,
-    override_server_name: Option<String>,
+    server_name_resolver: Option<Arc<dyn ResolveServerName + Sync + Send>>,
 }
 
 impl<T> HttpsConnector<T> {
@@ -90,24 +91,31 @@ where
         };
 
         let cfg = self.tls_config.clone();
-        let mut hostname = match self.override_server_name.as_deref() {
-            Some(h) => h,
-            None => dst.host().unwrap_or_default(),
-        };
+        let hostname = match &self.server_name_resolver {
+            Some(server_name_resolver) => match server_name_resolver.resolve(&dst) {
+                Ok(hostname) => hostname,
+                Err(e) => {
+                    return Box::pin(async move { Err(e) });
+                }
+            },
+            None => {
+                let mut hostname = dst.host().unwrap_or_default();
 
-        // Remove square brackets around IPv6 address.
-        if let Some(trimmed) = hostname
-            .strip_prefix('[')
-            .and_then(|h| h.strip_suffix(']'))
-        {
-            hostname = trimmed;
-        }
+                // Remove square brackets around IPv6 address.
+                if let Some(trimmed) = hostname
+                    .strip_prefix('[')
+                    .and_then(|h| h.strip_suffix(']'))
+                {
+                    hostname = trimmed;
+                }
 
-        let hostname = match ServerName::try_from(hostname) {
-            Ok(dns_name) => dns_name.to_owned(),
-            Err(_) => {
-                let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
-                return Box::pin(async move { Err(Box::new(err).into()) });
+                match ServerName::try_from(hostname) {
+                    Ok(dns_name) => dns_name.to_owned(),
+                    Err(_) => {
+                        let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
+                        return Box::pin(async move { Err(Box::new(err).into()) });
+                    }
+                }
             }
         };
 
@@ -135,7 +143,7 @@ where
             force_https: false,
             http,
             tls_config: cfg.into(),
-            override_server_name: None,
+            server_name_resolver: None,
         }
     }
 }
