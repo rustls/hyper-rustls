@@ -57,6 +57,7 @@ mod log {
 pub use crate::config::ConfigBuilderExt;
 pub use crate::connector::builder::ConnectorBuilder as HttpsConnectorBuilder;
 pub use crate::connector::HttpsConnector;
+pub use crate::server_name_resolver::ResolveServerName;
 pub use crate::stream::MaybeHttpsStream;
 
 /// The various states of the [`HttpsConnectorBuilder`]
