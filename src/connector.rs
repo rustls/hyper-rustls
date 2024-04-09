@@ -121,7 +121,7 @@ where
             force_https: false,
             http,
             tls_config: cfg.into(),
-            server_name_resolver: Arc::new(DefaultServerNameResolver::new()),
+            server_name_resolver: Arc::new(DefaultServerNameResolver::default()),
         }
     }
 }
@@ -137,13 +137,6 @@ impl<T> fmt::Debug for HttpsConnector<T> {
 /// The default server name resolver, which uses the hostname in the URI.
 #[derive(Default)]
 pub struct DefaultServerNameResolver(());
-
-impl DefaultServerNameResolver {
-    /// Creates a new resolver.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
 
 impl ResolveServerName for DefaultServerNameResolver {
     fn resolve(

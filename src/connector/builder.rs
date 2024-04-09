@@ -191,7 +191,7 @@ impl WantsProtocols1 {
             tls_config: std::sync::Arc::new(self.tls_config),
             server_name_resolver: self
                 .server_name_resolver
-                .unwrap_or_else(|| Arc::new(DefaultServerNameResolver::new())),
+                .unwrap_or_else(|| Arc::new(DefaultServerNameResolver::default())),
         }
     }
 
