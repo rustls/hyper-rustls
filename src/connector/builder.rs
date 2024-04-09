@@ -5,10 +5,10 @@ use hyper_util::client::legacy::connect::HttpConnector;
 use rustls::crypto::CryptoProvider;
 use rustls::ClientConfig;
 
-use super::HttpsConnector;
+use super::{DefaultServerNameResolver, HttpsConnector, ResolveServerName};
 #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
 use crate::config::ConfigBuilderExt;
-use crate::server_name_resolver::{FixedServerNameResolver, ResolveServerName};
+use pki_types::ServerName;
 
 /// A builder for an [`HttpsConnector`]
 ///
@@ -189,7 +189,9 @@ impl WantsProtocols1 {
             force_https: self.https_only,
             http: conn,
             tls_config: std::sync::Arc::new(self.tls_config),
-            server_name_resolver: self.server_name_resolver,
+            server_name_resolver: self
+                .server_name_resolver
+                .unwrap_or_else(|| Arc::new(DefaultServerNameResolver::new())),
         }
     }
 
@@ -248,10 +250,10 @@ impl ConnectorBuilder<WantsProtocols1> {
     ///
     /// If this method is called, hyper-rustls will instead use this resolver
     /// to compute the value used to verify the server certificate.
-    pub fn with_server_name_resolver<T>(mut self, resolver: T) -> Self
-    where
-        T: ResolveServerName + 'static + Sync + Send,
-    {
+    pub fn with_server_name_resolver(
+        mut self,
+        resolver: impl ResolveServerName + 'static + Sync + Send,
+    ) -> Self {
         self.0.server_name_resolver = Some(Arc::new(resolver));
         self
     }
@@ -265,8 +267,19 @@ impl ConnectorBuilder<WantsProtocols1> {
     /// If this method is called, hyper-rustls will instead verify that server
     /// certificate contains `override_server_name`. Domain name included in
     /// the URL will not affect certificate validation.
-    pub fn with_server_name(self, override_server_name: String) -> Self {
-        self.with_server_name_resolver(FixedServerNameResolver::new(override_server_name))
+    #[deprecated(since = "0.27.1", note = "use Self::with_server_name_resolver instead")]
+    pub fn with_server_name(self, mut override_server_name: String) -> Self {
+        // remove square brackets around IPv6 address.
+        if let Some(trimmed) = override_server_name
+            .strip_prefix('[')
+            .and_then(|s| s.strip_suffix(']'))
+        {
+            override_server_name = trimmed.to_string();
+        }
+
+        self.with_server_name_resolver(move |_: &_| {
+            ServerName::try_from(override_server_name.clone())
+        })
     }
 }
 
