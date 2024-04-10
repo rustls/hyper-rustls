@@ -267,7 +267,7 @@ impl ConnectorBuilder<WantsProtocols1> {
     /// If this method is called, hyper-rustls will instead verify that server
     /// certificate contains `override_server_name`. Domain name included in
     /// the URL will not affect certificate validation.
-    #[deprecated(since = "0.27.1", note = "use Self::with_server_name_resolver instead")]
+    #[deprecated(since = "0.27.1", note = "use Self::with_server_name_resolver with FixedServerNameResolver instead")]
     pub fn with_server_name(self, mut override_server_name: String) -> Self {
         // remove square brackets around IPv6 address.
         if let Some(trimmed) = override_server_name
