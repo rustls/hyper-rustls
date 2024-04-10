@@ -1,11 +1,14 @@
+use std::sync::Arc;
+
 use hyper_util::client::legacy::connect::HttpConnector;
 #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
 use rustls::crypto::CryptoProvider;
 use rustls::ClientConfig;
 
-use super::HttpsConnector;
+use super::{DefaultServerNameResolver, HttpsConnector, ResolveServerName};
 #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
 use crate::config::ConfigBuilderExt;
+use pki_types::ServerName;
 
 /// A builder for an [`HttpsConnector`]
 ///
@@ -153,7 +156,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: true,
-            override_server_name: None,
+            server_name_resolver: None,
         })
     }
 
@@ -165,7 +168,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: false,
-            override_server_name: None,
+            server_name_resolver: None,
         })
     }
 }
@@ -177,7 +180,7 @@ impl ConnectorBuilder<WantsSchemes> {
 pub struct WantsProtocols1 {
     tls_config: ClientConfig,
     https_only: bool,
-    override_server_name: Option<String>,
+    server_name_resolver: Option<Arc<dyn ResolveServerName + Sync + Send>>,
 }
 
 impl WantsProtocols1 {
@@ -186,7 +189,9 @@ impl WantsProtocols1 {
             force_https: self.https_only,
             http: conn,
             tls_config: std::sync::Arc::new(self.tls_config),
-            override_server_name: self.override_server_name,
+            server_name_resolver: self
+                .server_name_resolver
+                .unwrap_or_else(|| Arc::new(DefaultServerNameResolver::default())),
         }
     }
 
@@ -243,12 +248,41 @@ impl ConnectorBuilder<WantsProtocols1> {
     /// of the destination URL and verify that server certificate contains
     /// this value.
     ///
+    /// If this method is called, hyper-rustls will instead use this resolver
+    /// to compute the value used to verify the server certificate.
+    pub fn with_server_name_resolver(
+        mut self,
+        resolver: impl ResolveServerName + 'static + Sync + Send,
+    ) -> Self {
+        self.0.server_name_resolver = Some(Arc::new(resolver));
+        self
+    }
+
+    /// Override server name for the TLS stack
+    ///
+    /// By default, for each connection hyper-rustls will extract host portion
+    /// of the destination URL and verify that server certificate contains
+    /// this value.
+    ///
     /// If this method is called, hyper-rustls will instead verify that server
     /// certificate contains `override_server_name`. Domain name included in
     /// the URL will not affect certificate validation.
-    pub fn with_server_name(mut self, override_server_name: String) -> Self {
-        self.0.override_server_name = Some(override_server_name);
-        self
+    #[deprecated(
+        since = "0.27.1",
+        note = "use Self::with_server_name_resolver with FixedServerNameResolver instead"
+    )]
+    pub fn with_server_name(self, mut override_server_name: String) -> Self {
+        // remove square brackets around IPv6 address.
+        if let Some(trimmed) = override_server_name
+            .strip_prefix('[')
+            .and_then(|s| s.strip_suffix(']'))
+        {
+            override_server_name = trimmed.to_string();
+        }
+
+        self.with_server_name_resolver(move |_: &_| {
+            ServerName::try_from(override_server_name.clone())
+        })
     }
 }
 

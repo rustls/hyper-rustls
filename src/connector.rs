@@ -24,7 +24,7 @@ pub struct HttpsConnector<T> {
     force_https: bool,
     http: T,
     tls_config: Arc<rustls::ClientConfig>,
-    override_server_name: Option<String>,
+    server_name_resolver: Arc<dyn ResolveServerName + Sync + Send>,
 }
 
 impl<T> HttpsConnector<T> {
@@ -90,24 +90,10 @@ where
         };
 
         let cfg = self.tls_config.clone();
-        let mut hostname = match self.override_server_name.as_deref() {
-            Some(h) => h,
-            None => dst.host().unwrap_or_default(),
-        };
-
-        // Remove square brackets around IPv6 address.
-        if let Some(trimmed) = hostname
-            .strip_prefix('[')
-            .and_then(|h| h.strip_suffix(']'))
-        {
-            hostname = trimmed;
-        }
-
-        let hostname = match ServerName::try_from(hostname) {
-            Ok(dns_name) => dns_name.to_owned(),
-            Err(_) => {
-                let err = io::Error::new(io::ErrorKind::Other, "invalid dnsname");
-                return Box::pin(async move { Err(Box::new(err).into()) });
+        let hostname = match self.server_name_resolver.resolve(&dst) {
+            Ok(hostname) => hostname,
+            Err(e) => {
+                return Box::pin(async move { Err(e) });
             }
         };
 
@@ -135,7 +121,7 @@ where
             force_https: false,
             http,
             tls_config: cfg.into(),
-            override_server_name: None,
+            server_name_resolver: Arc::new(DefaultServerNameResolver::default()),
         }
     }
 }
@@ -146,4 +132,70 @@ impl<T> fmt::Debug for HttpsConnector<T> {
             .field("force_https", &self.force_https)
             .finish()
     }
+}
+
+/// The default server name resolver, which uses the hostname in the URI.
+#[derive(Default)]
+pub struct DefaultServerNameResolver(());
+
+impl ResolveServerName for DefaultServerNameResolver {
+    fn resolve(
+        &self,
+        uri: &Uri,
+    ) -> Result<ServerName<'static>, Box<dyn std::error::Error + Sync + Send>> {
+        let mut hostname = uri.host().unwrap_or_default();
+
+        // Remove square brackets around IPv6 address.
+        if let Some(trimmed) = hostname
+            .strip_prefix('[')
+            .and_then(|h| h.strip_suffix(']'))
+        {
+            hostname = trimmed;
+        }
+
+        ServerName::try_from(hostname.to_string()).map_err(|e| Box::new(e) as _)
+    }
+}
+
+/// A server name resolver which always returns the same fixed name.
+pub struct FixedServerNameResolver {
+    name: ServerName<'static>,
+}
+
+impl FixedServerNameResolver {
+    /// Creates a new resolver returning the specified name.
+    pub fn new(name: ServerName<'static>) -> Self {
+        Self { name }
+    }
+}
+
+impl ResolveServerName for FixedServerNameResolver {
+    fn resolve(
+        &self,
+        _: &Uri,
+    ) -> Result<ServerName<'static>, Box<dyn std::error::Error + Sync + Send>> {
+        Ok(self.name.clone())
+    }
+}
+
+impl<F, E> ResolveServerName for F
+where
+    F: Fn(&Uri) -> Result<ServerName<'static>, E>,
+    E: Into<Box<dyn std::error::Error + Sync + Send>>,
+{
+    fn resolve(
+        &self,
+        uri: &Uri,
+    ) -> Result<ServerName<'static>, Box<dyn std::error::Error + Sync + Send>> {
+        self(uri).map_err(Into::into)
+    }
+}
+
+/// A trait implemented by types that can resolve a [`ServerName`] for a request.
+pub trait ResolveServerName {
+    /// Maps a [`Uri`] into a [`ServerName`].
+    fn resolve(
+        &self,
+        uri: &Uri,
+    ) -> Result<ServerName<'static>, Box<dyn std::error::Error + Sync + Send>>;
 }
