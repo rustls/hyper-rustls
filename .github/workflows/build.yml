@@ -126,7 +126,8 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
 
       - name: cargo doc (all features)
-        run: cargo doc --all-features --no-deps
+        # keep features in sync with Cargo.toml `[package.metadata.docs.rs]` section
+        run: cargo doc --no-default-features --features http1,http2,webpki-tokio,native-tokio,ring,tls12,logging --no-deps
         env:
           RUSTDOCFLAGS: -Dwarnings
 
