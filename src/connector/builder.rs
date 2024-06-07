@@ -6,7 +6,11 @@ use rustls::crypto::CryptoProvider;
 use rustls::ClientConfig;
 
 use super::{DefaultServerNameResolver, HttpsConnector, ResolveServerName};
-#[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+#[cfg(any(
+    feature = "rustls-native-certs",
+    feature = "webpki-roots",
+    feature = "rustls-platform-verifier"
+))]
 use crate::config::ConfigBuilderExt;
 use pki_types::ServerName;
 
