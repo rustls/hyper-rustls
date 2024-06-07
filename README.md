@@ -48,6 +48,7 @@ This crate exposes a number of features to add support for different portions of
 | `http2` | **no** | Enables HTTP/2 support in [`hyper-util`][hyper-util] |
 | `webpki-tokio` | **no** | Uses a compiled-in set of root certificates trusted by Mozilla (via [`webpki-roots`][webpki-roots]) |
 | `native-tokio` | **yes** | Use the platform's native certificate store at runtime (via [`rustls-native-certs`][rustls-native-certs]) |
+| `rustls-platform-verifier` | **no** | Use the operating system's verifier for certificate verification (via [`rustls-platform-verifier`][rustls-platform-verifier]) |
 | `ring` | **no** | Enables use of the [`ring`][ring] backend for [`rustls`][rustls] |
 | `tls12` | **yes** | Enables support for TLS 1.2 (only TLS 1.3 supported when disabled) |
 | `logging` | **yes** | Enables logging of protocol-level diagnostics and errors via [`log`][log] |
@@ -58,5 +59,6 @@ This crate exposes a number of features to add support for different portions of
 [hyper-util]: https://docs.rs/hyper-util
 [webpki-roots]: https://docs.rs/webpki-roots
 [rustls-native-certs]: https://docs.rs/rustls-native-certs
+[rustls-platform-verifier]: https://docs.rs/rustls-platform-verifier
 [ring]: https://docs.rs/ring
 [log]: https://docs.rs/log
