@@ -87,7 +87,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     #[cfg(feature = "rustls-platform-verifier")]
     pub fn with_provider_and_platform_verifier(
         self,
-        provider: CryptoProvider,
+        provider: impl Into<Arc<CryptoProvider>>,
     ) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
             ClientConfig::builder_with_provider(provider.into())
@@ -120,7 +120,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     #[cfg(feature = "rustls-native-certs")]
     pub fn with_provider_and_native_roots(
         self,
-        provider: CryptoProvider,
+        provider: impl Into<Arc<CryptoProvider>>,
     ) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
             ClientConfig::builder_with_provider(provider.into())
@@ -151,7 +151,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
     #[cfg(feature = "webpki-roots")]
     pub fn with_provider_and_webpki_roots(
         self,
-        provider: CryptoProvider,
+        provider: impl Into<Arc<CryptoProvider>>,
     ) -> Result<ConnectorBuilder<WantsSchemes>, rustls::Error> {
         Ok(self.with_tls_config(
             ClientConfig::builder_with_provider(provider.into())
