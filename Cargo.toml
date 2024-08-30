@@ -10,6 +10,18 @@ homepage = "https://github.com/rustls/hyper-rustls"
 repository = "https://github.com/rustls/hyper-rustls"
 documentation = "https://docs.rs/hyper-rustls/"
 
+[features]
+default = ["native-tokio", "http1", "tls12", "logging", "aws-lc-rs"]
+aws-lc-rs = ["rustls/aws_lc_rs"]
+http1 = ["hyper-util/http1"]
+http2 = ["hyper-util/http2"]
+webpki-tokio = ["webpki-roots"]
+native-tokio = ["rustls-native-certs"]
+ring = ["rustls/ring"]
+tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
+logging = ["log", "tokio-rustls/logging", "rustls/logging"]
+fips = ["aws-lc-rs", "rustls/fips"]
+
 [dependencies]
 http = "1"
 hyper = { version = "1", default-features = false }
@@ -31,18 +43,6 @@ hyper-util = { version = "0.1", default-features = false, features = ["server-au
 rustls = { version = "0.23", default-features = false, features = ["tls12"] }
 rustls-pemfile = "2"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
-
-[features]
-default = ["native-tokio", "http1", "tls12", "logging", "aws-lc-rs"]
-aws-lc-rs = ["rustls/aws_lc_rs"]
-http1 = ["hyper-util/http1"]
-http2 = ["hyper-util/http2"]
-webpki-tokio = ["webpki-roots"]
-native-tokio = ["rustls-native-certs"]
-ring = ["rustls/ring"]
-tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
-logging = ["log", "tokio-rustls/logging", "rustls/logging"]
-fips = ["aws-lc-rs", "rustls/fips"]
 
 [[example]]
 name = "client"
