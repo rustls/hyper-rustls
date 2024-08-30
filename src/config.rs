@@ -8,6 +8,8 @@ use std::sync::Arc;
 ))]
 use rustls::client::WantsClientCert;
 use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
+#[cfg(feature = "rustls-native-certs")]
+use rustls_native_certs::CertificateResult;
 
 /// Methods for configuring roots
 ///
@@ -52,8 +54,19 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
         let mut valid_count = 0;
         let mut invalid_count = 0;
 
-        for cert in rustls_native_certs::load_native_certs().expect("could not load platform certs")
-        {
+        let CertificateResult { certs, errors, .. } = rustls_native_certs::load_native_certs();
+        if !errors.is_empty() {
+            crate::log::warn!("native root CA certificate loading errors: {errors:?}");
+        }
+
+        if certs.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("no native root CA certificates found (errors: {errors:?})"),
+            ));
+        }
+
+        for cert in certs {
             match roots.add(cert) {
                 Ok(_) => valid_count += 1,
                 Err(err) => {
@@ -62,6 +75,7 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
                 }
             }
         }
+
         crate::log::debug!(
             "with_native_roots processed {} valid and {} invalid certs",
             valid_count,
