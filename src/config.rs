@@ -30,7 +30,9 @@ pub trait ConfigBuilderExt {
     /// This will return an error if no valid certs were found. In that case,
     /// it's recommended to use `with_webpki_roots`.
     #[cfg(feature = "rustls-native-certs")]
-    fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>>;
+    fn with_native_roots(
+        self,
+    ) -> Result<ConfigBuilder<ClientConfig, WantsClientCert>, std::io::Error>;
 
     /// This configures the webpki roots, which are Mozilla's set of
     /// trusted roots as packaged by webpki-roots.
@@ -49,7 +51,9 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
 
     #[cfg(feature = "rustls-native-certs")]
     #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
-    fn with_native_roots(self) -> std::io::Result<ConfigBuilder<ClientConfig, WantsClientCert>> {
+    fn with_native_roots(
+        self,
+    ) -> Result<ConfigBuilder<ClientConfig, WantsClientCert>, std::io::Error> {
         let mut roots = rustls::RootCertStore::empty();
         let mut valid_count = 0;
         let mut invalid_count = 0;
