@@ -56,5 +56,14 @@ required-features = ["aws-lc-rs"]
 
 [package.metadata.docs.rs]
 no-default-features = true
-features = ["http1", "http2", "webpki-tokio", "native-tokio", "ring", "tls12", "logging", "rustls-platform-verifier"]
+features = [
+    "http1",
+    "http2",
+    "logging",
+    "native-tokio",
+    "ring",
+    "rustls-platform-verifier",
+    "tls12",
+    "webpki-tokio",
+]
 rustdoc-args = ["--cfg", "docsrs"]
