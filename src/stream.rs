@@ -98,4 +98,24 @@ impl<T: rt::Write + rt::Read + Unpin> rt::Write for MaybeHttpsStream<T> {
             Self::Https(s) => Pin::new(s).poll_shutdown(cx),
         }
     }
+
+    #[inline]
+    fn is_write_vectored(&self) -> bool {
+        match self {
+            Self::Http(s) => s.is_write_vectored(),
+            Self::Https(s) => s.is_write_vectored(),
+        }
+    }
+
+    #[inline]
+    fn poll_write_vectored(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        bufs: &[io::IoSlice<'_>],
+    ) -> Poll<Result<usize, io::Error>> {
+        match Pin::get_mut(self) {
+            Self::Http(s) => Pin::new(s).poll_write_vectored(cx, bufs),
+            Self::Https(s) => Pin::new(s).poll_write_vectored(cx, bufs),
+        }
+    }
 }
