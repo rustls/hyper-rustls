@@ -43,9 +43,10 @@ pub trait ConfigBuilderExt {
 impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     #[cfg(feature = "rustls-platform-verifier")]
     fn with_platform_verifier(self) -> ConfigBuilder<ClientConfig, WantsClientCert> {
+        let provider = self.crypto_provider().clone();
         self.dangerous()
             .with_custom_certificate_verifier(Arc::new(
-                rustls_platform_verifier::Verifier::default(),
+                rustls_platform_verifier::Verifier::new().with_provider(provider),
             ))
     }
 
