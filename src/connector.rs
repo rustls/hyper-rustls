@@ -69,7 +69,7 @@ where
         // dst.scheme() would need to derive Eq to be matchable;
         // use an if cascade instead
         match dst.scheme() {
-            Some(scheme) if scheme == &http::uri::Scheme::HTTP => {
+            Some(scheme) if scheme == &http::uri::Scheme::HTTP && !self.force_https => {
                 let future = self.http.call(dst);
                 return Box::pin(async move {
                     Ok(MaybeHttpsStream::Http(future.await.map_err(Into::into)?))
@@ -198,4 +198,75 @@ pub trait ResolveServerName {
         &self,
         uri: &Uri,
     ) -> Result<ServerName<'static>, Box<dyn std::error::Error + Sync + Send>>;
+}
+
+#[cfg(test)]
+mod tests {
+    use http::Uri;
+    use hyper_util::client::legacy::connect::HttpConnector;
+    use tower::ServiceExt;
+
+    use super::HttpsConnector;
+    use crate::HttpsConnectorBuilder;
+
+    fn https_or_http_connector() -> HttpsConnector<HttpConnector> {
+        HttpsConnectorBuilder::new()
+            .with_native_roots()
+            .unwrap()
+            .https_or_http()
+            .enable_http1()
+            .build()
+    }
+
+    fn https_only_connector() -> HttpsConnector<HttpConnector> {
+        HttpsConnectorBuilder::new()
+            .with_native_roots()
+            .unwrap()
+            .https_only()
+            .enable_http1()
+            .build()
+    }
+
+    fn https_uri() -> Uri {
+        Uri::from_static("https://google.com")
+    }
+
+    fn http_uri() -> Uri {
+        Uri::from_static("http://google.com")
+    }
+
+    #[tokio::test]
+    async fn connects_https() {
+        https_or_http_connector()
+            .oneshot(https_uri())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn connects_http() {
+        https_or_http_connector()
+            .oneshot(http_uri())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn connects_https_only() {
+        https_only_connector()
+            .oneshot(https_uri())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn enforces_https_only() {
+        let message = https_only_connector()
+            .oneshot(http_uri())
+            .await
+            .unwrap_err()
+            .to_string();
+
+        assert_eq!(message, "unsupported scheme http");
+    }
 }
