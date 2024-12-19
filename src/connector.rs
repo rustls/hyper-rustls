@@ -200,19 +200,44 @@ pub trait ResolveServerName {
     ) -> Result<ServerName<'static>, Box<dyn std::error::Error + Sync + Send>>;
 }
 
-#[cfg(test)]
+#[cfg(all(
+    test,
+    any(feature = "ring", feature = "aws-lc-rs"),
+    any(
+        feature = "rustls-native-certs",
+        feature = "webpki-roots",
+        feature = "rustls-platform-verifier",
+    )
+))]
 mod tests {
     use http::Uri;
     use hyper_util::client::legacy::connect::HttpConnector;
     use tower::ServiceExt;
 
     use super::HttpsConnector;
-    use crate::HttpsConnectorBuilder;
+    use crate::{ConfigBuilderExt, HttpsConnectorBuilder};
+
+    fn tls_config() -> rustls::ClientConfig {
+        #[cfg(feature = "rustls-native-certs")]
+        return rustls::ClientConfig::builder()
+            .with_native_roots()
+            .unwrap()
+            .with_no_client_auth();
+
+        #[cfg(feature = "webpki-roots")]
+        return rustls::ClientConfig::builder()
+            .with_webpki_roots()
+            .with_no_client_auth();
+
+        #[cfg(feature = "rustls-platform-verifier")]
+        return rustls::ClientConfig::builder()
+            .with_platform_verifier()
+            .with_no_client_auth();
+    }
 
     fn https_or_http_connector() -> HttpsConnector<HttpConnector> {
         HttpsConnectorBuilder::new()
-            .with_native_roots()
-            .unwrap()
+            .with_tls_config(tls_config())
             .https_or_http()
             .enable_http1()
             .build()
@@ -220,8 +245,7 @@ mod tests {
 
     fn https_only_connector() -> HttpsConnector<HttpConnector> {
         HttpsConnectorBuilder::new()
-            .with_native_roots()
-            .unwrap()
+            .with_tls_config(tls_config())
             .https_only()
             .enable_http1()
             .build()
