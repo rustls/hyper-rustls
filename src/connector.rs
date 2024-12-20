@@ -284,10 +284,7 @@ mod tests {
             .with_no_client_auth();
     }
 
-    async fn oneshot<S, Req>(mut service: S, req: Req) -> Result<S::Response, S::Error>
-    where
-        S: Service<Req>,
-    {
+    async fn oneshot<S: Service<Uri>>(mut service: S, req: Uri) -> Result<S::Response, S::Error> {
         poll_fn(|cx| service.poll_ready(cx)).await?;
         service.call(req).await
     }
