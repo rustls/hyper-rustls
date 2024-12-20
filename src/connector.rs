@@ -213,57 +213,42 @@ mod tests {
     use std::future::poll_fn;
 
     use http::Uri;
-    use hyper_util::client::legacy::connect::HttpConnector;
+    use hyper_util::rt::TokioIo;
+    use tokio::net::TcpStream;
     use tower_service::Service;
 
-    use super::HttpsConnector;
-    use crate::{ConfigBuilderExt, HttpsConnectorBuilder};
+    use super::*;
+    use crate::{ConfigBuilderExt, HttpsConnectorBuilder, MaybeHttpsStream};
 
     #[tokio::test]
     async fn connects_https() {
-        oneshot(https_or_http_connector(), Scheme::Https)
+        connect(Allow::Any, Scheme::Https)
             .await
             .unwrap();
     }
 
     #[tokio::test]
     async fn connects_http() {
-        oneshot(https_or_http_connector(), Scheme::Http)
+        connect(Allow::Any, Scheme::Http)
             .await
             .unwrap();
     }
 
     #[tokio::test]
     async fn connects_https_only() {
-        oneshot(https_only_connector(), Scheme::Https)
+        connect(Allow::Https, Scheme::Https)
             .await
             .unwrap();
     }
 
     #[tokio::test]
     async fn enforces_https_only() {
-        let message = oneshot(https_only_connector(), Scheme::Http)
+        let message = connect(Allow::Https, Scheme::Http)
             .await
             .unwrap_err()
             .to_string();
 
         assert_eq!(message, "unsupported scheme http");
-    }
-
-    fn https_or_http_connector() -> HttpsConnector<HttpConnector> {
-        HttpsConnectorBuilder::new()
-            .with_tls_config(tls_config())
-            .https_or_http()
-            .enable_http1()
-            .build()
-    }
-
-    fn https_only_connector() -> HttpsConnector<HttpConnector> {
-        HttpsConnectorBuilder::new()
-            .with_tls_config(tls_config())
-            .https_only()
-            .enable_http1()
-            .build()
     }
 
     fn tls_config() -> rustls::ClientConfig {
@@ -284,10 +269,18 @@ mod tests {
             .with_no_client_auth();
     }
 
-    async fn oneshot<S: Service<Uri>>(
-        mut service: S,
+    async fn connect(
+        allow: Allow,
         scheme: Scheme,
-    ) -> Result<S::Response, S::Error> {
+    ) -> Result<MaybeHttpsStream<TokioIo<TcpStream>>, BoxError> {
+        let builder = HttpsConnectorBuilder::new().with_tls_config(tls_config());
+        let mut service = match allow {
+            Allow::Https => builder.https_only(),
+            Allow::Any => builder.https_or_http(),
+        }
+        .enable_http1()
+        .build();
+
         poll_fn(|cx| service.poll_ready(cx)).await?;
         service
             .call(Uri::from_static(match scheme {
@@ -295,6 +288,11 @@ mod tests {
                 Scheme::Http => "http://google.com",
             }))
             .await
+    }
+
+    enum Allow {
+        Https,
+        Any,
     }
 
     enum Scheme {
