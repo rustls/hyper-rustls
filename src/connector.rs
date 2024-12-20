@@ -251,29 +251,23 @@ mod tests {
         assert_eq!(message, "unsupported scheme http");
     }
 
-    fn tls_config() -> rustls::ClientConfig {
-        #[cfg(feature = "rustls-platform-verifier")]
-        return rustls::ClientConfig::builder()
-            .with_platform_verifier()
-            .with_no_client_auth();
-
-        #[cfg(feature = "rustls-native-certs")]
-        return rustls::ClientConfig::builder()
-            .with_native_roots()
-            .unwrap()
-            .with_no_client_auth();
-
-        #[cfg(feature = "webpki-roots")]
-        return rustls::ClientConfig::builder()
-            .with_webpki_roots()
-            .with_no_client_auth();
-    }
-
     async fn connect(
         allow: Allow,
         scheme: Scheme,
     ) -> Result<MaybeHttpsStream<TokioIo<TcpStream>>, BoxError> {
-        let builder = HttpsConnectorBuilder::new().with_tls_config(tls_config());
+        let config_builder = rustls::ClientConfig::builder();
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "rustls-platform-verifier")] {
+                let config_builder = config_builder.with_platform_verifier();
+            } else if #[cfg(feature = "rustls-native-certs")] {
+                let config_builder = config_builder.with_native_roots().unwrap();
+            } else if #[cfg(feature = "webpki-roots")] {
+                let config_builder = config_builder.with_webpki_roots();
+            }
+        }
+        let config = config_builder.with_no_client_auth();
+
+        let builder = HttpsConnectorBuilder::new().with_tls_config(config);
         let mut service = match allow {
             Allow::Https => builder.https_only(),
             Allow::Any => builder.https_or_http(),
