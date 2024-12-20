@@ -221,28 +221,28 @@ mod tests {
 
     #[tokio::test]
     async fn connects_https() {
-        oneshot(https_or_http_connector(), https_uri())
+        oneshot(https_or_http_connector(), Scheme::Https)
             .await
             .unwrap();
     }
 
     #[tokio::test]
     async fn connects_http() {
-        oneshot(https_or_http_connector(), http_uri())
+        oneshot(https_or_http_connector(), Scheme::Http)
             .await
             .unwrap();
     }
 
     #[tokio::test]
     async fn connects_https_only() {
-        oneshot(https_only_connector(), https_uri())
+        oneshot(https_only_connector(), Scheme::Https)
             .await
             .unwrap();
     }
 
     #[tokio::test]
     async fn enforces_https_only() {
-        let message = oneshot(https_only_connector(), http_uri())
+        let message = oneshot(https_only_connector(), Scheme::Http)
             .await
             .unwrap_err()
             .to_string();
@@ -284,16 +284,21 @@ mod tests {
             .with_no_client_auth();
     }
 
-    async fn oneshot<S: Service<Uri>>(mut service: S, req: Uri) -> Result<S::Response, S::Error> {
+    async fn oneshot<S: Service<Uri>>(
+        mut service: S,
+        scheme: Scheme,
+    ) -> Result<S::Response, S::Error> {
         poll_fn(|cx| service.poll_ready(cx)).await?;
-        service.call(req).await
+        service
+            .call(Uri::from_static(match scheme {
+                Scheme::Https => "https://google.com",
+                Scheme::Http => "http://google.com",
+            }))
+            .await
     }
 
-    fn https_uri() -> Uri {
-        Uri::from_static("https://google.com")
-    }
-
-    fn http_uri() -> Uri {
-        Uri::from_static("http://google.com")
+    enum Scheme {
+        Https,
+        Http,
     }
 }
