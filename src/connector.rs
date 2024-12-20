@@ -220,6 +220,11 @@ mod tests {
     use crate::{ConfigBuilderExt, HttpsConnectorBuilder};
 
     fn tls_config() -> rustls::ClientConfig {
+        #[cfg(feature = "rustls-platform-verifier")]
+        return rustls::ClientConfig::builder()
+            .with_platform_verifier()
+            .with_no_client_auth();
+
         #[cfg(feature = "rustls-native-certs")]
         return rustls::ClientConfig::builder()
             .with_native_roots()
@@ -229,11 +234,6 @@ mod tests {
         #[cfg(feature = "webpki-roots")]
         return rustls::ClientConfig::builder()
             .with_webpki_roots()
-            .with_no_client_auth();
-
-        #[cfg(feature = "rustls-platform-verifier")]
-        return rustls::ClientConfig::builder()
-            .with_platform_verifier()
             .with_no_client_auth();
     }
 
