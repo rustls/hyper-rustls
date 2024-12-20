@@ -219,56 +219,6 @@ mod tests {
     use super::HttpsConnector;
     use crate::{ConfigBuilderExt, HttpsConnectorBuilder};
 
-    fn tls_config() -> rustls::ClientConfig {
-        #[cfg(feature = "rustls-platform-verifier")]
-        return rustls::ClientConfig::builder()
-            .with_platform_verifier()
-            .with_no_client_auth();
-
-        #[cfg(feature = "rustls-native-certs")]
-        return rustls::ClientConfig::builder()
-            .with_native_roots()
-            .unwrap()
-            .with_no_client_auth();
-
-        #[cfg(feature = "webpki-roots")]
-        return rustls::ClientConfig::builder()
-            .with_webpki_roots()
-            .with_no_client_auth();
-    }
-
-    fn https_or_http_connector() -> HttpsConnector<HttpConnector> {
-        HttpsConnectorBuilder::new()
-            .with_tls_config(tls_config())
-            .https_or_http()
-            .enable_http1()
-            .build()
-    }
-
-    fn https_only_connector() -> HttpsConnector<HttpConnector> {
-        HttpsConnectorBuilder::new()
-            .with_tls_config(tls_config())
-            .https_only()
-            .enable_http1()
-            .build()
-    }
-
-    async fn oneshot<S, Req>(mut service: S, req: Req) -> Result<S::Response, S::Error>
-    where
-        S: Service<Req>,
-    {
-        poll_fn(|cx| service.poll_ready(cx)).await?;
-        service.call(req).await
-    }
-
-    fn https_uri() -> Uri {
-        Uri::from_static("https://google.com")
-    }
-
-    fn http_uri() -> Uri {
-        Uri::from_static("http://google.com")
-    }
-
     #[tokio::test]
     async fn connects_https() {
         oneshot(https_or_http_connector(), https_uri())
@@ -298,5 +248,55 @@ mod tests {
             .to_string();
 
         assert_eq!(message, "unsupported scheme http");
+    }
+
+    fn https_or_http_connector() -> HttpsConnector<HttpConnector> {
+        HttpsConnectorBuilder::new()
+            .with_tls_config(tls_config())
+            .https_or_http()
+            .enable_http1()
+            .build()
+    }
+
+    fn https_only_connector() -> HttpsConnector<HttpConnector> {
+        HttpsConnectorBuilder::new()
+            .with_tls_config(tls_config())
+            .https_only()
+            .enable_http1()
+            .build()
+    }
+
+    fn tls_config() -> rustls::ClientConfig {
+        #[cfg(feature = "rustls-platform-verifier")]
+        return rustls::ClientConfig::builder()
+            .with_platform_verifier()
+            .with_no_client_auth();
+
+        #[cfg(feature = "rustls-native-certs")]
+        return rustls::ClientConfig::builder()
+            .with_native_roots()
+            .unwrap()
+            .with_no_client_auth();
+
+        #[cfg(feature = "webpki-roots")]
+        return rustls::ClientConfig::builder()
+            .with_webpki_roots()
+            .with_no_client_auth();
+    }
+
+    async fn oneshot<S, Req>(mut service: S, req: Req) -> Result<S::Response, S::Error>
+    where
+        S: Service<Req>,
+    {
+        poll_fn(|cx| service.poll_ready(cx)).await?;
+        service.call(req).await
+    }
+
+    fn https_uri() -> Uri {
+        Uri::from_static("https://google.com")
+    }
+
+    fn http_uri() -> Uri {
+        Uri::from_static("http://google.com")
     }
 }
