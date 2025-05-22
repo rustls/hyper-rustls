@@ -34,7 +34,7 @@ rustls = { version = "0.23", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.26", default-features = false }
 tower-service = "0.3"
-webpki-roots = { version = "0.26", optional = true }
+webpki-roots = { version = "1", optional = true }
 
 [dev-dependencies]
 cfg-if = "1"
