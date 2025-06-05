@@ -29,7 +29,7 @@ hyper-util = { version = "0.1", default-features = false, features = ["client-le
 log = { version = "0.4.4", optional = true }
 pki-types = { package = "rustls-pki-types", version = "1" }
 rustls-native-certs = { version = "0.8", optional = true }
-rustls-platform-verifier = { version = "0.5", optional = true }
+rustls-platform-verifier = { version = "0.6", optional = true }
 rustls = { version = "0.23", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.26", default-features = false }
