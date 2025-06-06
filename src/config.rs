@@ -17,7 +17,7 @@ use rustls_native_certs::CertificateResult;
 ///
 /// This adds methods (gated by crate features) for easily configuring
 /// TLS server roots a rustls ClientConfig will trust.
-pub trait ConfigBuilderExt {
+pub trait ConfigBuilderExt: sealed::Sealed {
     /// Use the platform's native verifier to verify server certificates.
     ///
     /// See the documentation for [rustls-platform-verifier] for more details.
@@ -105,4 +105,12 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
         );
         self.with_root_certificates(roots)
     }
+}
+
+mod sealed {
+    use super::*;
+
+    pub trait Sealed {}
+
+    impl Sealed for ConfigBuilder<ClientConfig, WantsVerifier> {}
 }
