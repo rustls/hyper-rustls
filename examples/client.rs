@@ -15,7 +15,7 @@ use std::{env, fs, io};
 fn main() {
     // Send GET request and inspect result, with proper error handling.
     if let Err(e) = run_client() {
-        eprintln!("FAILED: {}", e);
+        eprintln!("FAILED: {e}");
         std::process::exit(1);
     }
 }
@@ -34,7 +34,7 @@ async fn run_client() -> io::Result<()> {
 
     // First parameter is target URL (mandatory).
     let url = match env::args().nth(1) {
-        Some(ref url) => Uri::from_str(url).map_err(|e| error(format!("{}", e)))?,
+        Some(ref url) => Uri::from_str(url).map_err(|e| error(format!("{e}")))?,
         None => {
             println!("Usage: client <url> <ca_store>");
             return Ok(());
@@ -44,8 +44,8 @@ async fn run_client() -> io::Result<()> {
     // Second parameter is custom Root-CA store (optional, defaults to native cert store).
     let mut ca = match env::args().nth(2) {
         Some(ref path) => {
-            let f = fs::File::open(path)
-                .map_err(|e| error(format!("failed to open {}: {}", path, e)))?;
+            let f =
+                fs::File::open(path).map_err(|e| error(format!("failed to open {path}: {e}")))?;
             let rd = io::BufReader::new(f);
             Some(rd)
         }
@@ -86,7 +86,7 @@ async fn run_client() -> io::Result<()> {
         let res = client
             .get(url)
             .await
-            .map_err(|e| error(format!("Could not get: {:?}", e)))?;
+            .map_err(|e| error(format!("Could not get: {e:?}")))?;
         println!("Status:\n{}", res.status());
         println!("Headers:\n{:#?}", res.headers());
 
@@ -94,7 +94,7 @@ async fn run_client() -> io::Result<()> {
             .into_body()
             .collect()
             .await
-            .map_err(|e| error(format!("Could not get body: {:?}", e)))?
+            .map_err(|e| error(format!("Could not get body: {e:?}")))?
             .to_bytes();
         println!("Body:\n{}", String::from_utf8_lossy(&body));
 

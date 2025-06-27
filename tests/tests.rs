@@ -29,7 +29,7 @@ fn wait_for_server(addr: &str) {
         }
         thread::sleep(time::Duration::from_millis(i * 100));
     }
-    panic!("failed to connect to {:?} after 10 tries", addr);
+    panic!("failed to connect to {addr:?} after 10 tries");
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn server() {
     let output = Command::new("curl")
         .arg("--insecure")
         .arg("--http1.0")
-        .arg(format!("https://{}", addr))
+        .arg(format!("https://{addr}"))
         .output()
         .expect("cannot run curl");
 
@@ -87,7 +87,7 @@ fn custom_ca_store() {
     wait_for_server(addr);
 
     let rc = client_command()
-        .arg(format!("https://{}", addr))
+        .arg(format!("https://{addr}"))
         .arg("examples/sample.pem")
         .output()
         .expect("cannot run client example");
