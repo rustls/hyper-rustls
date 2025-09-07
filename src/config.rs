@@ -1,5 +1,6 @@
 #[cfg(feature = "rustls-native-certs")]
 use std::io;
+use std::sync::Arc;
 
 #[cfg(any(
     feature = "rustls-platform-verifier",
@@ -7,7 +8,7 @@ use std::io;
     feature = "webpki-roots"
 ))]
 use rustls::client::WantsClientCert;
-use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
+use rustls::{ClientConfig, ConfigBuilder, KeyLog, KeyLogFile, WantsVerifier};
 #[cfg(feature = "rustls-native-certs")]
 use rustls_native_certs::CertificateResult;
 #[cfg(feature = "rustls-platform-verifier")]
@@ -122,6 +123,37 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
                 .cloned(),
         );
         self.with_root_certificates(roots)
+    }
+}
+
+/// Methods for enabling TLS key logging on a `ClientConfig`.
+///
+/// This sets `config.key_log` to a `KeyLogFile` which writes
+/// to the path in the `SSLKEYLOGFILE` env var (if set). If the variable is
+/// not set, it becomes a no-op.
+pub trait ClientConfigKeyLogExt {
+    /// Replace the `key_log` sink with a custom implementation.
+    fn with_key_log(self, key_log: Arc<dyn KeyLog>) -> Self;
+
+    // Enable NSS-style key logging to the file named by `SSLKEYLOGFILE`.
+    ///
+    /// If `SSLKEYLOGFILE` is unset, this is a no-op (matches `rustls`’ behavior).
+    fn with_key_log_file(self) -> Self;
+}
+
+impl ClientConfigKeyLogExt for ClientConfig {
+    fn with_key_log(mut self, key_log: Arc<dyn KeyLog>) -> Self {
+        self.key_log = key_log;
+
+        self
+    }
+
+    fn with_key_log_file(mut self) -> Self {
+        // `KeyLogFile::new()` internally reads SSLKEYLOGFILE and either opens the file
+        // or becomes a sink that does nothing. Safe to enable unconditionally.
+        self.key_log = Arc::new(KeyLogFile::new());
+
+        self
     }
 }
 

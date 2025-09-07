@@ -59,7 +59,7 @@ mod log {
     pub(crate) use warn_ as warn;
 }
 
-pub use crate::config::ConfigBuilderExt;
+pub use crate::config::{ClientConfigKeyLogExt, ConfigBuilderExt};
 pub use crate::connector::builder::ConnectorBuilder as HttpsConnectorBuilder;
 pub use crate::connector::{
     DefaultServerNameResolver, FixedServerNameResolver, HttpsConnector, ResolveServerName,
