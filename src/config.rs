@@ -128,14 +128,15 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
 
 /// Methods for enabling TLS key logging on a `ClientConfig`.
 ///
-/// This sets `config.key_log` to a `KeyLogFile` which writes
-/// to the path in the `SSLKEYLOGFILE` env var (if set). If the variable is
-/// not set, it becomes a no-op.
+/// Naturally, secrets passed over the interface are *extremely*
+/// sensitive and can break the security of past, present and
+/// future sessions.
 pub trait ClientConfigKeyLogExt {
     /// Replace the `key_log` sink with a custom implementation.
     fn with_key_log(self, key_log: Arc<dyn KeyLog>) -> Self;
 
-    // Enable NSS-style key logging to the file named by `SSLKEYLOGFILE`.
+    /// Replace the `key_log` sink with NSS-style key logging to the file
+    /// named by `SSLKEYLOGFILE`.
     ///
     /// If `SSLKEYLOGFILE` is unset, this is a no-op (matches `rustls`’ behavior).
     fn with_key_log_file(self) -> Self;
