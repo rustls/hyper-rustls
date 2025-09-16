@@ -11,12 +11,12 @@ repository = "https://github.com/rustls/hyper-rustls"
 documentation = "https://docs.rs/hyper-rustls/"
 
 [features]
-default = ["native-tokio", "http1", "tls12", "logging", "aws-lc-rs"]
-aws-lc-rs = ["rustls/aws_lc_rs"]
+default = ["native-tokio", "http1", "tls12", "log", "aws-lc-rs"]
+aws-lc-rs = ["rustls/aws-lc-rs"]
 fips = ["aws-lc-rs", "rustls/fips"]
 http1 = ["hyper-util/http1"]
 http2 = ["hyper-util/http2"]
-logging = ["log", "tokio-rustls/logging", "rustls/logging"]
+log = ["dep:log", "tokio-rustls/log", "rustls/log"]
 native-tokio = ["rustls-native-certs"]
 ring = ["rustls/ring"]
 tls12 = ["tokio-rustls/tls12", "rustls/tls12"]
@@ -29,10 +29,10 @@ hyper-util = { version = "0.1", default-features = false, features = ["client-le
 log = { version = "0.4.4", optional = true }
 pki-types = { package = "rustls-pki-types", version = "1" }
 rustls-native-certs = { version = "0.8", optional = true }
-rustls-platform-verifier = { version = "0.6", optional = true }
-rustls = { version = "0.23", default-features = false }
+rustls-platform-verifier = { git = "https://github.com/fenollp/rustls-platform-verifier.git", branch = "rustls-0.24", optional = true }
+rustls = { git = "https://github.com/rustls/rustls.git", rev = "30f3753a70c3b138841675b6381c0b63a3005414", default-features = false }
 tokio = "1.0"
-tokio-rustls = { version = "0.26", default-features = false }
+tokio-rustls = { git = "https://github.com/fenollp/tokio-rustls.git", branch = "rustls-0.24", default-features = false }
 tower-service = "0.3"
 webpki-roots = { version = "1", optional = true }
 
@@ -40,7 +40,7 @@ webpki-roots = { version = "1", optional = true }
 cfg-if = "1"
 http-body-util = "0.1"
 hyper-util = { version = "0.1", default-features = false, features = ["server-auto"] }
-rustls = { version = "0.23", default-features = false, features = ["tls12"] }
+rustls = { git = "https://github.com/rustls/rustls.git", rev = "30f3753a70c3b138841675b6381c0b63a3005414", default-features = false, features = ["tls12"] }
 rustls-pemfile = "2"
 tokio = { version = "1.0", features = ["io-std", "macros", "net", "rt-multi-thread"] }
 
@@ -59,7 +59,7 @@ no-default-features = true
 features = [
     "http1",
     "http2",
-    "logging",
+    "log",
     "native-tokio",
     "ring",
     "rustls-platform-verifier",
