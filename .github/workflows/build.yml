@@ -49,48 +49,48 @@ jobs:
         uses: seanmiddleditch/gha-setup-ninja@v6
 
       - name: cargo check (default features)
-        run: cargo check --all-targets
+        run: cargo check --locked --all-targets
 
       - name: cargo test (debug; default features)
-        run: cargo test
+        run: cargo test --locked
         env:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; native-tokio only)
-        run: cargo test --no-default-features --features native-tokio
+        run: cargo test --locked --no-default-features --features native-tokio
         env:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; webpki-tokio only)
-        run: cargo test --no-default-features --features webpki-tokio
+        run: cargo test --locked --no-default-features --features webpki-tokio
         env:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; defaults+ring)
-        run: cargo test --no-default-features --features ring,native-tokio,http1,tls12,logging
+        run: cargo test --locked --no-default-features --features ring,native-tokio,http1,tls12,logging
         env:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; all features)
         if: runner.os == 'Linux'
-        run: cargo test --all-features
+        run: cargo test --locked --all-features
         env:
           RUST_BACKTRACE: 1
 
       - name: cargo test (debug; all features, excluding FIPS)
         if: runner.os != 'Linux'
-        run: cargo test --features aws-lc-rs,http1,http2,webpki-tokio,native-tokio,ring,tls12,logging
+        run: cargo test --locked --features aws-lc-rs,http1,http2,webpki-tokio,native-tokio,ring,tls12,logging
         env:
           RUST_BACKTRACE: 1
 
       - name: cargo build (debug; no default features)
-        run: cargo build --no-default-features
+        run: cargo build --locked --no-default-features
 
       - name: cargo test (debug; no default features; no run)
-        run: cargo test --no-default-features --no-run
+        run: cargo test --locked --no-default-features --no-run
 
       - name: cargo test (release; no run)
-        run: cargo test --release --no-run
+        run: cargo test --locked --release --no-run
 
   msrv:
     runs-on: ubuntu-latest
@@ -106,7 +106,7 @@ jobs:
           toolchain: "1.71"
 
       - name: Check MSRV
-        run: cargo check --lib --all-features
+        run: cargo check --lib --locked --all-features
 
   semver:
     name: Check semver compatibility
@@ -134,7 +134,7 @@ jobs:
 
       - name: cargo doc (all features)
         # keep features in sync with Cargo.toml `[package.metadata.docs.rs]` section
-        run: cargo doc --no-default-features --features http1,http2,webpki-tokio,native-tokio,ring,tls12,logging --no-deps
+        run: cargo doc --locked --no-default-features --features http1,http2,webpki-tokio,native-tokio,ring,tls12,logging --no-deps
         env:
           RUSTDOCFLAGS: -Dwarnings
 
@@ -165,7 +165,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - run: cargo clippy --all-features -- --deny warnings
+      - run: cargo clippy --locked --all-features -- --deny warnings
 
   features:
     runs-on: ubuntu-latest
