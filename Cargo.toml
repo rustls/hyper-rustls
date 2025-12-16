@@ -9,6 +9,7 @@ description = "Rustls+hyper integration for pure rust HTTPS"
 homepage = "https://github.com/rustls/hyper-rustls"
 repository = "https://github.com/rustls/hyper-rustls"
 documentation = "https://docs.rs/hyper-rustls/"
+include = ["Cargo.toml", "LICENSE-MIT", "LICENSE-APACHE", "LICENSE-ICS", "README.md", "src/**/*.rs"]
 
 [features]
 default = ["native-tokio", "http1", "tls12", "logging", "aws-lc-rs"]
