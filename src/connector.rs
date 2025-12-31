@@ -8,7 +8,7 @@ use http::Uri;
 use hyper::rt;
 use hyper_util::client::legacy::connect::Connection;
 use hyper_util::rt::TokioIo;
-use pki_types::ServerName;
+use rustls::pki_types::ServerName;
 use tokio_rustls::TlsConnector;
 use tower_service::Service;
 
