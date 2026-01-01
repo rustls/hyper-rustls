@@ -8,11 +8,11 @@ use http_body_util::{BodyExt, Empty};
 use hyper::body::Bytes;
 use hyper_rustls::ConfigBuilderExt;
 use hyper_util::{client::legacy::Client, rt::TokioExecutor};
+use rustls::pki_types::{pem::PemObject, CertificateDer};
 use rustls::{ClientConfig, RootCertStore};
-use rustls::pki_types::{CertificateDer, pem::PemObject};
 
-use std::{env, fs, io};
 use std::str::FromStr;
+use std::{env, fs, io};
 
 fn error(err: String) -> io::Error {
     io::Error::new(io::ErrorKind::Other, err)
@@ -35,8 +35,7 @@ async fn main() -> io::Result<()> {
     // Prepare the TLS client config
     let tls = match env::args().nth(2) {
         Some(path) => {
-            let data = fs::read(&path)
-                .map_err(|e| error(format!("failed to open {path}: {e}")))?;
+            let data = fs::read(&path).map_err(|e| error(format!("failed to open {path}: {e}")))?;
 
             let mut roots = RootCertStore::empty();
             for cert in CertificateDer::pem_slice_iter(&data) {
@@ -62,8 +61,7 @@ async fn main() -> io::Result<()> {
         .build();
 
     // Build the hyper client from the HTTPS connector.
-    let client: Client<_, Empty<Bytes>> =
-        Client::builder(TokioExecutor::new()).build(https);
+    let client: Client<_, Empty<Bytes>> = Client::builder(TokioExecutor::new()).build(https);
 
     // Send the request and print the response.
     let res = client
@@ -87,4 +85,3 @@ async fn main() -> io::Result<()> {
 
     Ok(())
 }
-
