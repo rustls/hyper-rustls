@@ -7,6 +7,7 @@ use hyper_util::client::legacy::connect::HttpConnector;
     feature = "webpki-roots"
 ))]
 use rustls::crypto::CryptoProvider;
+use rustls::pki_types::ServerName;
 use rustls::ClientConfig;
 
 use super::{DefaultServerNameResolver, HttpsConnector, ResolveServerName};
@@ -16,7 +17,6 @@ use super::{DefaultServerNameResolver, HttpsConnector, ResolveServerName};
     feature = "rustls-platform-verifier"
 ))]
 use crate::config::ConfigBuilderExt;
-use pki_types::ServerName;
 
 /// A builder for an [`HttpsConnector`]
 ///
