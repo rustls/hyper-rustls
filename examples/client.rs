@@ -8,7 +8,7 @@ use http_body_util::{BodyExt, Empty};
 use hyper::body::Bytes;
 use hyper_rustls::ConfigBuilderExt;
 use hyper_util::{client::legacy::Client, rt::TokioExecutor};
-use rustls::pki_types::{pem::PemObject, CertificateDer};
+use pki_types::{pem::PemObject, CertificateDer};
 use rustls::{ClientConfig, RootCertStore};
 
 use std::str::FromStr;

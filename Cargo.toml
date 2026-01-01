@@ -27,7 +27,7 @@ http = "1"
 hyper = { version = "1", default-features = false }
 hyper-util = { version = "0.1", default-features = false, features = ["client-legacy", "tokio"] }
 log = { version = "0.4.4", optional = true }
-rustls-pki-types = { package = "rustls-pki-types", version = "1", features = ["std"] }
+pki-types = { package = "rustls-pki-types", version = "1", features = ["std"] }
 rustls-native-certs = { version = "0.8", optional = true }
 rustls-platform-verifier = { version = "0.6", optional = true }
 rustls = { version = "0.23", default-features = false }

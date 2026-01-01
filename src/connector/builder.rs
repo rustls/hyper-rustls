@@ -16,7 +16,7 @@ use super::{DefaultServerNameResolver, HttpsConnector, ResolveServerName};
     feature = "rustls-platform-verifier"
 ))]
 use crate::config::ConfigBuilderExt;
-use rustls::pki_types::ServerName;
+use pki_types::ServerName;
 
 /// A builder for an [`HttpsConnector`]
 ///
