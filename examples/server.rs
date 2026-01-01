@@ -117,8 +117,7 @@ async fn echo(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, hyper::Er
 // Load public certificate from file.
 fn load_certs(filename: &str) -> io::Result<Vec<CertificateDer<'static>>> {
     // Open certificate file.
-    let data =
-        fs::read(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
+    let data = fs::read(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
 
     // Load and return certificate.
     CertificateDer::pem_slice_iter(&data)
@@ -129,11 +128,9 @@ fn load_certs(filename: &str) -> io::Result<Vec<CertificateDer<'static>>> {
 // Load private key from file.
 fn load_private_key(filename: &str) -> io::Result<PrivateKeyDer<'static>> {
     // Open keyfile.
-    let data =
-        fs::read(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
+    let data = fs::read(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
 
     // Load and return a single private key.
     PrivateKeyDer::from_pem_slice(&data)
         .map_err(|e| error(format!("invalid private key in {filename}: {e}")))
 }
-
