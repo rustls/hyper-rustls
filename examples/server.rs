@@ -15,7 +15,7 @@ use hyper::body::{Bytes, Incoming};
 use hyper::service::service_fn;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use hyper_util::server::conn::auto::Builder;
-use pki_types::{CertificateDer, PrivateKeyDer};
+use rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
 use rustls::ServerConfig;
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
@@ -114,25 +114,26 @@ async fn echo(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, hyper::Er
     };
     Ok(response)
 }
-
 // Load public certificate from file.
 fn load_certs(filename: &str) -> io::Result<Vec<CertificateDer<'static>>> {
     // Open certificate file.
-    let certfile =
-        fs::File::open(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
-    let mut reader = io::BufReader::new(certfile);
+    let data =
+        fs::read(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
 
     // Load and return certificate.
-    rustls_pemfile::certs(&mut reader).collect()
+    CertificateDer::pem_slice_iter(&data)
+        .map(|cert| cert.map_err(|e| error(format!("invalid PEM in {filename}: {e}"))))
+        .collect()
 }
 
 // Load private key from file.
 fn load_private_key(filename: &str) -> io::Result<PrivateKeyDer<'static>> {
     // Open keyfile.
-    let keyfile =
-        fs::File::open(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
-    let mut reader = io::BufReader::new(keyfile);
+    let data =
+        fs::read(filename).map_err(|e| error(format!("failed to open {filename}: {e}")))?;
 
     // Load and return a single private key.
-    rustls_pemfile::private_key(&mut reader).map(|key| key.unwrap())
+    PrivateKeyDer::from_pem_slice(&data)
+        .map_err(|e| error(format!("invalid private key in {filename}: {e}")))
 }
+
