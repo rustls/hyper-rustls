@@ -5,6 +5,8 @@ permissions:
 
 on:
   push:
+    branches: ['main', 'rel-*', 'ci/*']
+    tags: ['**']
   pull_request:
   merge_group:
   schedule:
