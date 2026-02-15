@@ -56,10 +56,11 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let key = PrivateKeyDer::from_pem_file("examples/sample.rsa")
         .map_err(|e| error(format!("could not read private key file: {e}")))?;
 
-    println!("Starting to serve on https://{addr}");
-
     // Create a TCP listener via tokio.
     let incoming = TcpListener::bind(&addr).await?;
+    let addr = incoming.local_addr()?;
+
+    println!("Starting to serve on https://{addr}");
 
     // Build TLS configuration.
     let mut server_config = ServerConfig::builder()
