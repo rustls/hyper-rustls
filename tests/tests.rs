@@ -104,5 +104,6 @@ fn custom_ca_store() {
 
     if !rc.status.success() {
         assert_eq!(String::from_utf8_lossy(&rc.stdout), "");
+        panic!("test failed");
     }
 }
