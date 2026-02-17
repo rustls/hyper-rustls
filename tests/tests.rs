@@ -57,7 +57,11 @@ fn client() {
         .output()
         .expect("cannot run client example");
 
-    assert!(rc.status.success());
+    if !rc.status.success() {
+        assert_eq!(String::from_utf8_lossy(&rc.stdout), "");
+        assert_eq!(String::from_utf8_lossy(&rc.stderr), "");
+        panic!("test failed");
+    }
 }
 
 #[test]
@@ -104,6 +108,7 @@ fn custom_ca_store() {
 
     if !rc.status.success() {
         assert_eq!(String::from_utf8_lossy(&rc.stdout), "");
+        assert_eq!(String::from_utf8_lossy(&rc.stderr), "");
         panic!("test failed");
     }
 }
