@@ -94,16 +94,10 @@ where
             }
             Some(scheme) if scheme != &http::uri::Scheme::HTTPS => {
                 let message = format!("unsupported scheme {scheme}");
-                return Box::pin(async move {
-                    Err(io::Error::new(io::ErrorKind::Other, message).into())
-                });
+                return Box::pin(async move { Err(io::Error::other(message).into()) });
             }
             Some(_) => {}
-            None => {
-                return Box::pin(async move {
-                    Err(io::Error::new(io::ErrorKind::Other, "missing scheme").into())
-                })
-            }
+            None => return Box::pin(async move { Err(io::Error::other("missing scheme").into()) }),
         };
 
         let cfg = self.tls_config.clone();
@@ -123,7 +117,7 @@ where
                 TlsConnector::from(cfg)
                     .connect(hostname, TokioIo::new(tcp))
                     .await
-                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?,
+                    .map_err(io::Error::other)?,
             )))
         })
     }

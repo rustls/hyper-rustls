@@ -30,7 +30,7 @@ fn main() {
 }
 
 fn error(err: String) -> io::Error {
-    io::Error::new(io::ErrorKind::Other, err)
+    io::Error::other(err)
 }
 
 #[tokio::main]
