@@ -108,7 +108,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
             ClientConfig::builder_with_provider(provider.into())
                 .with_safe_default_protocol_versions()
                 .and_then(|builder| builder.try_with_platform_verifier())
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?
+                .map_err(std::io::Error::other)?
                 .with_no_client_auth(),
         ))
     }
@@ -140,7 +140,7 @@ impl ConnectorBuilder<WantsTlsConfig> {
         Ok(self.with_tls_config(
             ClientConfig::builder_with_provider(provider.into())
                 .with_safe_default_protocol_versions()
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?
+                .map_err(std::io::Error::other)?
                 .with_native_roots()?
                 .with_no_client_auth(),
         ))
