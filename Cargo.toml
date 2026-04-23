@@ -53,6 +53,9 @@ name = "server"
 path = "examples/server.rs"
 required-features = ["aws-lc-rs"]
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(hyper_rustls_docsrs)"] }
+
 [package.metadata.docs.rs]
 no-default-features = true
 features = [
@@ -65,4 +68,4 @@ features = [
     "tls12",
     "webpki-tokio",
 ]
-rustdoc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "hyper_rustls_docsrs"]
