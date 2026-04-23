@@ -138,7 +138,7 @@ where
 }
 
 impl<T> fmt::Debug for HttpsConnector<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("HttpsConnector")
             .field("force_https", &self.force_https)
             .finish()
