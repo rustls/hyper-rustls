@@ -33,7 +33,7 @@
 //! ```
 
 #![warn(missing_docs, unreachable_pub, clippy::use_self)]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod config;
 mod connector;
