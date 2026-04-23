@@ -229,7 +229,7 @@ impl WantsProtocols1 {
         HttpsConnector {
             force_https: self.https_only,
             http: conn,
-            tls_config: std::sync::Arc::new(self.tls_config),
+            tls_config: Arc::new(self.tls_config),
             server_name_resolver: self
                 .server_name_resolver
                 .unwrap_or_else(|| Arc::new(DefaultServerNameResolver::default())),

@@ -128,6 +128,7 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
 mod sealed {
     use super::*;
 
+    #[expect(unnameable_types)]
     pub trait Sealed {}
 
     impl Sealed for ConfigBuilder<ClientConfig, WantsVerifier> {}

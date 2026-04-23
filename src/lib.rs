@@ -32,7 +32,7 @@
 //! # fn main() {}
 //! ```
 
-#![warn(missing_docs, unreachable_pub, clippy::use_self)]
+#![warn(missing_docs, clippy::use_self)]
 #![cfg_attr(hyper_rustls_docsrs, feature(doc_cfg))]
 
 mod config;
