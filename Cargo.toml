@@ -27,7 +27,7 @@ webpki-tokio = ["webpki-roots"]
 http = "1"
 hyper = { version = "1", default-features = false }
 hyper-util = { version = "0.1", default-features = false, features = ["client-legacy", "tokio"] }
-log = { version = "0.4.4", optional = true }
+log = { version = "0.4.30", optional = true }
 rustls-native-certs = { version = "0.8", optional = true }
 rustls-platform-verifier = { version = "0.7", optional = true }
 rustls = { version = "0.23", default-features = false }
