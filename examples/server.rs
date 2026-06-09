@@ -15,6 +15,8 @@ use hyper::body::{Bytes, Incoming};
 use hyper::service::service_fn;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use hyper_util::server::conn::auto::Builder;
+use rustls::crypto::Identity;
+use rustls::enums::ApplicationProtocol;
 use rustls::pki_types::pem::PemObject;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use rustls::ServerConfig;
@@ -35,12 +37,6 @@ fn error(err: String) -> io::Error {
 
 #[tokio::main]
 async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // Set a process wide default crypto provider.
-    #[cfg(feature = "ring")]
-    let _ = rustls::crypto::ring::default_provider().install_default();
-    #[cfg(feature = "aws-lc-rs")]
-    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
-
     // First parameter is port number (optional, defaults to 1337)
     let port = match env::args().nth(1) {
         Some(ref p) => p.parse()?,
@@ -63,11 +59,16 @@ async fn run_server() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting to serve on https://{addr}");
 
     // Build TLS configuration.
-    let mut server_config = ServerConfig::builder()
+    let identity = Arc::new(Identity::from_cert_chain(certs)?);
+    let mut server_config = ServerConfig::builder(provider())
         .with_no_client_auth()
-        .with_single_cert(certs, key)
+        .with_single_cert(identity, key)
         .map_err(|e| error(e.to_string()))?;
-    server_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec(), b"http/1.0".to_vec()];
+    server_config.alpn_protocols = vec![
+        ApplicationProtocol::from(&b"h2"[..]),
+        ApplicationProtocol::from(&b"http/1.1"[..]),
+        ApplicationProtocol::from(&b"http/1.0"[..]),
+    ];
     let tls_acceptor = TlsAcceptor::from(Arc::new(server_config));
 
     let service = service_fn(echo);
@@ -118,4 +119,16 @@ async fn echo(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, hyper::Er
         }
     };
     Ok(response)
+}
+
+fn provider() -> Arc<rustls::crypto::CryptoProvider> {
+    #[cfg(feature = "aws-lc-rs")]
+    {
+        return Arc::new(rustls_aws_lc_rs::DEFAULT_PROVIDER.clone());
+    }
+
+    #[cfg(all(not(feature = "aws-lc-rs"), feature = "ring"))]
+    {
+        return Arc::new(rustls_ring::DEFAULT_PROVIDER.clone());
+    }
 }

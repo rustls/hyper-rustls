@@ -25,7 +25,10 @@ impl<T: rt::Read + rt::Write + Connection + Unpin> Connection for MaybeHttpsStre
             Self::Http(s) => s.connected(),
             Self::Https(s) => {
                 let (tcp, tls) = s.inner().get_ref();
-                if tls.alpn_protocol() == Some(b"h2") {
+                if tls
+                    .alpn_protocol()
+                    .is_some_and(|protocol| protocol.as_ref() == b"h2")
+                {
                     tcp.inner().connected().negotiated_h2()
                 } else {
                     tcp.inner().connected()
