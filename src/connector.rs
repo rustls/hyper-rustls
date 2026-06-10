@@ -2,6 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
+use std::time::Duration;
 use std::{fmt, io};
 
 use http::Uri;
@@ -24,6 +25,7 @@ pub struct HttpsConnector<T> {
     force_https: bool,
     http: T,
     tls_config: Arc<rustls::ClientConfig>,
+    handshake_timeout: Option<Duration>,
     server_name_resolver: Arc<dyn ResolveServerName + Sync + Send>,
 }
 
@@ -48,6 +50,7 @@ impl<T> HttpsConnector<T> {
             http,
             tls_config: tls_config.into(),
             force_https,
+            handshake_timeout: None,
             server_name_resolver,
         }
     }
@@ -101,6 +104,7 @@ where
         };
 
         let cfg = self.tls_config.clone();
+        let handshake_timeout = self.handshake_timeout;
         let hostname = match self.server_name_resolver.resolve(&dst) {
             Ok(hostname) => hostname,
             Err(e) => {
@@ -115,6 +119,7 @@ where
                 .map_err(Into::into)?;
             Ok(MaybeHttpsStream::Https(TokioIo::new(
                 TlsConnector::from(cfg)
+                    .with_handshake_timeout(handshake_timeout)
                     .connect(hostname, TokioIo::new(tcp))
                     .await
                     .map_err(io::Error::other)?,
@@ -132,6 +137,7 @@ where
             force_https: false,
             http,
             tls_config: cfg.into(),
+            handshake_timeout: None,
             server_name_resolver: Arc::new(DefaultServerNameResolver::default()),
         }
     }
