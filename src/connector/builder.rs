@@ -7,10 +7,22 @@ use hyper_util::client::legacy::connect::HttpConnector;
     feature = "webpki-roots"
 ))]
 use rustls::crypto::CryptoProvider;
+#[cfg(any(feature = "http2", test))]
+use rustls::enums::ApplicationProtocol;
 use rustls::pki_types::ServerName;
 use rustls::ClientConfig;
 
 use super::{DefaultServerNameResolver, HttpsConnector, ResolveServerName};
+#[cfg(all(
+    any(feature = "aws-lc-rs", feature = "ring"),
+    any(
+        feature = "rustls-platform-verifier",
+        feature = "rustls-native-certs",
+        feature = "webpki-roots",
+        test
+    )
+))]
+use crate::config::default_provider;
 #[cfg(any(
     feature = "rustls-native-certs",
     feature = "webpki-roots",
@@ -30,7 +42,6 @@ use crate::config::ConfigBuilderExt;
 ///
 /// # #[cfg(all(feature = "webpki-roots", feature = "http1", feature="aws-lc-rs"))]
 /// # {
-/// # let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
 ///     let https = HttpsConnectorBuilder::new()
 ///     .with_webpki_roots()
 ///     .https_only()
@@ -90,9 +101,9 @@ impl ConnectorBuilder<WantsTlsConfig> {
         self,
     ) -> Result<ConnectorBuilder<WantsSchemes>, rustls::Error> {
         Ok(self.with_tls_config(
-            ClientConfig::builder()
+            ClientConfig::builder(default_provider())
                 .try_with_platform_verifier()?
-                .with_no_client_auth(),
+                .with_no_client_auth()?,
         ))
     }
 
@@ -105,11 +116,11 @@ impl ConnectorBuilder<WantsTlsConfig> {
         provider: impl Into<Arc<CryptoProvider>>,
     ) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
-            ClientConfig::builder_with_provider(provider.into())
-                .with_safe_default_protocol_versions()
-                .and_then(|builder| builder.try_with_platform_verifier())
+            ClientConfig::builder(provider.into())
+                .try_with_platform_verifier()
                 .map_err(std::io::Error::other)?
-                .with_no_client_auth(),
+                .with_no_client_auth()
+                .map_err(std::io::Error::other)?,
         ))
     }
 
@@ -123,9 +134,10 @@ impl ConnectorBuilder<WantsTlsConfig> {
     ))]
     pub fn with_native_roots(self) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
-            ClientConfig::builder()
+            ClientConfig::builder(default_provider())
                 .with_native_roots()?
-                .with_no_client_auth(),
+                .with_no_client_auth()
+                .map_err(std::io::Error::other)?,
         ))
     }
 
@@ -138,11 +150,10 @@ impl ConnectorBuilder<WantsTlsConfig> {
         provider: impl Into<Arc<CryptoProvider>>,
     ) -> std::io::Result<ConnectorBuilder<WantsSchemes>> {
         Ok(self.with_tls_config(
-            ClientConfig::builder_with_provider(provider.into())
-                .with_safe_default_protocol_versions()
-                .map_err(std::io::Error::other)?
+            ClientConfig::builder(provider.into())
                 .with_native_roots()?
-                .with_no_client_auth(),
+                .with_no_client_auth()
+                .map_err(std::io::Error::other)?,
         ))
     }
 
@@ -153,9 +164,10 @@ impl ConnectorBuilder<WantsTlsConfig> {
     #[cfg(all(any(feature = "ring", feature = "aws-lc-rs"), feature = "webpki-roots"))]
     pub fn with_webpki_roots(self) -> ConnectorBuilder<WantsSchemes> {
         self.with_tls_config(
-            ClientConfig::builder()
+            ClientConfig::builder(default_provider())
                 .with_webpki_roots()
-                .with_no_client_auth(),
+                .with_no_client_auth()
+                .expect("rustls provider configuration is invalid"),
         )
     }
 
@@ -169,10 +181,9 @@ impl ConnectorBuilder<WantsTlsConfig> {
         provider: impl Into<Arc<CryptoProvider>>,
     ) -> Result<ConnectorBuilder<WantsSchemes>, rustls::Error> {
         Ok(self.with_tls_config(
-            ClientConfig::builder_with_provider(provider.into())
-                .with_safe_default_protocol_versions()?
+            ClientConfig::builder(provider.into())
                 .with_webpki_roots()
-                .with_no_client_auth(),
+                .with_no_client_auth()?,
         ))
     }
 }
@@ -258,7 +269,7 @@ impl ConnectorBuilder<WantsProtocols1> {
     /// This needs to be called explicitly, no protocol is enabled by default
     #[cfg(feature = "http2")]
     pub fn enable_http2(mut self) -> ConnectorBuilder<WantsProtocols3> {
-        self.0.tls_config.alpn_protocols = vec![b"h2".to_vec()];
+        self.0.tls_config.alpn_protocols = vec![alpn(b"h2")];
         ConnectorBuilder(WantsProtocols3 {
             inner: self.0,
             enable_http1: false,
@@ -272,9 +283,9 @@ impl ConnectorBuilder<WantsProtocols1> {
     #[cfg(feature = "http2")]
     pub fn enable_all_versions(mut self) -> ConnectorBuilder<WantsProtocols3> {
         #[cfg(feature = "http1")]
-        let alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        let alpn_protocols = vec![alpn(b"h2"), alpn(b"http/1.1")];
         #[cfg(not(feature = "http1"))]
-        let alpn_protocols = vec![b"h2".to_vec()];
+        let alpn_protocols = vec![alpn(b"h2")];
 
         self.0.tls_config.alpn_protocols = alpn_protocols;
         ConnectorBuilder(WantsProtocols3 {
@@ -343,7 +354,7 @@ impl ConnectorBuilder<WantsProtocols2> {
     /// This needs to be called explicitly, no protocol is enabled by default
     #[cfg(feature = "http2")]
     pub fn enable_http2(mut self) -> ConnectorBuilder<WantsProtocols3> {
-        self.0.inner.tls_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
+        self.0.inner.tls_config.alpn_protocols = vec![alpn(b"h2"), alpn(b"http/1.1")];
         ConnectorBuilder(WantsProtocols3 {
             inner: self.0.inner,
             enable_http1: true,
@@ -363,6 +374,11 @@ impl ConnectorBuilder<WantsProtocols2> {
         // though it won't be used
         self.0.inner.wrap_connector(conn)
     }
+}
+
+#[cfg(any(feature = "http2", test))]
+fn alpn(protocol: &'static [u8]) -> ApplicationProtocol<'static> {
+    protocol.into()
 }
 
 /// State of a builder with HTTP2 (and possibly HTTP1) enabled
@@ -414,10 +430,11 @@ mod tests {
     fn test_reject_predefined_alpn() {
         ensure_global_state();
         let roots = rustls::RootCertStore::empty();
-        let mut config_with_alpn = rustls::ClientConfig::builder()
+        let mut config_with_alpn = rustls::ClientConfig::builder(crate::config::default_provider())
             .with_root_certificates(roots)
-            .with_no_client_auth();
-        config_with_alpn.alpn_protocols = vec![b"fancyprotocol".to_vec()];
+            .with_no_client_auth()
+            .unwrap();
+        config_with_alpn.alpn_protocols = vec![super::alpn(b"fancyprotocol")];
         let _connector = super::ConnectorBuilder::new()
             .with_tls_config(config_with_alpn)
             .https_only()
@@ -430,9 +447,10 @@ mod tests {
     fn test_alpn() {
         ensure_global_state();
         let roots = rustls::RootCertStore::empty();
-        let tls_config = rustls::ClientConfig::builder()
+        let tls_config = rustls::ClientConfig::builder(crate::config::default_provider())
             .with_root_certificates(roots)
-            .with_no_client_auth();
+            .with_no_client_auth()
+            .unwrap();
         let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config.clone())
             .https_only()
@@ -447,7 +465,15 @@ mod tests {
             .https_only()
             .enable_http2()
             .build();
-        assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
+        assert_eq!(
+            connector
+                .tls_config
+                .alpn_protocols
+                .iter()
+                .map(|protocol| protocol.as_ref())
+                .collect::<Vec<_>>(),
+            vec![b"h2".as_slice()]
+        );
         let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config.clone())
             .https_only()
@@ -455,8 +481,13 @@ mod tests {
             .enable_http2()
             .build();
         assert_eq!(
-            &connector.tls_config.alpn_protocols,
-            &[b"h2".to_vec(), b"http/1.1".to_vec()]
+            connector
+                .tls_config
+                .alpn_protocols
+                .iter()
+                .map(|protocol| protocol.as_ref())
+                .collect::<Vec<_>>(),
+            vec![b"h2".as_slice(), b"http/1.1".as_slice()]
         );
         let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config)
@@ -464,8 +495,13 @@ mod tests {
             .enable_all_versions()
             .build();
         assert_eq!(
-            &connector.tls_config.alpn_protocols,
-            &[b"h2".to_vec(), b"http/1.1".to_vec()]
+            connector
+                .tls_config
+                .alpn_protocols
+                .iter()
+                .map(|protocol| protocol.as_ref())
+                .collect::<Vec<_>>(),
+            vec![b"h2".as_slice(), b"http/1.1".as_slice()]
         );
     }
 
@@ -473,28 +509,41 @@ mod tests {
     #[cfg(all(not(feature = "http1"), feature = "http2"))]
     fn test_alpn_http2() {
         let roots = rustls::RootCertStore::empty();
-        let tls_config = rustls::ClientConfig::builder()
-            .with_safe_defaults()
+        let tls_config = rustls::ClientConfig::builder(crate::config::default_provider())
             .with_root_certificates(roots)
-            .with_no_client_auth();
+            .with_no_client_auth()
+            .unwrap();
         let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config.clone())
             .https_only()
             .enable_http2()
             .build();
-        assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
+        assert_eq!(
+            connector
+                .tls_config
+                .alpn_protocols
+                .iter()
+                .map(|protocol| protocol.as_ref())
+                .collect::<Vec<_>>(),
+            vec![b"h2".as_slice()]
+        );
         let connector = super::ConnectorBuilder::new()
             .with_tls_config(tls_config)
             .https_only()
             .enable_all_versions()
             .build();
-        assert_eq!(&connector.tls_config.alpn_protocols, &[b"h2".to_vec()]);
+        assert_eq!(
+            connector
+                .tls_config
+                .alpn_protocols
+                .iter()
+                .map(|protocol| protocol.as_ref())
+                .collect::<Vec<_>>(),
+            vec![b"h2".as_slice()]
+        );
     }
 
     fn ensure_global_state() {
-        #[cfg(feature = "ring")]
-        let _ = rustls::crypto::ring::default_provider().install_default();
-        #[cfg(feature = "aws-lc-rs")]
-        let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+        let _ = crate::config::default_provider();
     }
 }

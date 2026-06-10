@@ -12,6 +12,7 @@ use rustls::pki_types::CertificateDer;
 use rustls::RootCertStore;
 
 use std::str::FromStr;
+use std::sync::Arc;
 use std::{env, io};
 
 fn main() {
@@ -28,12 +29,6 @@ fn error(err: String) -> io::Error {
 
 #[tokio::main]
 async fn run_client() -> io::Result<()> {
-    // Set a process wide default crypto provider.
-    #[cfg(feature = "ring")]
-    let _ = rustls::crypto::ring::default_provider().install_default();
-    #[cfg(feature = "aws-lc-rs")]
-    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
-
     // First parameter is target URL (mandatory).
     let url = match env::args().nth(1) {
         Some(ref url) => Uri::from_str(url).map_err(|e| error(format!("{e}")))?,
@@ -54,14 +49,16 @@ async fn run_client() -> io::Result<()> {
             let mut roots = RootCertStore::empty();
             roots.add_parsable_certificates(certs);
             // TLS client config using the custom CA store for lookups
-            rustls::ClientConfig::builder()
+            rustls::ClientConfig::builder(provider())
                 .with_root_certificates(roots)
                 .with_no_client_auth()
+                .map_err(|e| error(e.to_string()))?
         }
         // Default TLS client config with native roots
-        None => rustls::ClientConfig::builder()
+        None => rustls::ClientConfig::builder(provider())
             .with_native_roots()?
-            .with_no_client_auth(),
+            .with_no_client_auth()
+            .map_err(|e| error(e.to_string()))?,
     };
     // Prepare the HTTPS connector
     let https = hyper_rustls::HttpsConnectorBuilder::new()
@@ -96,4 +93,16 @@ async fn run_client() -> io::Result<()> {
     };
 
     fut.await
+}
+
+fn provider() -> Arc<rustls::crypto::CryptoProvider> {
+    #[cfg(feature = "aws-lc-rs")]
+    {
+        return Arc::new(rustls_aws_lc_rs::DEFAULT_PROVIDER.clone());
+    }
+
+    #[cfg(all(not(feature = "aws-lc-rs"), feature = "ring"))]
+    {
+        return Arc::new(rustls_ring::DEFAULT_PROVIDER.clone());
+    }
 }
