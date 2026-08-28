@@ -41,7 +41,7 @@ mod stream;
 
 #[cfg(feature = "logging")]
 mod log {
-    #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+    #[cfg(feature = "rustls-native-certs")]
     pub(crate) use log::debug;
     #[cfg(feature = "rustls-native-certs")]
     pub(crate) use log::warn;
@@ -49,9 +49,9 @@ mod log {
 
 #[cfg(not(feature = "logging"))]
 mod log {
-    #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+    #[cfg(feature = "rustls-native-certs")]
     macro_rules! debug    ( ($($tt:tt)*) => {{}} );
-    #[cfg(any(feature = "rustls-native-certs", feature = "webpki-roots"))]
+    #[cfg(feature = "rustls-native-certs")]
     pub(crate) use debug;
     #[cfg(feature = "rustls-native-certs")]
     macro_rules! warn_    ( ($($tt:tt)*) => {{}} );

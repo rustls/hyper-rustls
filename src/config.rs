@@ -1,5 +1,15 @@
 #[cfg(feature = "rustls-native-certs")]
 use std::io;
+#[cfg(all(
+    any(feature = "aws-lc-rs", feature = "ring"),
+    any(
+        feature = "rustls-platform-verifier",
+        feature = "rustls-native-certs",
+        feature = "webpki-roots",
+        test
+    )
+))]
+use std::sync::Arc;
 
 #[cfg(any(
     feature = "rustls-platform-verifier",
@@ -7,6 +17,16 @@ use std::io;
     feature = "webpki-roots"
 ))]
 use rustls::client::WantsClientCert;
+#[cfg(all(
+    any(feature = "aws-lc-rs", feature = "ring"),
+    any(
+        feature = "rustls-platform-verifier",
+        feature = "rustls-native-certs",
+        feature = "webpki-roots",
+        test
+    )
+))]
+use rustls::crypto::CryptoProvider;
 use rustls::{ClientConfig, ConfigBuilder, WantsVerifier};
 #[cfg(feature = "rustls-native-certs")]
 use rustls_native_certs::CertificateResult;
@@ -71,7 +91,7 @@ impl ConfigBuilderExt for ConfigBuilder<ClientConfig, WantsVerifier> {
     }
 
     #[cfg(feature = "rustls-native-certs")]
-    #[cfg_attr(not(feature = "logging"), allow(unused_variables))]
+    #[cfg_attr(not(feature = "logging"), allow(unused_assignments, unused_variables))]
     fn with_native_roots(self) -> Result<ConfigBuilder<ClientConfig, WantsClientCert>, io::Error> {
         let mut roots = rustls::RootCertStore::empty();
         let mut valid_count = 0;
@@ -132,4 +152,25 @@ mod sealed {
     pub trait Sealed {}
 
     impl Sealed for ConfigBuilder<ClientConfig, WantsVerifier> {}
+}
+
+#[cfg(all(
+    any(feature = "aws-lc-rs", feature = "ring"),
+    any(
+        feature = "rustls-platform-verifier",
+        feature = "rustls-native-certs",
+        feature = "webpki-roots",
+        test
+    )
+))]
+pub(crate) fn default_provider() -> Arc<CryptoProvider> {
+    #[cfg(feature = "aws-lc-rs")]
+    {
+        Arc::new(rustls_aws_lc_rs::DEFAULT_PROVIDER.clone())
+    }
+
+    #[cfg(all(not(feature = "aws-lc-rs"), feature = "ring"))]
+    {
+        Arc::new(rustls_ring::DEFAULT_PROVIDER.clone())
+    }
 }
