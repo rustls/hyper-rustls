@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use hyper_util::client::legacy::connect::HttpConnector;
 #[cfg(any(
@@ -197,6 +198,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: true,
+            handshake_timeout: None,
             server_name_resolver: None,
         })
     }
@@ -209,6 +211,7 @@ impl ConnectorBuilder<WantsSchemes> {
         ConnectorBuilder(WantsProtocols1 {
             tls_config: self.0.tls_config,
             https_only: false,
+            handshake_timeout: None,
             server_name_resolver: None,
         })
     }
@@ -221,6 +224,7 @@ impl ConnectorBuilder<WantsSchemes> {
 pub struct WantsProtocols1 {
     tls_config: ClientConfig,
     https_only: bool,
+    handshake_timeout: Option<Duration>,
     server_name_resolver: Option<Arc<dyn ResolveServerName + Sync + Send>>,
 }
 
@@ -230,6 +234,7 @@ impl WantsProtocols1 {
             force_https: self.https_only,
             http: conn,
             tls_config: Arc::new(self.tls_config),
+            handshake_timeout: self.handshake_timeout,
             server_name_resolver: self
                 .server_name_resolver
                 .unwrap_or_else(|| Arc::new(DefaultServerNameResolver::default())),
@@ -296,6 +301,14 @@ impl ConnectorBuilder<WantsProtocols1> {
         resolver: impl ResolveServerName + 'static + Sync + Send,
     ) -> Self {
         self.0.server_name_resolver = Some(Arc::new(resolver));
+        self
+    }
+
+    /// Set the maximum amount of time to allow for TLS handshakes.
+    ///
+    /// `None` disables the handshake timeout.
+    pub fn with_tls_handshake_timeout(mut self, timeout: Option<Duration>) -> Self {
+        self.0.handshake_timeout = timeout;
         self
     }
 
@@ -467,6 +480,32 @@ mod tests {
             &connector.tls_config.alpn_protocols,
             &[b"h2".to_vec(), b"http/1.1".to_vec()]
         );
+    }
+
+    #[test]
+    #[cfg(feature = "http1")]
+    fn test_tls_handshake_timeout() {
+        ensure_global_state();
+        let roots = rustls::RootCertStore::empty();
+        let tls_config = rustls::ClientConfig::builder()
+            .with_root_certificates(roots)
+            .with_no_client_auth();
+        let timeout = std::time::Duration::from_secs(5);
+
+        let connector = super::ConnectorBuilder::new()
+            .with_tls_config(tls_config.clone())
+            .https_only()
+            .enable_http1()
+            .build();
+        assert_eq!(connector.handshake_timeout, None);
+
+        let connector = super::ConnectorBuilder::new()
+            .with_tls_config(tls_config)
+            .https_only()
+            .with_tls_handshake_timeout(Some(timeout))
+            .enable_http1()
+            .build();
+        assert_eq!(connector.handshake_timeout, Some(timeout));
     }
 
     #[test]
