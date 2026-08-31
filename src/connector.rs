@@ -266,7 +266,7 @@ mod tests {
         allow: Allow,
         scheme: Scheme,
     ) -> Result<MaybeHttpsStream<TokioIo<TcpStream>>, BoxError> {
-        let config_builder = rustls::ClientConfig::builder();
+        let config_builder = rustls::ClientConfig::builder(crate::config::default_provider());
         cfg_if::cfg_if! {
             if #[cfg(feature = "rustls-platform-verifier")] {
                 let config_builder = config_builder.try_with_platform_verifier()?;
@@ -276,7 +276,7 @@ mod tests {
                 let config_builder = config_builder.with_webpki_roots();
             }
         }
-        let config = config_builder.with_no_client_auth();
+        let config = config_builder.with_no_client_auth()?;
 
         let builder = HttpsConnectorBuilder::new().with_tls_config(config);
         let mut service = match allow {
