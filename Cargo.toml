@@ -1,6 +1,6 @@
 [package]
 name = "hyper-rustls"
-version = "0.26.0"
+version = "0.26.1"
 edition = "2021"
 rust-version = "1.63"
 license = "Apache-2.0 OR ISC OR MIT"
@@ -21,7 +21,7 @@ rustls = { version = "0.22", default-features = false }
 tokio = "1.0"
 tokio-rustls = { version = "0.25", default-features = false }
 tower-service = "0.3"
-webpki-roots = { version = "0.26", optional = true }
+webpki-roots = { version = "1", optional = true }
 futures-util = { version = "0.3", default-features = false }
 
 [dev-dependencies]
